@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Distributed EVL
+Bundle-SymbolicName: org.eclipse.epsilon.evl.engine.distributed
+Bundle-Version: 1.6.0.qualifier
+Bundle-Vendor: Eclipse Modeling Project
+Automatic-Module-Name: org.eclipse.epsilon.evl.engine.distributed
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Require-Bundle: org.eclipse.epsilon.evl.engine;visibility:=reexport,
+ org.eclipse.epsilon.eol.cli;visibility:=reexport
+Export-Package: org.eclipse.epsilon.evl.distributed,
+ org.eclipse.epsilon.evl.distributed.execute.context,
+ org.eclipse.epsilon.evl.distributed.execute.data,
+ org.eclipse.epsilon.evl.distributed.launch

@@ -1,0 +1,31 @@
+<?nsuri org.eclipse.scava.crossflow?>
+<_>
+	<workflow name="DistributedEVL">
+		
+		<task configurations="Config" masterOnly="true" multipleOutputs="true" name="JobDistributor" out="ValidationDataQueue"/>
+		
+		<queue name="ValidationDataQueue" type="ValidationData"/>
+		
+		<task name="Processing" configurations="Config" in="ValidationDataQueue" out="ValidationOutput" multipleOutputs="true"/>
+		
+		<queue name="ValidationOutput" type="ValidationResult"/> 
+		
+		<sink name="ResultSink" in="ValidationOutput"/>
+		
+		<type name="Config">
+			<field name="data" type="java.util.HashMap"/>
+		</type>
+
+		<type name="ValidationData">
+			<field name="data" type="java.io.Serializable"/>
+		</type>
+		
+		<type name="ValidationResult">
+			<field isMany="true" name="atoms" type="org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlResultAtom"/>
+		</type>
+
+	<language name="Java" package="org.eclipse.epsilon.evl.distributed.crossflow"/>
+
+	</workflow> 
+	
+</_>

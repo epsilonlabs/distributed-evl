@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Flink EVL
+Bundle-SymbolicName: org.eclipse.epsilon.evl.engine.distributed.flink
+Bundle-Version: 1.0.0.qualifier
+Bundle-Vendor: Epsilon
+Automatic-Module-Name: org.eclipse.epsilon.evl.engine.distributed.flink
+Main-Class: org.eclipse.epsilon.evl.distributed.flink.launch.FlinkEvlMasterConfigParser
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Export-Package: org.eclipse.epsilon.evl.distributed.flink,
+ org.eclipse.epsilon.evl.distributed.flink.atomic,
+ org.eclipse.epsilon.evl.distributed.flink.batch,
+ org.eclipse.epsilon.evl.distributed.flink.launch
+Require-Bundle: org.eclipse.epsilon.evl.engine.distributed,
+ org.eclipse.epsilon.eol.cli
