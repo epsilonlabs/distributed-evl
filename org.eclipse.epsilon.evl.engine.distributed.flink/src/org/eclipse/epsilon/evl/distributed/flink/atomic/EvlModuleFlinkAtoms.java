@@ -9,9 +9,11 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.flink.atomic;
 
+import java.util.List;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.operators.DataSource;
+import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlInputAtom;
 import org.eclipse.epsilon.evl.distributed.flink.EvlModuleFlinkMaster;
 import org.eclipse.epsilon.evl.distributed.flink.format.FlinkInputFormat;
@@ -23,8 +25,6 @@ import org.eclipse.epsilon.evl.distributed.flink.format.FlinkInputFormat;
  * @since 1.6
  */
 public class EvlModuleFlinkAtoms extends EvlModuleFlinkMaster<SerializableEvlInputAtom> {
-
-	protected final boolean shuffle;
 	
 	public EvlModuleFlinkAtoms() {
 		this(-1);
@@ -36,14 +36,20 @@ public class EvlModuleFlinkAtoms extends EvlModuleFlinkMaster<SerializableEvlInp
 	
 	public EvlModuleFlinkAtoms(int parallelism, boolean shuffle) {
 		super(parallelism);
-		this.shuffle = shuffle;
+		jobSplitter = new AtomicJobSplitter(0, shuffle);
 	}
 
+	@SuppressWarnings("unchecked")
+	@Override
+	protected List<SerializableEvlInputAtom> getWorkerJobs() throws EolRuntimeException {
+		return (List<SerializableEvlInputAtom>) super.getWorkerJobs();
+	}
+	
 	@Override
 	protected DataSource<SerializableEvlInputAtom> getProcessingPipeline(ExecutionEnvironment execEnv) throws Exception {
 		return execEnv
 			.createInput(
-				new FlinkInputFormat<>(new AtomicJobSplitter(0, shuffle).getWorkerJobs()),
+				new FlinkInputFormat<>(getWorkerJobs()),
 				TypeInformation.of(SerializableEvlInputAtom.class)
 			);
 	}

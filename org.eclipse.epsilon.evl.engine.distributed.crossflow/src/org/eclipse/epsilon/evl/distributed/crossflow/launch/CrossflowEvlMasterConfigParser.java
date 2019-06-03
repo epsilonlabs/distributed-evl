@@ -9,6 +9,9 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.crossflow.launch;
 
+import org.apache.commons.cli.Option;
+import org.eclipse.epsilon.evl.distributed.crossflow.atomic.EvlModuleCrossflowMasterAtomic;
+import org.eclipse.epsilon.evl.distributed.crossflow.batch.EvlModuleCrossflowMasterBatch;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlMasterConfigParser;
 
 /**
@@ -21,6 +24,8 @@ import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlMasterConfigPars
  */
 public class CrossflowEvlMasterConfigParser<R extends CrossflowEvlRunConfigurationMaster, B extends CrossflowEvlRunConfigurationMaster.Builder<R, B>> extends DistributedEvlMasterConfigParser<R, B> {
 
+	private final String instanceIdOpt = "instanceID";
+	
 	public static void main(String... args) {
 		new CrossflowEvlMasterConfigParser<>().parseAndRun(args);
 	}
@@ -32,10 +37,25 @@ public class CrossflowEvlMasterConfigParser<R extends CrossflowEvlRunConfigurati
 	
 	public CrossflowEvlMasterConfigParser(B builder) {
 		super(builder);
+		options.addOption(Option.builder("id")
+			.longOpt(instanceIdOpt)
+			.hasArg()
+			.desc("Instance ID for Crossflow")
+			.build()
+		);
 	}
 	
 	@Override
 	public void parseArgs(String[] args) throws Exception {
 		super.parseArgs(args);
+		if (cmdLine.hasOption(instanceIdOpt)) {
+			builder.instanceID = cmdLine.getOptionValue(instanceIdOpt);
+		}
+		if (builder.batchFactor > 0) {
+			builder.module = new EvlModuleCrossflowMasterBatch(builder.instanceID, builder.distributedParallelism, builder.masterProportion, builder.shuffle, builder.batchFactor);
+		}
+		else {
+			builder.module = new EvlModuleCrossflowMasterAtomic(builder.instanceID, builder.distributedParallelism, builder.masterProportion, builder.shuffle);
+		}
 	}
 }

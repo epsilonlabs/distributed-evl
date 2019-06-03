@@ -9,29 +9,39 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.crossflow;
 
+import java.io.Serializable;
+import java.util.List;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedMaster;
 import org.eclipse.scava.crossflow.runtime.Mode;
 
-public class EvlModuleCrossflowMaster extends EvlModuleDistributedMaster {
+public abstract class EvlModuleCrossflowMaster extends EvlModuleDistributedMaster {
 
-	public EvlModuleCrossflowMaster() {
-		super(-1);
+	protected final String instanceID;
+
+	public EvlModuleCrossflowMaster(String instanceId, int distributedParallelism, double masterProportion, boolean shuffle, double batchFactor) {
+		super(distributedParallelism, masterProportion, shuffle, batchFactor);
+		this.instanceID = instanceId;
+	}
+
+	protected EvlModuleCrossflowMaster(String instanceId, int distributedParallelism, double masterProportion, boolean shuffle) {
+		super(distributedParallelism, masterProportion, shuffle);
+		this.instanceID = instanceId;
+	}
+
+	protected EvlModuleCrossflowMaster(String instanceId, int distributedParallelism) {
+		super(distributedParallelism);
+		this.instanceID = instanceId;
 	}
 
 	@Override
 	protected void checkConstraints() throws EolRuntimeException {
 		try {
 			DistributedEVL crossflow = new DistributedEVL(Mode.MASTER_BARE);
-			crossflow.setInstanceId("DistributedEVL");
-			//
+			crossflow.setInstanceId(instanceID);
 			crossflow.getConfigConfigSource().masterModule = this;
-			//
 			crossflow.run(5000L);
-			
 			crossflow.awaitTermination();
-
-			//
 			crossflow.getResultSink();
 		}
 		catch (Exception ex) {
@@ -46,5 +56,12 @@ public class EvlModuleCrossflowMaster extends EvlModuleDistributedMaster {
 			result = super.deserializeResults(((ValidationResult) response).getAtoms());
 		}
 		return result;
+	}
+	
+	// METHOD VISIBILITY
+	
+	@Override
+	public List<? extends Serializable> getWorkerJobs() throws EolRuntimeException {
+		return super.getWorkerJobs();
 	}
 }

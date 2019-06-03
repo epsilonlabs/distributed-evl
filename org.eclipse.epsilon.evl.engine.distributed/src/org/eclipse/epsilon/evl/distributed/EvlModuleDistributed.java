@@ -25,6 +25,7 @@ import org.eclipse.epsilon.eol.execute.concurrent.executors.EolExecutorService;
 import org.eclipse.epsilon.eol.execute.context.IEolContext;
 import org.eclipse.epsilon.evl.concurrent.EvlModuleParallel;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributed;
+import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.execute.data.*;
 import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
 import org.eclipse.epsilon.evl.execute.atoms.*;
@@ -154,7 +155,10 @@ public abstract class EvlModuleDistributed extends EvlModuleParallel {
 	
 	public List<DistributedEvlBatch> getBatches(double batchPercent) throws EolRuntimeException {
 		final int numTotalJobs = getContextJobs().size();
-		return DistributedEvlBatch.getBatches(numTotalJobs, (int) (numTotalJobs * batchPercent));
+		final EvlContextDistributed context = getContext();
+		final int adjusted = context instanceof EvlContextDistributedMaster ?
+			 Math.max(((EvlContextDistributedMaster) context).getDistributedParallelism(), 1) : 1;
+		return DistributedEvlBatch.getBatches(numTotalJobs, (int) (numTotalJobs * (batchPercent / adjusted)));
 	}
 	
 	protected Collection<SerializableEvlResultAtom> serializeResults(Collection<UnsatisfiedConstraint> unsatisfiedConstraints) {

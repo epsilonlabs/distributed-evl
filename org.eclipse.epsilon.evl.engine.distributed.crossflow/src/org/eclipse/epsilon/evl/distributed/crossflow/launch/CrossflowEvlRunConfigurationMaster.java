@@ -10,6 +10,7 @@
 package org.eclipse.epsilon.evl.distributed.crossflow.launch;
 
 import org.eclipse.epsilon.evl.distributed.crossflow.EvlModuleCrossflowMaster;
+import org.eclipse.epsilon.evl.distributed.crossflow.batch.EvlModuleCrossflowMasterBatch;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfiguration;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfigurationMaster;
 
@@ -20,7 +21,17 @@ import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfiguration
  */
 public class CrossflowEvlRunConfigurationMaster extends DistributedEvlRunConfigurationMaster {
 	
+	protected final String instanceID;
+	
+	@SuppressWarnings("unchecked")
 	public static class Builder<R extends CrossflowEvlRunConfigurationMaster, B extends Builder<R, B>> extends DistributedEvlRunConfigurationMaster.Builder<R, B> {
+		
+		public String instanceID = "DistributedEVL";
+		
+		public B withInstanceID(String id) {
+			this.instanceID = id;
+			return (B) this;
+		}
 		
 		protected Builder() {
 			super();
@@ -36,10 +47,11 @@ public class CrossflowEvlRunConfigurationMaster extends DistributedEvlRunConfigu
 	
 	public CrossflowEvlRunConfigurationMaster(Builder<? extends DistributedEvlRunConfiguration, ?> builder) {
 		super(builder);
+		this.instanceID = builder.instanceID;
 	}
 
 	@Override
 	protected EvlModuleCrossflowMaster getDefaultModule() {
-		return new EvlModuleCrossflowMaster();
+		return new EvlModuleCrossflowMasterBatch(instanceID, expectedWorkers, masterProportion, shuffle, batchFactor);
 	}
 }

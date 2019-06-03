@@ -9,18 +9,18 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.crossflow;
 
-import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedMaster;
-import org.eclipse.epsilon.evl.distributed.execute.data.DistributedEvlBatch;
-
+/**
+ * 
+ *
+ * @author Sina Madani
+ * @since 1.6
+ */
 public class JobDistributor extends JobDistributorBase {
 	
 	@Override
 	public void consumeConfigTopic(Config config) throws Exception {
-		
-		final EvlModuleDistributedMaster module = workflow.getConfigConfigSource().masterModule;
-		
-		for (DistributedEvlBatch batch : module.getBatches(0.000975d)) {
-			sendToValidationDataQueue(new ValidationData(batch));
+		for (java.io.Serializable job : workflow.getConfigConfigSource().masterModule.getWorkerJobs()) {
+			sendToValidationDataQueue(new ValidationData(job));
 		}
 	}
 }

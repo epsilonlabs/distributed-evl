@@ -25,23 +25,21 @@ import org.eclipse.epsilon.evl.execute.atoms.ConstraintContextAtom;
  * @since 1.6
  */
 public class EvlModuleJmsMasterAtomic extends EvlModuleJmsMaster {
-
-	protected final AtomicJobSplitter splitter;
 	
 	public EvlModuleJmsMasterAtomic(int expectedWorkers, double masterProportion, boolean shuffle, String host, int sessionID) throws URISyntaxException {
 		super(expectedWorkers, host, sessionID);
 		double mp = masterProportion >= 0 && masterProportion <= 1 ? masterProportion : 1 / (1 + expectedSlaves);
-		splitter = new AtomicJobSplitter(mp, shuffle);
+		jobSplitter = new AtomicJobSplitter(mp, shuffle);
 	}
 
 	@Override
 	protected void processJobs(AtomicInteger workersReady) throws Exception {
 		waitForWorkersToConnect(workersReady);
 		
-		sendAllJobs(splitter.getWorkerJobs());
+		sendAllJobs(jobSplitter.getWorkerJobs());
 		
 		log("Began processing own jobs");
-		executeJob(splitter.getMasterJobs());
+		executeJob(jobSplitter.getMasterJobs());
 		log("Finished processing own jobs");
 	}
 }

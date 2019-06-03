@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
@@ -40,15 +41,48 @@ import org.eclipse.epsilon.evl.execute.atoms.ConstraintContextAtom;
  * @since 1.6
  */
 public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
-
+	
+	protected JobSplitter<?, ?> jobSplitter;
+	
+	/**
+	 * 
+	 * @param distributedParallelism Expected number of workers.
+	 */
 	public EvlModuleDistributedMaster(int distributedParallelism) {
 		super(distributedParallelism);
 		setContext(new EvlContextDistributedMaster(0, distributedParallelism));
 	}
 	
+	/**
+	 * Constructor for atom-based modules.
+	 * 
+	 * @param distributedParallelism
+	 * @param masterProportion Percentage of jobs (i.e. between 0 and 1) to assign to the master
+	 * @param shuffle Whether to randomise order of jobs.
+	 * @see #EvlModuleDistributedMaster(int)
+	 */
+	protected EvlModuleDistributedMaster(int distributedParallelism, double masterProportion, boolean shuffle) {
+		this(distributedParallelism);
+		this.jobSplitter = new AtomicJobSplitter(masterProportion, shuffle);
+	}
+	
+	/**
+	 * Constructor for batch-based modules.
+	 * 
+	 * @param distributedParallelism
+	 * @param masterProportion
+	 * @param shuffle
+	 * @param batchFactor Granularity of batches, where 0 is one job per batch and 1 is all jobs in one batch.
+	 * @see #EvlModuleDistributedMaster(int, double, boolean)
+	 */
+	protected EvlModuleDistributedMaster(int distributedParallelism, double masterProportion, boolean shuffle, double batchFactor) {
+		this(distributedParallelism);
+		this.jobSplitter = new BatchJobSplitter(masterProportion, shuffle, batchFactor);
+	}
+	
 	// Job division
 
-	protected abstract class JobSplitter<T, S extends Serializable> {
+	protected static abstract class JobSplitter<T, S extends Serializable> {
 		protected final double masterProportion;
 		protected final boolean shuffle;
 		protected ArrayList<S> workerJobs;
@@ -137,6 +171,10 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 		protected List<DistributedEvlBatch> getAllJobs() throws EolRuntimeException {
 			return getBatches(granularity / 2);
 		}
+	}
+	
+	protected List<? extends Serializable> getWorkerJobs() throws EolRuntimeException {
+		return Objects.requireNonNull(jobSplitter, "JobSplitter must be set!").getWorkerJobs();
 	}
 	
 	// UnsatisfiedConstraint resolution

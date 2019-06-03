@@ -13,6 +13,7 @@ import java.net.URI;
 import java.nio.file.Paths;
 import org.eclipse.epsilon.common.util.StringProperties;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributed;
+import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributed;
 import org.eclipse.epsilon.evl.launch.EvlRunConfiguration;
 
 /**
@@ -62,6 +63,7 @@ public abstract class DistributedEvlRunConfiguration extends EvlRunConfiguration
 			if (outputFile != null && !outputFile.isAbsolute()) {
 				outputFile = Paths.get(basePath, outputFile.toString());
 			}
+			System.setProperty(EvlContextDistributed.BASE_PATH_SYSTEM_PROPERTY, basePath);
 			
 			return super.buildReflective(null);
 		}

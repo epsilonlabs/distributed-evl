@@ -16,7 +16,6 @@ import java.time.LocalTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -27,7 +26,6 @@ import org.eclipse.epsilon.common.function.ExceptionContainer;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
-import org.eclipse.epsilon.evl.distributed.execute.data.DistributedEvlBatch;
 
 /**
  * This module co-ordinates a message-based architecture. The workflow is as follows: <br/>
@@ -91,14 +89,14 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	protected final int sessionID;
 	protected final int expectedSlaves;
 	protected final Map<String, Map<String, Duration>> slaveWorkers;
-	protected final Collection<Serializable> failedJobs;
+	protected final Collection<Serializable> failedJobs = new java.util.HashSet<>();
 	// Set this to false for unbounded scalability
 	protected boolean refuseAdditionalWorkers = true;
 	ConnectionFactory connectionFactory;
 	private CheckedConsumer<Serializable, JMSException> jobSender;
 	private CheckedRunnable<JMSException> completionSender;
 	private Thread jobSenderThread;
-	
+
 	public EvlModuleJmsMaster(int expectedWorkers, String host, int sessionID) throws URISyntaxException {
 		super(expectedWorkers);
 		this.host = host;
@@ -106,7 +104,6 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 		slaveWorkers = new java.util./*Hashtable*/concurrent.ConcurrentHashMap<>(
 			this.expectedSlaves = expectedWorkers
 		);
-		failedJobs = new java.util.HashSet<>();
 	}
 	
 	@Override
@@ -114,11 +111,6 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 		super.prepareExecution();
 		connectionFactory = new org.apache.activemq.artemis.jms.client.ActiveMQJMSConnectionFactory(host);
 		log("Connected to "+host+" session "+sessionID);
-	}
-	
-	@Override
-	public List<DistributedEvlBatch> getBatches(double batchPercent) throws EolRuntimeException {
-		return super.getBatches(batchPercent / Math.max(expectedSlaves, 1));
 	}
 	
 	@Override

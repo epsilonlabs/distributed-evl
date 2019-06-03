@@ -39,6 +39,8 @@ public class EvlContextDistributed extends EvlContextParallel {
 		SCRIPT_PARAMS = "scriptParameters",
 		IGNORE_MODELS = "noModelLoading";
 	
+	public static final String BASE_PATH_SYSTEM_PROPERTY = "org.eclipse.epsilon.evl.distributed."+BASE_PATH;
+	
 	public EvlContextDistributed(IEvlContext other) {
 		super(other);
 	}

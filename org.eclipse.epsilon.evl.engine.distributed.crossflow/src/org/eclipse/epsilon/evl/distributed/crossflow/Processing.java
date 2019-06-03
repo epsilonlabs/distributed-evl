@@ -12,6 +12,7 @@ package org.eclipse.epsilon.evl.distributed.crossflow;
 import java.util.Collection;
 import java.util.List;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedSlave;
+import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributed;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedSlave;
 import org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlResultAtom;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfigurationSlave;
@@ -35,7 +36,7 @@ public class Processing extends ProcessingBase {
 		assert workflow.isWorker();
 		while (configuration == null) synchronized (this) {
 			configuration = EvlContextDistributedSlave.parseJobParameters(config.data,
-				null
+				System.getProperty(EvlContextDistributed.BASE_PATH_SYSTEM_PROPERTY)
 			);
 			slaveModule = configuration.getModule();
 			notify();

@@ -9,6 +9,12 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.crossflow;
 
+/**
+ * 
+ *
+ * @author Sina Madani
+ * @since 1.6
+ */
 public class ResultSink extends ResultSinkBase {
 	
 	@Override

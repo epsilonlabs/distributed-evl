@@ -96,4 +96,19 @@ public class DistributedEvlConfigParser<R extends DistributedEvlRunConfiguration
 		return absentDefault;
 	}
 	
+	protected long tryParse(String opt, long absentDefault) throws IllegalArgumentException {
+		if (cmdLine.hasOption(opt)) {
+			String value = cmdLine.getOptionValue(opt);
+			if (value != null && !value.isEmpty()) try {
+				return Long.parseLong(value);
+			}
+			catch (NumberFormatException nan) {
+				throw new IllegalArgumentException(
+					"Invalid value for option '"+opt
+					+ "': expected long but got "+value
+				);
+			}
+		}
+		return absentDefault;
+	}
 }

@@ -26,23 +26,21 @@ import org.eclipse.epsilon.evl.execute.atoms.ConstraintContextAtom;
  */
 public class EvlModuleJmsMasterBatch extends EvlModuleJmsMaster {
 	
-	protected final BatchJobSplitter splitter;
-	
 	public EvlModuleJmsMasterBatch(int expectedWorkers, double masterProportion, double batchFactor, boolean shuffle, String host, int sessionID) throws URISyntaxException {
 		super(expectedWorkers, host, sessionID);
 		double mp = masterProportion >= 0 && masterProportion <= 1 ? masterProportion : 1 / (1 + expectedSlaves);
 		double bf = batchFactor >= 0 && batchFactor <= 1 ? batchFactor : 0.008;
-		splitter = new BatchJobSplitter(mp, shuffle, bf);
+		jobSplitter = new BatchJobSplitter(mp, shuffle, bf);
 	}
 	
 	@Override
 	protected void processJobs(AtomicInteger workersReady) throws Exception {
 		waitForWorkersToConnect(workersReady);
 		
-		sendAllJobs(splitter.getWorkerJobs());
+		sendAllJobs(jobSplitter.getWorkerJobs());
 		
 		log("Began processing own jobs");
-		executeJob(splitter.getMasterJobs());
+		executeJob(jobSplitter.getMasterJobs());
 		log("Finished processing own jobs");
 	}
 }
