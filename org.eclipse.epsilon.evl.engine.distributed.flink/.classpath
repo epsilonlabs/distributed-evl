@@ -8,5 +8,6 @@
 	</classpathentry>
 	<classpathentry combineaccessrules="false" kind="src" path="/org.eclipse.epsilon.evl.engine.distributed"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
+	<classpathentry kind="lib" path="C:/Users/Sina/Google Drive/PhD/Experiments/bin/dependencies/flink-dist_2.12-1.8.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

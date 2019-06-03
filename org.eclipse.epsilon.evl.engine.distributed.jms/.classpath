@@ -9,5 +9,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
+	<classpathentry kind="lib" path="C:/Users/Sina/Google Drive/PhD/Experiments/bin/dependencies/artemis-jms-client-all-2.6.4.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
