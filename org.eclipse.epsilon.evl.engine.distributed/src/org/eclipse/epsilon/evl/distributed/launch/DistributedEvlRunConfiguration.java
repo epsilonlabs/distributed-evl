@@ -46,8 +46,7 @@ public abstract class DistributedEvlRunConfiguration extends EvlRunConfiguration
 			return (B) this;
 		}
 		
-		@Override
-		public R build() {
+		protected void preBuild() {
 			for (StringProperties props : modelsAndProperties.values()) {
 				props.replaceAll((k, v) -> {
 					// TODO better way to determine if there is a path?
@@ -64,8 +63,16 @@ public abstract class DistributedEvlRunConfiguration extends EvlRunConfiguration
 				outputFile = Paths.get(basePath, outputFile.toString());
 			}
 			System.setProperty(EvlContextDistributed.BASE_PATH_SYSTEM_PROPERTY, basePath);
-			
-			return super.buildReflective(null);
+		}
+		
+		protected R buildInstance() {
+			return buildReflective(null);
+		}
+		
+		@Override
+		public final R build() {
+			preBuild();
+			return buildInstance();
 		}
 		
 		protected Builder() {

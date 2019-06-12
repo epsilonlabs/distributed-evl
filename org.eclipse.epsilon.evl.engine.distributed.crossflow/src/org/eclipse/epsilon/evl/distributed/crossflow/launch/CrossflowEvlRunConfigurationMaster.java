@@ -11,7 +11,6 @@ package org.eclipse.epsilon.evl.distributed.crossflow.launch;
 
 import org.eclipse.epsilon.evl.distributed.crossflow.EvlModuleCrossflowMaster;
 import org.eclipse.epsilon.evl.distributed.crossflow.batch.EvlModuleCrossflowMasterBatch;
-import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfiguration;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfigurationMaster;
 
 /**
@@ -33,6 +32,11 @@ public class CrossflowEvlRunConfigurationMaster extends DistributedEvlRunConfigu
 			return (B) this;
 		}
 		
+		@Override
+		protected R buildInstance() {
+			return (R) new CrossflowEvlRunConfigurationMaster(this);
+		}
+		
 		protected Builder() {
 			super();
 		}
@@ -45,7 +49,7 @@ public class CrossflowEvlRunConfigurationMaster extends DistributedEvlRunConfigu
 		return new Builder<>(CrossflowEvlRunConfigurationMaster.class);
 	}
 	
-	public CrossflowEvlRunConfigurationMaster(Builder<? extends DistributedEvlRunConfiguration, ?> builder) {
+	public CrossflowEvlRunConfigurationMaster(Builder<? extends CrossflowEvlRunConfigurationMaster, ?> builder) {
 		super(builder);
 		this.instanceID = builder.instanceID;
 	}

@@ -63,7 +63,10 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 	 */
 	protected EvlModuleDistributedMaster(int distributedParallelism, double masterProportion, boolean shuffle) {
 		this(distributedParallelism);
-		this.jobSplitter = new AtomicJobSplitter(masterProportion, shuffle);
+		this.jobSplitter = new AtomicJobSplitter(
+			masterProportion > 1 || masterProportion < 0 ? 1/(1+distributedParallelism) : masterProportion,
+			shuffle
+		);
 	}
 	
 	/**
@@ -77,7 +80,11 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 	 */
 	protected EvlModuleDistributedMaster(int distributedParallelism, double masterProportion, boolean shuffle, double batchFactor) {
 		this(distributedParallelism);
-		this.jobSplitter = new BatchJobSplitter(masterProportion, shuffle, batchFactor);
+		this.jobSplitter = new BatchJobSplitter(
+			masterProportion > 1 || masterProportion < 0 ? 1/(1+distributedParallelism) : masterProportion,
+			shuffle,
+			batchFactor > 1 || batchFactor < 0 ? Math.random() / 100 : batchFactor
+		);
 	}
 	
 	// Job division
@@ -96,7 +103,7 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 		 */
 		public JobSplitter(double masterProportion, boolean shuffle) {
 			if ((this.masterProportion = masterProportion) > 1 || masterProportion < 0)
-				throw new IllegalArgumentException("Percentage of master jobs must be a valid percentage");
+				throw new IllegalArgumentException("Proportion of master jobs must be a valid percentage");
 			this.shuffle = shuffle;
 		}
 		

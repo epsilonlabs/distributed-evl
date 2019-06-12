@@ -60,12 +60,6 @@ public class EvlContextDistributedSlave extends EvlContextDistributed {
 	}
 	
 	@Override
-	protected void initThreadLocals() {
-		super.initThreadLocals();
-		concurrentUnsatisfiedConstraints = null;
-	}
-	
-	@Override
 	public Set<UnsatisfiedConstraint> getUnsatisfiedConstraints() {
 		return unsatisfiedConstraints;
 	}
