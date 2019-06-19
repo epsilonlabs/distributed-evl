@@ -186,7 +186,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 	
 	void onCompletion(JMSContext session) throws Exception {
 		// This is to ensure execution times are merged into main thread
-		module.getContext().endParallel();
+		module.getContext().endParallelTask();
 		
 		ObjectMessage finishedMsg = session.createObjectMessage();
 		finishedMsg.setStringProperty(WORKER_ID_PROPERTY, workerID);

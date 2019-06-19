@@ -75,7 +75,6 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	
 	public static final String
 		JOBS_QUEUE = "worker_jobs",
-		CONFIG_TOPIC = "configuration",
 		END_JOBS_TOPIC = "no_more_jobs",
 		STOP_TOPIC = "shortcircuit",
 		REGISTRATION_QUEUE = "registration",
