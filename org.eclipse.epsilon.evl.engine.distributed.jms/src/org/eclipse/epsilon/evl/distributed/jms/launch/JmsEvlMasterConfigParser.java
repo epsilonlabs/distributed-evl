@@ -39,7 +39,7 @@ public class JmsEvlMasterConfigParser<R extends JmsEvlRunConfigurationMaster, B 
 	@Override
 	public void parseArgs(String[] args) throws Exception {
 		super.parseArgs(args);
-		if (builder.batchFactor > 0) {
+		if (builder.batchFactor != Double.MIN_VALUE) {
 			builder.module = new EvlModuleJmsMasterBatch(
 				builder.distributedParallelism, builder.masterProportion, builder.batchFactor, builder.shuffle, builder.host, builder.sessionID
 			);

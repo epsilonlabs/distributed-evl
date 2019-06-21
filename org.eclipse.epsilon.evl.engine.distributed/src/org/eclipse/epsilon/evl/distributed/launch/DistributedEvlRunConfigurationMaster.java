@@ -23,8 +23,8 @@ public abstract class DistributedEvlRunConfigurationMaster extends DistributedEv
 	public static class Builder<R extends DistributedEvlRunConfigurationMaster, B extends Builder<R, B>> extends DistributedEvlRunConfiguration.Builder<R, B> {
 		
 		public int distributedParallelism;
-		public double batchFactor = -1, masterProportion = -1;
-		public boolean shuffle;
+		public double batchFactor = Double.MIN_VALUE, masterProportion = Double.MIN_VALUE;
+		public boolean shuffle = false;
 		
 		public B withDistributedParallelism(int workers) {
 			this.distributedParallelism = workers;

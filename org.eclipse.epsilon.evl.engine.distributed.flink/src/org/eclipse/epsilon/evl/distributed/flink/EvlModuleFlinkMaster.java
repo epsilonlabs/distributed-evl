@@ -35,6 +35,17 @@ public abstract class EvlModuleFlinkMaster<D extends Serializable> extends EvlMo
 
 	private ExecutionEnvironment executionEnv;
 	
+	protected EvlModuleFlinkMaster(int distributedParallelism, double masterProportion, boolean shuffle) {
+		super(distributedParallelism, masterProportion, shuffle);
+		setContext(new EvlContextFlinkMaster(distributedParallelism));
+	}
+
+	protected EvlModuleFlinkMaster(int distributedParallelism, double masterProportion, boolean shuffle, double batchFactor) {
+		super(distributedParallelism, masterProportion, shuffle, batchFactor);
+		setContext(new EvlContextFlinkMaster(distributedParallelism));
+	}
+
+
 	public EvlModuleFlinkMaster() {
 		this(-1);
 	}

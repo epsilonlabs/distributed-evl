@@ -20,6 +20,7 @@ import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.eol.execute.context.IEolContext;
+import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributed;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.execute.data.*;
 import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
@@ -64,7 +65,7 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 	protected EvlModuleDistributedMaster(int distributedParallelism, double masterProportion, boolean shuffle) {
 		this(distributedParallelism);
 		this.jobSplitter = new AtomicJobSplitter(
-			masterProportion > 1 || masterProportion < 0 ? 1/(1+distributedParallelism) : masterProportion,
+			masterProportion > 1 || masterProportion < 0 ? (1/(1+distributedParallelism)) : masterProportion,
 			shuffle
 		);
 	}
@@ -75,15 +76,16 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 	 * @param distributedParallelism
 	 * @param masterProportion
 	 * @param shuffle
-	 * @param batchFactor Granularity of batches, where 0 is one job per batch and 1 is all jobs in one batch.
+	 * @param batches Granularity of batches, where 0 is one job per batch and 1 is all jobs in one batch.
+	 * If this is greater than 1, then the specified number will be the batch size (i.e. the <code>batch.to - batch.from</code>).
 	 * @see #EvlModuleDistributedMaster(int, double, boolean)
 	 */
-	protected EvlModuleDistributedMaster(int distributedParallelism, double masterProportion, boolean shuffle, double batchFactor) {
+	protected EvlModuleDistributedMaster(int distributedParallelism, double masterProportion, boolean shuffle, double batches) {
 		this(distributedParallelism);
 		this.jobSplitter = new BatchJobSplitter(
-			masterProportion > 1 || masterProportion < 0 ? 1/(1+distributedParallelism) : masterProportion,
+			masterProportion > 1 || masterProportion < 0 ? 1/(1+getContext().getDistributedParallelism()) : masterProportion,
 			shuffle,
-			batchFactor > 1 || batchFactor < 0 ? Math.random() / 100 : batchFactor
+			batches < 0 ? getContext().getParallelism() : batches
 		);
 	}
 	
@@ -109,6 +111,7 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 		
 		public ArrayList<S> getWorkerJobs() throws EolRuntimeException {
 			if (workerJobs == null) split();
+			System.out.println(workerJobs.get(0));
 			return workerJobs;
 		}
 		
@@ -161,12 +164,12 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 	}
 
 	public class BatchJobSplitter extends JobSplitter<DistributedEvlBatch, DistributedEvlBatch> {
-		protected final double granularity;
+		protected final double batchSize;
 		
-		public BatchJobSplitter(double masterProportion, boolean shuffle, double granularity) {
+		public BatchJobSplitter(double masterProportion, boolean shuffle, double batchSize) {
 			super(masterProportion, shuffle);
-			if ((this.granularity = granularity) < 0 || granularity > 1)
-				throw new IllegalArgumentException("Granularity must be a valid percentage");
+			if ((this.batchSize = batchSize) < 0)
+				throw new IllegalArgumentException("Batches can't be negative!");
 		}
 		
 		@Override
@@ -176,7 +179,17 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 
 		@Override
 		protected List<DistributedEvlBatch> getAllJobs() throws EolRuntimeException {
-			return getBatches(granularity / 2);
+			final int numTotalJobs = getContextJobs().size(), chunks;
+			final EvlContextDistributed context = getContext();
+			if (this.batchSize >= 1) {
+				chunks = (int) batchSize;
+			}
+			else {
+				final int adjusted = context instanceof EvlContextDistributedMaster ?
+					 Math.max(((EvlContextDistributedMaster) context).getDistributedParallelism(), 1) : 1;
+				chunks = (int) (numTotalJobs * (batchSize / adjusted));
+			}
+			return DistributedEvlBatch.getBatches(numTotalJobs, chunks);
 		}
 	}
 	

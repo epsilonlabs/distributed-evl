@@ -23,7 +23,9 @@ public class DistributedEvlMasterConfigParser<R extends DistributedEvlRunConfigu
 		super(builder);
 		options.addOption(Option.builder("bf")
 			.longOpt(batchesOpt)
-			.desc("Granularity of job batches, between 0 and 1 (sets the module to batch-based)")
+			.desc("Granularity of job batches if between 0 and 1, or the batch size if greater than 1."
+				+ "Either way sets the module to batch-based."
+			)
 			.hasArg()
 			.build()
 		).addOption(Option.builder()

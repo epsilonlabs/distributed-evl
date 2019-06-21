@@ -9,6 +9,7 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.flink.batch;
 
+import java.util.List;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.operators.DataSource;
@@ -29,26 +30,24 @@ import org.eclipse.epsilon.evl.distributed.flink.format.FlinkInputFormat;
  */
 public class EvlModuleFlinkSubset extends EvlModuleFlinkMaster<DistributedEvlBatch> {
 
-	protected final double batchFactor;
-	
 	public EvlModuleFlinkSubset() {
-		this(-1);
-	}
-	
-	public EvlModuleFlinkSubset(int parallelism) {
-		this(parallelism, 0.00825);
-	}
-	
-	public EvlModuleFlinkSubset(int parallelism, double batchFactor) {
-		super(parallelism);
-		this.batchFactor = batchFactor;
+		super();
 	}
 
+	public EvlModuleFlinkSubset(int distributedParallelism, boolean shuffle, double batchFactor) {
+		super(distributedParallelism, 0, shuffle, batchFactor);
+	}
+	
+	public EvlModuleFlinkSubset(int distributedParallelism, boolean shuffle, int batchSize) {
+		super(distributedParallelism, 0, shuffle, batchSize);
+	}
+
+	@SuppressWarnings("unchecked")
 	@Override
 	protected DataSource<DistributedEvlBatch> getProcessingPipeline(ExecutionEnvironment execEnv) throws Exception {
 		return execEnv
 			.createInput(
-				new FlinkInputFormat<>(getBatches(batchFactor)),
+				new FlinkInputFormat<>((List<DistributedEvlBatch>) jobSplitter.getWorkerJobs()),
 				TypeInformation.of(DistributedEvlBatch.class)
 			);
 	}

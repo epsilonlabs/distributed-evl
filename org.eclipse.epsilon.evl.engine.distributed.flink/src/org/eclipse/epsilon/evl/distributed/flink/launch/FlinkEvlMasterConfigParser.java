@@ -39,8 +39,8 @@ public class FlinkEvlMasterConfigParser<R extends FlinkEvlRunConfigurationMaster
 	@Override
 	public void parseArgs(String[] args) throws Exception {
 		super.parseArgs(args);
-		if (builder.batchFactor >= 0) {
-			builder.module = new EvlModuleFlinkSubset(builder.distributedParallelism, builder.batchFactor);
+		if (builder.batchFactor != Double.MIN_VALUE) {
+			builder.module = new EvlModuleFlinkSubset(builder.distributedParallelism, builder.shuffle, builder.batchFactor);
 		}
 		else {
 			builder.module = new EvlModuleFlinkAtoms(builder.distributedParallelism, builder.shuffle);
