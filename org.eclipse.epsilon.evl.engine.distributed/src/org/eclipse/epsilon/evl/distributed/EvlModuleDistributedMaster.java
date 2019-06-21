@@ -111,7 +111,6 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 		
 		public ArrayList<S> getWorkerJobs() throws EolRuntimeException {
 			if (workerJobs == null) split();
-			System.out.println(workerJobs.get(0));
 			return workerJobs;
 		}
 		
