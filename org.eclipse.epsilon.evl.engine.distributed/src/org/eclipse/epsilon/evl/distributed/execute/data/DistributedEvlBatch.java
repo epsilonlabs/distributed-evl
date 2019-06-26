@@ -76,22 +76,27 @@ public class DistributedEvlBatch implements java.io.Serializable, Cloneable {
 	 * @return A Serializable List of indexes with {@code totalJobs/batches} increments.
 	 */
 	public static List<DistributedEvlBatch> getBatches(int totalJobs, int chunks) {
+		assert totalJobs >= 1 : "Must have at least one job";
+		assert chunks >= 1 : "Batch size (chunks) must be at least 1";
+		
 		final int
 			modulo = totalJobs % chunks,
 			division = totalJobs / chunks,
-			maxBatches = modulo > 0 ? 1 + (totalJobs / chunks) : division;
+			batches = modulo > 0 ? 1 + division : division;
 		
-		ArrayList<DistributedEvlBatch> resultList = new ArrayList<>(maxBatches);
+		ArrayList<DistributedEvlBatch> resultList = new ArrayList<>(batches);
 
 		for (int prev = 0, curr = chunks; curr <= totalJobs; curr += chunks) {
 			resultList.add(new DistributedEvlBatch(prev, prev = curr));
 		}
 		
-		if (maxBatches > 0 && modulo > 0) {
+		if (batches > 0 && modulo > 0) {
 			resultList.add(new DistributedEvlBatch(totalJobs - modulo, totalJobs));
 		}
 		
-		assert resultList.size() == maxBatches;
+		assert resultList.size() == batches : "Expected number of batches met";
+		assert resultList.get(batches-1).to == totalJobs : "All jobs retained";
+		
 		return resultList;
 	}
 

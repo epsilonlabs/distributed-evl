@@ -57,12 +57,12 @@ public class SerializableEvlInputParametersAtom extends SerializableEvlInputAtom
 		ConstraintContext constraintContext = module.getConstraintContext(contextName);
 		Collection<Constraint> constraintsToCheck =  constraintContext.getConstraints();
 		if (constraintName != null && !constraintName.isEmpty()) {
-			constraintsToCheck = Collections.singleton(constraintsToCheck
+			constraintsToCheck = constraintsToCheck
 				.stream()
 				.filter(c -> c.getName().equals(constraintName))
 				.findAny()
-				.orElseThrow(() -> new EvlConstraintNotFoundException(constraintName, constraintContext))
-			);
+				.map(Collections::singleton)
+				.orElseThrow(() -> new EvlConstraintNotFoundException(constraintName, constraintContext));
 		}
 		return constraintsToCheck;
 	}
@@ -97,8 +97,8 @@ public class SerializableEvlInputParametersAtom extends SerializableEvlInputAtom
 				
 				if (constraintContext.shouldBeChecked(modelElement, context)) {
 					SerializableEvlInputParametersAtom sipa = new SerializableEvlInputParametersAtom();
-					sipa.modelElementID = model.getElementId(modelElement);
-					sipa.modelName = model.getName();
+					//sipa.modelElementID = model.getElementId(modelElement);
+					//sipa.modelName = model.getName();
 					sipa.contextName = constraintContext.getTypeName();
 					sipa.variables = extras;
 					parameters.add(sipa);

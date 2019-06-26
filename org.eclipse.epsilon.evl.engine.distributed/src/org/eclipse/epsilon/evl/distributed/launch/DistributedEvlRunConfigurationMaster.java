@@ -21,10 +21,13 @@ public abstract class DistributedEvlRunConfigurationMaster extends DistributedEv
 
 	@SuppressWarnings("unchecked")
 	public static class Builder<R extends DistributedEvlRunConfigurationMaster, B extends Builder<R, B>> extends DistributedEvlRunConfiguration.Builder<R, B> {
+		public static final double UNINTIALIZED_VALUE = -Double.MAX_VALUE;
 		
 		public int distributedParallelism;
-		public double batchFactor = Double.MIN_VALUE, masterProportion = Double.MIN_VALUE;
 		public boolean shuffle = false;
+		public double
+			batchFactor = UNINTIALIZED_VALUE,
+			masterProportion = UNINTIALIZED_VALUE;
 		
 		public B withDistributedParallelism(int workers) {
 			this.distributedParallelism = workers;
