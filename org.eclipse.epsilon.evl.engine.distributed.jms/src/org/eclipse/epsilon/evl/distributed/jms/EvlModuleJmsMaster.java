@@ -89,7 +89,7 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	protected final int expectedSlaves;
 	protected final Map<String, Map<String, Duration>> slaveWorkers;
 	protected final Collection<Serializable> failedJobs = new java.util.HashSet<>();
-	protected boolean refuseAdditionalWorkersRegistration = false;
+	protected boolean refuseAdditionalWorkersRegistration = true;
 	protected boolean refuseAdditionalWorkersConfirm = true;
 	ConnectionFactory connectionFactory;
 	private CheckedConsumer<Serializable, JMSException> jobSender;
