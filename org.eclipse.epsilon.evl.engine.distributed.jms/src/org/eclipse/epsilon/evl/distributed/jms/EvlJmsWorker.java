@@ -42,7 +42,12 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 		
 		String host = "tcp://localhost:61616";
 		if (args.length > 2) try {
-			host = new URI(args[2]).toString();
+			host = args[2].contains("://") ? args[2] : "tcp://"+args[2];
+			URI hostUri = new URI(host);
+			host = hostUri.toString();
+			if (hostUri.getPort() <= 0) {
+				host += ":61616";
+			}
 		}
 		catch (URISyntaxException urx) {
 			System.err.println(urx);
@@ -55,15 +60,18 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 		}
 	}
 	
+	static final long JOB_RECV_TIMEOUT = Short.MAX_VALUE;
+	
 	final ConnectionFactory connectionFactory;
 	final String basePath;
 	final int sessionID;
-	boolean finished;
 	String workerID;
 	DistributedEvlRunConfigurationSlave configContainer;
 	EvlModuleDistributedSlave module;
 	Serializable stopBody;
-
+	volatile boolean finished;
+	
+	
 	public EvlJmsWorker(String host, String basePath, int sessionID) {
 		connectionFactory = new org.apache.activemq.artemis.jms.client.ActiveMQJMSConnectionFactory(host);
 		this.basePath = basePath;
@@ -149,39 +157,44 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 		log("Began processing jobs");
 		
 		Message msg;
-		while ((msg = finished ? jobConsumer.receiveNoWait() : jobConsumer.receive()) != null) try {
-			if (msg instanceof ObjectMessage)  {
-				Serializable currentJob = ((ObjectMessage) msg).getObject();
-				ObjectMessage resultsMsg = null;
-				try {
-					Serializable resultObj = (Serializable) module.executeJob(currentJob);
-					resultsMsg = replyContext.createObjectMessage(resultObj);
-				}
-				catch (EolRuntimeException eox) {
-					onFail(eox, msg);
-					resultsMsg = replyContext.createObjectMessage(currentJob);
+		while ((msg = finished ? jobConsumer.receiveNoWait() : jobConsumer.receive(JOB_RECV_TIMEOUT)) != null) {
+			try {
+				if (msg instanceof ObjectMessage)  {
+					Serializable currentJob = ((ObjectMessage) msg).getObject();
+					ObjectMessage resultsMsg = null;
+					try {
+						Serializable resultObj = (Serializable) module.executeJob(currentJob);
+						resultsMsg = replyContext.createObjectMessage(resultObj);
+					}
+					catch (EolRuntimeException eox) {
+						onFail(eox, msg);
+						resultsMsg = replyContext.createObjectMessage(currentJob);
+					}
+					
+					if (resultsMsg != null) {
+						resultsMsg.setStringProperty(WORKER_ID_PROPERTY, workerID);
+						resultSender.send(resultDest, resultsMsg);
+					}
 				}
 				
-				if (resultsMsg != null) {
-					resultsMsg.setStringProperty(WORKER_ID_PROPERTY, workerID);
-					resultSender.send(resultDest, resultsMsg);
+				if (msg.getBooleanProperty(LAST_MESSAGE_PROPERTY)) {
+					finished = true;
+				}
+				else if (!(msg instanceof ObjectMessage)) {
+					log("Received unexpected message of type "+msg.getClass().getName());
 				}
 			}
-			
-			if (msg.getBooleanProperty(LAST_MESSAGE_PROPERTY)) {
-				finished = true;
+			catch (JMSException jmx) {
+				onFail(jmx, msg);
+				stopBody = jmx;
 			}
-			else if (!(msg instanceof ObjectMessage)) {
-				log("Received unexpected message of type "+msg.getClass().getName());
+			finally {
+				if (stopBody != null) return;
 			}
 		}
-		catch (JMSException jmx) {
-			onFail(jmx, msg);
-			stopBody = jmx;
-		}
-		finally {
-			if (stopBody != null) return;
-		}
+		assert finished || stopBody != null;
+		
+		log("Finished processing jobs");
 	}
 	
 	void onCompletion(JMSContext session) throws Exception {
