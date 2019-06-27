@@ -516,7 +516,7 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 			}
 			catch (InterruptedException ie) {}
 		}
-		assert !refuseAdditionalWorkersRegistration || (workersReady.get() == expectedSlaves && slaveWorkers.size() == expectedSlaves);
+		assert workersReady.get() >= expectedSlaves && slaveWorkers.size() >= expectedSlaves;
 		log("All workers connected");
 	}
 	
