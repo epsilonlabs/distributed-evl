@@ -35,11 +35,7 @@ public class EvlModuleFlinkSubset extends EvlModuleFlinkMaster<DistributedEvlBat
 	}
 
 	public EvlModuleFlinkSubset(int distributedParallelism, boolean shuffle, double batchFactor) {
-		super(distributedParallelism, 0, shuffle, batchFactor);
-	}
-	
-	public EvlModuleFlinkSubset(int distributedParallelism, boolean shuffle, int batchSize) {
-		super(distributedParallelism, 0, shuffle, batchSize);
+		super(distributedParallelism, shuffle, batchFactor);
 	}
 
 	@SuppressWarnings("unchecked")

@@ -28,9 +28,7 @@ public class EvlModuleJmsMasterBatch extends EvlModuleJmsMaster {
 	
 	public EvlModuleJmsMasterBatch(int expectedWorkers, double masterProportion, double batchFactor, boolean shuffle, String host, int sessionID) throws URISyntaxException {
 		super(expectedWorkers, host, sessionID);
-		double mp = masterProportion >= 0 && masterProportion <= 1 ? masterProportion : (1 / (1 + expectedSlaves));
-		double bf = batchFactor > 0 ? batchFactor : getContext().getParallelism();
-		jobSplitter = new BatchJobSplitter(mp, shuffle, bf);
+		jobSplitter = new BatchJobSplitter(sanitizeMasterProportion(masterProportion), shuffle, sanitizeBatchSize(batchFactor));
 	}
 	
 	@Override

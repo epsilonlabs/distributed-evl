@@ -35,8 +35,7 @@ public class EvlModuleFlinkAtoms extends EvlModuleFlinkMaster<SerializableEvlInp
 	}
 	
 	public EvlModuleFlinkAtoms(int parallelism, boolean shuffle) {
-		super(parallelism);
-		jobSplitter = new AtomicJobSplitter(0, shuffle);
+		super(parallelism, shuffle);
 	}
 
 	@SuppressWarnings("unchecked")
