@@ -162,12 +162,14 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 					try {
 						final int receivedHash = response.getIntProperty(CONFIG_HASH_PROPERTY);
 						if (receivedHash != configHash) {
-							throw new java.lang.IllegalStateException("Received invalid configuration checksum!");
+							throw new java.lang.IllegalStateException(
+								"Received invalid configuration checksum! Expected "+receivedHash+" but got "+configHash
+							);
 						}
 						confirmWorker(response, readyWorkers);
 					}
 					catch (JMSException jmx) {
-						throw new JMSRuntimeException(jmx.getMessage());
+						throw new JMSRuntimeException("Did not receive "+CONFIG_HASH_PROPERTY+": "+jmx.getMessage());
 					}
 				});
 				
@@ -368,10 +370,12 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 			}
 			finally {
 				if (resultsInProgress.decrementAndGet() <= 1 &&
-					workersFinished.get() >= expectedSlaves)
-						synchronized (resultsInProgress) {
-							resultsInProgress.notify();
-						}
+					workersFinished.get() >= expectedSlaves
+				) {
+					synchronized (resultsInProgress) {
+						resultsInProgress.notify();
+					}
+				}
 			}
 		};
 	}
