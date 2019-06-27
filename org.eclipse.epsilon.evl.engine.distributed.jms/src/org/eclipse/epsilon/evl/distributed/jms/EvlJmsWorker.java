@@ -192,9 +192,13 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 				if (stopBody != null) return;
 			}
 		}
-		assert finished || stopBody != null;
 		
-		log("Finished processing jobs");
+		if (!finished || stopBody == null) {
+			log("Timeout threshold reached: no job received within "+JOB_RECV_TIMEOUT);
+		}
+		else {
+			log("Finished processing jobs");
+		}
 	}
 	
 	void onCompletion(JMSContext session) throws Exception {
