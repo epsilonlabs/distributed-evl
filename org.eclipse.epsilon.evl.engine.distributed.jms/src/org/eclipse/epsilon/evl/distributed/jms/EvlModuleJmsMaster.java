@@ -128,7 +128,13 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 			regContext.createConsumer(createRegistrationQueue(regContext)).setMessageListener(msg -> {
 				// For security / load purposes, stop additional workers from being picked up.
 				if (refuseAdditionalWorkersRegistration && registeredWorkers.get() >= expectedSlaves) {
-					log("Ignoring additional worker registration: "+msg);
+					String logMsg = "Ignoring additional worker registration";
+					try {
+						log(logMsg+" "+msg.getJMSMessageID());
+					}
+					catch (JMSException jmx) {
+						log(logMsg);
+					}
 					return;
 				}
 				try {
@@ -162,7 +168,13 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 				regContext.createConsumer(tempDest).setMessageListener(response -> {
 					try {
 						if (refuseAdditionalWorkersConfirm && readyWorkers.get() >= expectedSlaves) {
-							log("Ignoring additional confirmation: "+response);
+							String logMsg = "Ignoring additional worker confirmation ";
+							try {
+								log(logMsg+" "+response.getJMSMessageID());
+							}
+							catch (JMSException jmx) {
+								log(logMsg);
+							}
 							return;
 						}
 						final int receivedHash = response.getIntProperty(CONFIG_HASH_PROPERTY);
