@@ -89,8 +89,8 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	protected final int expectedSlaves;
 	protected final Map<String, Map<String, Duration>> slaveWorkers;
 	protected final Collection<Serializable> failedJobs = new java.util.HashSet<>();
-	// Set this to false for unbounded scalability
-	protected boolean refuseAdditionalWorkers = true;
+	protected boolean refuseAdditionalWorkersRegistration = false;
+	protected boolean refuseAdditionalWorkersConfirm = true;
 	ConnectionFactory connectionFactory;
 	private CheckedConsumer<Serializable, JMSException> jobSender;
 	private CheckedRunnable<JMSException> completionSender;
@@ -127,7 +127,8 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 			// Triggered when a worker announces itself to the registration queue
 			regContext.createConsumer(createRegistrationQueue(regContext)).setMessageListener(msg -> {
 				// For security / load purposes, stop additional workers from being picked up.
-				if (refuseAdditionalWorkers && registeredWorkers.get() >= expectedSlaves) {
+				if (refuseAdditionalWorkersRegistration && registeredWorkers.get() >= expectedSlaves) {
+					log("Ignoring additional worker registration: "+msg);
 					return;
 				}
 				try {
@@ -160,6 +161,10 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 				// Triggered when a worker has completed loading the configuration
 				regContext.createConsumer(tempDest).setMessageListener(response -> {
 					try {
+						if (refuseAdditionalWorkersConfirm && readyWorkers.get() >= expectedSlaves) {
+							log("Ignoring additional confirmation: "+response);
+							return;
+						}
 						final int receivedHash = response.getIntProperty(CONFIG_HASH_PROPERTY);
 						if (receivedHash != configHash) {
 							throw new java.lang.IllegalStateException(
