@@ -10,17 +10,11 @@
 package org.eclipse.epsilon.evl.distributed;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.eol.execute.context.IEolContext;
-import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributed;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.execute.data.*;
 import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
@@ -188,7 +182,7 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 		
 		public BatchJobSplitter(double masterProportion, boolean shuffle, double batchSize) {
 			super(masterProportion, shuffle);
-			if  (Double.doubleToRawLongBits(this.batchSize = batchSize) < 0)
+			if (Double.doubleToRawLongBits(this.batchSize = batchSize) < 0)
 				throw new IllegalArgumentException("Batches can't be negative!");
 		}
 		
@@ -200,13 +194,12 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 		@Override
 		protected List<DistributedEvlBatch> getAllJobs() throws EolRuntimeException {
 			final int numTotalJobs = getContextJobs().size(), chunks;
-			final EvlContextDistributed context = getContext();
+			final EvlContextDistributedMaster context = getContext();
 			if (this.batchSize >= 1) {
 				chunks = (int) batchSize;
 			}
 			else {
-				final int adjusted = context instanceof EvlContextDistributedMaster ?
-					 Math.max(((EvlContextDistributedMaster) context).getDistributedParallelism(), 1) : 1;
+				final int adjusted = Math.max(context.getDistributedParallelism(), 1);
 				chunks = (int) (numTotalJobs * (batchSize / adjusted));
 			}
 			return DistributedEvlBatch.getBatches(numTotalJobs, chunks);
