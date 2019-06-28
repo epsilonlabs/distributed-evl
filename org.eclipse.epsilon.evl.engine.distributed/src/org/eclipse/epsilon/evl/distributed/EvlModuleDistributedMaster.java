@@ -55,7 +55,7 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 	 * @return A value between 0 and 1.
 	 */
 	protected double sanitizeMasterProportion(double percent01) {
-		return Math.max(percent01, 1) > 1 || Double.doubleToRawLongBits(percent01) < 0 ?
+		return Math.max(percent01, 1) > 1 || Math.min(percent01, 0) < 0 ?
 			1/(1+getContext().getDistributedParallelism()) : percent01;
 	}
 	
@@ -66,7 +66,7 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 	 * @return A positive value.
 	 */
 	protected double sanitizeBatchSize(double granularity) {
-		return Double.doubleToRawLongBits(granularity) < 0 ? getContext().getParallelism() : granularity;
+		return Math.min(0, granularity) < 0 ? getContext().getParallelism() : granularity;
 	}
 	
 	/**
@@ -119,7 +119,7 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 		 * @throws IllegalArgumentException If the percentage is out of bounds.
 		 */
 		public JobSplitter(double masterProportion, boolean shuffle) {
-			if ((this.masterProportion = Math.max(1, masterProportion)) > 1 || Math.min(0, masterProportion) < 0)
+			if (Math.max(1, this.masterProportion = masterProportion) > 1 || Math.min(0, masterProportion) < 0)
 				throw new IllegalArgumentException("Proportion of master jobs must be a valid percentage");
 			this.shuffle = shuffle;
 		}
@@ -182,7 +182,7 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 		
 		public BatchJobSplitter(double masterProportion, boolean shuffle, double batchSize) {
 			super(masterProportion, shuffle);
-			if (Double.doubleToRawLongBits(this.batchSize = batchSize) < 0)
+			if (Math.min(this.batchSize = batchSize, 0) < 0)
 				throw new IllegalArgumentException("Batches can't be negative!");
 		}
 		

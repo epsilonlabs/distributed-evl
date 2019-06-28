@@ -9,6 +9,7 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.jms.launch;
 
+import java.net.URI;
 import org.eclipse.epsilon.evl.distributed.jms.atomic.EvlModuleJmsMasterAtomic;
 import org.eclipse.epsilon.evl.distributed.jms.batch.EvlModuleJmsMasterBatch;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlMasterConfigParser;
@@ -39,6 +40,12 @@ public class JmsEvlMasterConfigParser<R extends JmsEvlRunConfigurationMaster, B 
 	@Override
 	public void parseArgs(String[] args) throws Exception {
 		super.parseArgs(args);
+		
+		if (!builder.host.contains("://")) builder.host = "tcp://"+builder.host;
+		URI hostUri = new URI(builder.host);
+		builder.host = hostUri.toString();
+		if (hostUri.getPort() <= 0) builder.host += ":61616";
+		
 		if (builder.batchFactor != Double.MIN_VALUE) {
 			builder.module = new EvlModuleJmsMasterBatch(
 				builder.distributedParallelism, builder.masterProportion, builder.batchFactor, builder.shuffle, builder.host, builder.sessionID
