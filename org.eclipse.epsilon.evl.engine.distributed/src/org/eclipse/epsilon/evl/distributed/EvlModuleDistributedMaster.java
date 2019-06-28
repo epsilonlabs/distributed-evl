@@ -55,6 +55,7 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 	 * @return A value between 0 and 1.
 	 */
 	protected double sanitizeMasterProportion(double percent01) {
+		if (getContext().getDistributedParallelism() == 0) return 1;
 		return Math.max(percent01, 1) > 1 || Math.min(percent01, 0) < 0 ?
 			1/(1+getContext().getDistributedParallelism()) : percent01;
 	}
