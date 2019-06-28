@@ -19,7 +19,7 @@ It is strongly recommended to specify the "bf" argument. This should be at least
 
 You must specify the number of workers you expect to connect with the -workers option.
 
-Enabling job order randomisation (with the -shuffle option) is strongly recommended.
+Job randomisation order can be disabled with the -noshuffle option, though it is only recommended for debugging.
 
 You can specify multiple models to the -models option (see command-line help).
 

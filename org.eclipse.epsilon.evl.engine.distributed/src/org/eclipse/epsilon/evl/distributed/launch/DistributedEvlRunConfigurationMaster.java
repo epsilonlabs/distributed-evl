@@ -24,7 +24,7 @@ public abstract class DistributedEvlRunConfigurationMaster extends DistributedEv
 		public static final double UNINTIALIZED_VALUE = -Double.MAX_VALUE;
 		
 		public int distributedParallelism;
-		public boolean shuffle = false;
+		public boolean shuffle = true;
 		public double
 			batchFactor = UNINTIALIZED_VALUE,
 			masterProportion = UNINTIALIZED_VALUE;
@@ -37,8 +37,8 @@ public abstract class DistributedEvlRunConfigurationMaster extends DistributedEv
 			this.batchFactor = bf;
 			return (B) this;
 		}
-		public B shuffle() {
-			return withShuffle(true);
+		public B noShuffle() {
+			return withShuffle(false);
 		}
 		public B withShuffle(boolean shuffle) {
 			this.shuffle = shuffle;

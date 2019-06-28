@@ -15,7 +15,7 @@ public class DistributedEvlMasterConfigParser<R extends DistributedEvlRunConfigu
 	
 	private final String
 		expectedWorkersOpt = "workers",
-		shuffleOpt = "shuffle",
+		shuffleOpt = "no-shuffle",
 		batchesOpt = "batches",
 		masterProportionOpt = "masterProportion";
 	
@@ -28,9 +28,9 @@ public class DistributedEvlMasterConfigParser<R extends DistributedEvlRunConfigu
 			)
 			.hasArg()
 			.build()
-		).addOption(Option.builder()
+		).addOption(Option.builder("noshuffle")
 			.longOpt(shuffleOpt)
-			.desc("Whether to randomise the order of jobs")
+			.desc("Disables order randomisation of jobs")
 			.build()
 		).addOption(Option.builder()
 			.longOpt(expectedWorkersOpt)
@@ -48,7 +48,7 @@ public class DistributedEvlMasterConfigParser<R extends DistributedEvlRunConfigu
 	@Override
 	public void parseArgs(String[] args) throws Exception {
 		super.parseArgs(args);
-		builder.shuffle = cmdLine.hasOption(shuffleOpt);
+		builder.shuffle = !cmdLine.hasOption(shuffleOpt);
 		builder.distributedParallelism = tryParse(expectedWorkersOpt, builder.distributedParallelism);
 		builder.batchFactor = tryParse(batchesOpt, builder.batchFactor);
 		builder.masterProportion = tryParse(masterProportionOpt, builder.masterProportion);
