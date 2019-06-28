@@ -13,6 +13,7 @@ import java.net.URI;
 import org.eclipse.epsilon.evl.distributed.jms.atomic.EvlModuleJmsMasterAtomic;
 import org.eclipse.epsilon.evl.distributed.jms.batch.EvlModuleJmsMasterBatch;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlMasterConfigParser;
+import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfigurationMaster.Builder;
 
 /**
  * 
@@ -41,12 +42,17 @@ public class JmsEvlMasterConfigParser<R extends JmsEvlRunConfigurationMaster, B 
 	public void parseArgs(String[] args) throws Exception {
 		super.parseArgs(args);
 		
-		if (!builder.host.contains("://")) builder.host = "tcp://"+builder.host;
-		URI hostUri = new URI(builder.host);
-		builder.host = hostUri.toString();
-		if (hostUri.getPort() <= 0) builder.host += ":61616";
+		if (builder.host == null || builder.host.isEmpty()) {
+			builder.host = "tcp://localhost:61616";
+		}
+		else {
+			if (!builder.host.contains("://")) builder.host = "tcp://"+builder.host;
+			URI hostUri = new URI(builder.host);
+			builder.host = hostUri.toString();
+			if (hostUri.getPort() <= 0) builder.host += ":61616";
+		}
 		
-		if (builder.batchFactor != Double.MIN_VALUE) {
+		if (builder.batchFactor != Builder.UNINTIALIZED_VALUE) {
 			builder.module = new EvlModuleJmsMasterBatch(
 				builder.distributedParallelism, builder.masterProportion, builder.batchFactor, builder.shuffle, builder.host, builder.sessionID
 			);
