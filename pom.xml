@@ -22,7 +22,7 @@
 	</dependency-->
   </dependencies>
 
-  <!-- The rest is copy-pasted from Horacio ;) -->
+  <!-- The rest is copy-pasted from Horacio ;) ->
 
    <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -61,9 +61,6 @@
         </configuration>
       </plugin>
 
-      <!-- Generate source bundles (exclude target so we don't enter
-           an infinite loop for binary-only plugins, which have itself
-           as the source). -->
       <plugin>
         <groupId>org.eclipse.tycho</groupId>
         <artifactId>tycho-source-plugin</artifactId>
@@ -145,11 +142,6 @@
       </plugin>
 
       <plugin>
-        <!--
-          Bugs in older versions prevent altReleaseDeploymentRepository
-          and altSnapshotDeploymentRepository from working correctly
-          https://maven.apache.org/plugins/maven-deploy-plugin/deploy-mojo.html
-         -->
         <artifactId>maven-deploy-plugin</artifactId>
         <version>2.8.1</version>
       </plugin>
@@ -190,14 +182,9 @@
               <configuration>
               <serverId>ossrh</serverId>
               <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-
-                <!-- We want to check staged releases manually on
-                     Sonatype OSSRH before we propagate to Central. -->
               <autoReleaseAfterClose>false</autoReleaseAfterClose>
               </configuration>
             </plugin>
-
-            <!-- Anything that goes to Central must be GPG signed -->
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-gpg-plugin</artifactId>
@@ -224,5 +211,5 @@
           <javadoc.opts>-Xdoclint:none</javadoc.opts>
       </properties>
     </profile>
-  </profiles>
+  </profiles-->
 </project>

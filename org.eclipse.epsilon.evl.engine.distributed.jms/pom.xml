@@ -7,10 +7,8 @@
     <artifactId>parent</artifactId>
     <version>1.6.0-SNAPSHOT</version>
   </parent>
-  <groupId>org.eclipse.epsilon.distributed-evl</groupId>
   <artifactId>org.eclipse.epsilon.evl.engine.distributed.jms</artifactId>
-  <version>1.6.0-SNAPSHOT</version>
-  <packaging>eclipse-plugin</packaging>
+  <!--packaging>eclipse-plugin</packaging-->
   <dependencies>
     <dependency>
         <groupId>org.apache.activemq</groupId>

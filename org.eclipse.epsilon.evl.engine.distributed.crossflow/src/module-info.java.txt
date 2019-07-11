@@ -1,4 +1,5 @@
-module org.eclipse.epsilon.evl.engine.distributed.crossflow {exports org.eclipse.epsilon.evl.distributed.crossflow.launch;
+module org.eclipse.epsilon.evl.engine.distributed.crossflow {
+	exports org.eclipse.epsilon.evl.distributed.crossflow.launch;
 	exports org.eclipse.epsilon.evl.distributed.crossflow.batch;
 	exports org.eclipse.epsilon.evl.distributed.crossflow.atomic;
 	exports org.eclipse.epsilon.evl.distributed.crossflow;
