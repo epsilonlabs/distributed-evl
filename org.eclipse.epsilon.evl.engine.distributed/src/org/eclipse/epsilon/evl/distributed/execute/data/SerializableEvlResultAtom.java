@@ -33,8 +33,8 @@ public class SerializableEvlResultAtom extends SerializableEvlAtom {
 	@Override
 	protected SerializableEvlResultAtom clone() {
 		SerializableEvlResultAtom clone = (SerializableEvlResultAtom) super.clone();
-		clone.constraintName = ""+this.constraintName;
-		clone.message = ""+this.message;
+		clone.constraintName = this.constraintName != null ? ""+this.constraintName : null;
+		clone.message = this.message != null ? ""+this.message : null;
 		return clone;
 	}
 	
@@ -56,7 +56,9 @@ public class SerializableEvlResultAtom extends SerializableEvlAtom {
 
 	@Override
 	public String toString() {
-		return super.toString()+", constraintName=" + constraintName + ", message=" + message;
+		String start = super.toString();
+		start = start.substring(0, start.length() - 1);
+		return start+", constraintName=" + constraintName + ", message=" + message+"]";
 	}
 	
 	/**

@@ -36,6 +36,14 @@ public class LazyUnsatisfiedConstraint extends UnsatisfiedConstraint {
 		this.message = proxy.message;
 	}
 
+	public UnsatisfiedConstraint resolve() {
+		getConstraint();
+		getInstance();
+		getFixes();
+		getExtras();
+		return this;
+	}
+	
 	@Override
 	public Constraint getConstraint() {
 		if (constraint != null) return constraint;
@@ -71,7 +79,7 @@ public class LazyUnsatisfiedConstraint extends UnsatisfiedConstraint {
 		// TODO Support
 		return super.getExtras();
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return Objects.hash(super.hashCode(), proxy);

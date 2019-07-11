@@ -63,7 +63,7 @@ public class DistributedEvlBatch implements java.io.Serializable, Cloneable {
 	
 	@Override
 	public String toString() {
-		return getClass().getSimpleName()+": from="+from+", to="+to;
+		return getClass().getSimpleName()+" [from="+from+", to="+to+"]";
 	}
 	
 	/**

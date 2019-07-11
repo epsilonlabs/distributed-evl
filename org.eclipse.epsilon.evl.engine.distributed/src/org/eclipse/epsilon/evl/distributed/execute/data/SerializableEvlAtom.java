@@ -40,9 +40,9 @@ public abstract class SerializableEvlAtom implements java.io.Serializable, Clone
 		catch (CloneNotSupportedException cnsx) {
 			throw new UnsupportedOperationException(cnsx);
 		}
-		clone.modelElementID = ""+this.modelElementID;
-		clone.modelName = ""+this.modelName;
-		clone.contextName = ""+this.contextName;
+		clone.modelElementID = this.modelElementID != null ? ""+this.modelElementID : null;
+		clone.modelName = this.modelName != null ? ""+this.modelName : null;
+		clone.contextName = this.contextName != null ? ""+this.contextName : null;
 		return clone;
 	}
 	
@@ -65,9 +65,9 @@ public abstract class SerializableEvlAtom implements java.io.Serializable, Clone
 	
 	@Override
 	public String toString() {
-		return getClass().getSimpleName()+": modelElementID="
+		return getClass().getSimpleName()+" [modelElementID="
 				+ modelElementID + ", modelName=" + modelName
-				+ ", contextType=" + contextName;
+				+ ", contextType=" + contextName+"]";
 	}
 	
 	public Object findElement(IEolContext context) throws EolRuntimeException {
