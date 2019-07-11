@@ -16,6 +16,7 @@ import org.eclipse.epsilon.eol.exceptions.models.EolModelElementTypeNotFoundExce
 import org.eclipse.epsilon.eol.exceptions.models.EolModelNotFoundException;
 import org.eclipse.epsilon.eol.execute.context.IEolContext;
 import org.eclipse.epsilon.eol.types.EolModelElementType;
+import org.eclipse.epsilon.evl.IEvlModule;
 import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
 import org.eclipse.epsilon.evl.execute.atoms.ConstraintContextAtom;
 import org.eclipse.epsilon.evl.execute.context.IEvlContext;
@@ -29,7 +30,7 @@ import org.eclipse.epsilon.evl.execute.context.IEvlContext;
  */
 public class SerializableEvlInputAtom extends SerializableEvlAtom {
 
-	private static final long serialVersionUID = -5175915914665990769L;
+	private static final long serialVersionUID = -5643807454658114529L;
 
 	@Override
 	protected SerializableEvlInputAtom clone() {
@@ -49,6 +50,12 @@ public class SerializableEvlInputAtom extends SerializableEvlAtom {
 			);
 		}
 		return modelElement;
+	}
+	
+	public void execute(IEvlModule module) throws EolRuntimeException {
+		IEvlContext context = module.getContext();
+		Object modelElement = findElement(context);
+		module.getConstraintContext(contextName).execute(modelElement, context);
 	}
 	
 	public SerializableEvlResultAtom serializeUnsatisfiedConstraint(UnsatisfiedConstraint unsatisfiedConstraint) {

@@ -45,9 +45,8 @@ public class SerializableEvlResultAtom extends SerializableEvlAtom {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (!super.equals(obj))
-			return false;
-		
+		if (this == obj) return true;
+		if (!super.equals(obj)) return false;
 		SerializableEvlResultAtom other = (SerializableEvlResultAtom) obj;
 		return
 			Objects.equals(this.constraintName, other.constraintName) &&

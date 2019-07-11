@@ -77,7 +77,7 @@ public abstract class EvlModuleDistributed extends EvlModuleParallel {
 	 */
 	protected void executeJobImpl(Object job, boolean isInLoop) throws EolRuntimeException {
 		if (job instanceof SerializableEvlInputAtom) {
-			executeAtom((SerializableEvlInputAtom) job);
+			((SerializableEvlInputAtom) job).execute(this);
 		}
 		else if (job instanceof JobBatch) {
 			executeJobImpl(((JobBatch) job).split(getContextJobs()), isInLoop);
@@ -123,12 +123,6 @@ public abstract class EvlModuleDistributed extends EvlModuleParallel {
 		else {
 			throw new IllegalArgumentException("Received unexpected object of type "+job.getClass().getName());
 		}
-	}
-	
-	protected void executeAtom(SerializableEvlInputAtom job) throws EolRuntimeException {
-		EvlContextDistributed context = getContext();
-		Object modelElement = job.findElement(context);
-		getConstraintContext(job.contextName).execute(modelElement, context);
 	}
 	
 	List<ConstraintContextAtom> contextJobsCache;

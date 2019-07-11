@@ -114,7 +114,7 @@ public class SerializableEvlInputParametersAtom extends SerializableEvlInputAtom
 	 * otherwise only the specified constraint. Uses the variables in {@link #variables} instead of trying
 	 * to find the model element.
 	 */
-	public Collection<SerializableEvlResultAtom> execute(IEvlModule module) throws EolRuntimeException {
+	public Collection<SerializableEvlResultAtom> executeConstraints(IEvlModule module) throws EolRuntimeException {
 		IEvlContext context = module.getContext();
 		FrameStack frameStack = context.getFrameStack();
 		ExpressionStatement entryPoint = new ExpressionStatement();
