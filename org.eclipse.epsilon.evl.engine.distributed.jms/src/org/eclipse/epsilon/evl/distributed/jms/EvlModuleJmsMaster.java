@@ -108,7 +108,7 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	@Override
 	protected void prepareExecution() throws EolRuntimeException {
 		super.prepareExecution();
-		connectionFactory = new org.apache.activemq.artemis.jms.client.ActiveMQJMSConnectionFactory(host);
+		connectionFactory = ConnectionFactoryProvider.getDefault(host);
 		log("Connected to "+host+" session "+sessionID);
 	}
 	

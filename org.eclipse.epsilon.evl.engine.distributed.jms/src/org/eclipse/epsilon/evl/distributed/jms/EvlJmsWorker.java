@@ -73,7 +73,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 	
 	
 	public EvlJmsWorker(String host, String basePath, int sessionID) {
-		connectionFactory = new org.apache.activemq.artemis.jms.client.ActiveMQJMSConnectionFactory(host);
+		connectionFactory = ConnectionFactoryProvider.getDefault(host);
 		this.basePath = basePath;
 		this.sessionID = sessionID;
 	}
