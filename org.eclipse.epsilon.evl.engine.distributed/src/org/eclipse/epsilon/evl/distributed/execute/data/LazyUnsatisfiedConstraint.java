@@ -36,12 +36,11 @@ public class LazyUnsatisfiedConstraint extends UnsatisfiedConstraint {
 		this.message = proxy.message;
 	}
 
-	public UnsatisfiedConstraint resolve() {
+	public void resolve() {
 		getConstraint();
 		getInstance();
 		getFixes();
 		getExtras();
-		return this;
 	}
 	
 	@Override
@@ -82,13 +81,15 @@ public class LazyUnsatisfiedConstraint extends UnsatisfiedConstraint {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(super.hashCode(), proxy);
+		return Objects.hashCode(proxy);
 	}
 	
 	@Override
 	public boolean equals(Object obj) {
-		if (!super.equals(obj)) return false;
-		LazyUnsatisfiedConstraint luc = (LazyUnsatisfiedConstraint) obj;
-		return Objects.equals(this.proxy, luc.proxy);
+		if (this == obj) return true;
+		if (obj instanceof LazyUnsatisfiedConstraint) {
+			return Objects.equals(this.proxy, ((LazyUnsatisfiedConstraint) obj).proxy);
+		}
+		return super.equals(obj);
 	}
 }
