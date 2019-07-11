@@ -11,5 +11,4 @@ Export-Package: org.eclipse.epsilon.evl.distributed.flink,
  org.eclipse.epsilon.evl.distributed.flink.atomic,
  org.eclipse.epsilon.evl.distributed.flink.batch,
  org.eclipse.epsilon.evl.distributed.flink.launch
-Require-Bundle: org.eclipse.epsilon.evl.engine.distributed,
- org.eclipse.epsilon.eol.cli
+Require-Bundle: org.eclipse.epsilon.evl.engine.distributed
