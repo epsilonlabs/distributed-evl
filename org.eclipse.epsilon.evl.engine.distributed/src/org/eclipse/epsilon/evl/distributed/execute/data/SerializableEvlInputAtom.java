@@ -18,6 +18,7 @@ import org.eclipse.epsilon.eol.execute.context.IEolContext;
 import org.eclipse.epsilon.eol.types.EolModelElementType;
 import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
 import org.eclipse.epsilon.evl.execute.atoms.ConstraintContextAtom;
+import org.eclipse.epsilon.evl.execute.context.IEvlContext;
 
 /**
  * Data unit to be used as inputs in distributed processing. No additional
@@ -68,10 +69,10 @@ public class SerializableEvlInputAtom extends SerializableEvlAtom {
 	 * @throws EolModelElementTypeNotFoundException If resolving any of the model elements fails.
 	 * @throws EolModelNotFoundException 
 	 */
-	public static ArrayList<SerializableEvlInputAtom> serializeJobs(Collection<ConstraintContextAtom> atoms) throws EolModelElementTypeNotFoundException, EolModelNotFoundException {
+	public static ArrayList<SerializableEvlInputAtom> serializeJobs(Collection<ConstraintContextAtom> atoms, IEvlContext context) throws EolModelElementTypeNotFoundException, EolModelNotFoundException {
 		ArrayList<SerializableEvlInputAtom> serAtoms = new ArrayList<>(atoms.size());	
 		for (ConstraintContextAtom cca : atoms) {
-			EolModelElementType modelType = cca.unit.getType(cca.context);
+			EolModelElementType modelType = cca.unit.getType(context);
 			SerializableEvlInputAtom sa = new SerializableEvlInputAtom();
 			sa.modelName = modelType.getModelName();
 			sa.modelElementID = modelType.getModel().getElementId(cca.element);

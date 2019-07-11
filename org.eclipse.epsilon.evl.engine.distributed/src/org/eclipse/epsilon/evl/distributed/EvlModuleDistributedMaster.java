@@ -15,6 +15,7 @@ import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.eol.execute.context.IEolContext;
+import org.eclipse.epsilon.erl.execute.data.JobBatch;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.execute.data.*;
 import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
@@ -174,11 +175,11 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 		
 		@Override
 		protected List<SerializableEvlInputAtom> convertToWorkerJobs(List<ConstraintContextAtom> masterJobs) throws EolRuntimeException {
-			return SerializableEvlInputAtom.serializeJobs(masterJobs);
+			return SerializableEvlInputAtom.serializeJobs(masterJobs, getContext());
 		}
 	}
 
-	public class BatchJobSplitter extends JobSplitter<DistributedEvlBatch, DistributedEvlBatch> {
+	public class BatchJobSplitter extends JobSplitter<JobBatch, JobBatch> {
 		protected final double batchSize;
 		
 		public BatchJobSplitter(double masterProportion, boolean shuffle, double batchSize) {
@@ -188,12 +189,12 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 		}
 		
 		@Override
-		protected List<DistributedEvlBatch> convertToWorkerJobs(List<DistributedEvlBatch> masterJobs) throws EolRuntimeException {
+		protected List<JobBatch> convertToWorkerJobs(List<JobBatch> masterJobs) throws EolRuntimeException {
 			return masterJobs;
 		}
 
 		@Override
-		protected List<DistributedEvlBatch> getAllJobs() throws EolRuntimeException {
+		protected List<JobBatch> getAllJobs() throws EolRuntimeException {
 			final int numTotalJobs = getContextJobs().size(), chunks;
 			final EvlContextDistributedMaster context = getContext();
 			if (this.batchSize >= 1) {
@@ -203,7 +204,7 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 				final int adjusted = Math.max(context.getDistributedParallelism(), 1);
 				chunks = (int) (numTotalJobs * (batchSize / adjusted));
 			}
-			return DistributedEvlBatch.getBatches(numTotalJobs, chunks);
+			return JobBatch.getBatches(numTotalJobs, chunks);
 		}
 	}
 	

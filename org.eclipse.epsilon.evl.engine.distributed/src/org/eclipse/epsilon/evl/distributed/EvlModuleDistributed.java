@@ -15,6 +15,7 @@ import org.eclipse.epsilon.common.concurrent.ConcurrencyUtils;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.eol.execute.concurrent.executors.EolExecutorService;
 import org.eclipse.epsilon.eol.execute.context.IEolContext;
+import org.eclipse.epsilon.erl.execute.data.JobBatch;
 import org.eclipse.epsilon.evl.concurrent.EvlModuleParallel;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributed;
 import org.eclipse.epsilon.evl.distributed.execute.data.*;
@@ -78,14 +79,15 @@ public abstract class EvlModuleDistributed extends EvlModuleParallel {
 		if (job instanceof SerializableEvlInputAtom) {
 			executeAtom((SerializableEvlInputAtom) job);
 		}
-		else if (job instanceof DistributedEvlBatch) {
-			executeJobImpl(((DistributedEvlBatch) job).split(getContextJobs()), isInLoop);
+		else if (job instanceof JobBatch) {
+			executeJobImpl(((JobBatch) job).split(getContextJobs()), isInLoop);
 		}
 		else if (job instanceof ConstraintContextAtom) {
 			((ConstraintContextAtom) job).execute(getContext());
 		}
 		else if (job instanceof ConstraintAtom) {
-			((ConstraintAtom) job).execute(getContext());
+			ConstraintAtom ca = (ConstraintAtom) job;
+			ca.unit.execute(ca.element, getContext());
 		}
 		else if (job instanceof Iterable) {
 			executeJobImpl(((Iterable<?>) job).iterator(), isInLoop);

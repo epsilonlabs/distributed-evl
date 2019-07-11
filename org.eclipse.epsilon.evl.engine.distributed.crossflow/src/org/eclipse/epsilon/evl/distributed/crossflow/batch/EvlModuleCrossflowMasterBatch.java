@@ -11,8 +11,8 @@ package org.eclipse.epsilon.evl.distributed.crossflow.batch;
 
 import java.util.List;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
+import org.eclipse.epsilon.erl.execute.data.JobBatch;
 import org.eclipse.epsilon.evl.distributed.crossflow.EvlModuleCrossflowMaster;
-import org.eclipse.epsilon.evl.distributed.execute.data.DistributedEvlBatch;
 
 /**
  * 
@@ -28,7 +28,7 @@ public class EvlModuleCrossflowMasterBatch extends EvlModuleCrossflowMaster {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<? extends DistributedEvlBatch> getWorkerJobs() throws EolRuntimeException {
-		return (List<? extends DistributedEvlBatch>) super.getWorkerJobs();
+	public List<? extends JobBatch> getWorkerJobs() throws EolRuntimeException {
+		return (List<? extends JobBatch>) super.getWorkerJobs();
 	}
 }

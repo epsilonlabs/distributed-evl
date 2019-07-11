@@ -11,7 +11,7 @@ package org.eclipse.epsilon.evl.distributed.jms.batch;
 
 import java.net.URISyntaxException;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.eclipse.epsilon.evl.distributed.execute.data.DistributedEvlBatch;
+import org.eclipse.epsilon.erl.execute.data.JobBatch;
 import org.eclipse.epsilon.evl.distributed.jms.EvlModuleJmsMaster;
 import org.eclipse.epsilon.evl.execute.atoms.ConstraintContextAtom;
 
@@ -20,7 +20,7 @@ import org.eclipse.epsilon.evl.execute.atoms.ConstraintContextAtom;
  * jobs created from ConstraintContext and element pairs.
  * 
  * @see ConstraintContextAtom
- * @see DistributedEvlBatch
+ * @see JobBatch
  * @author Sina Madani
  * @since 1.6
  */
