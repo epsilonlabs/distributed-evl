@@ -110,7 +110,7 @@ public abstract class DistributedEvlRunConfiguration extends EvlRunConfiguration
 	
 	@Override
 	public void postExecute() throws Exception {
-		writeOut("Number of jobs: "+getModule().getContextJobs().size());
+		writeOut("Number of jobs: "+getModule().getAllJobs().size());
 		super.postExecute();
 	}
 	

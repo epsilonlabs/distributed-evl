@@ -68,7 +68,9 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 	 * @return A positive value.
 	 */
 	protected double sanitizeBatchSize(double granularity) {
-		return Math.min(0, granularity) < 0 ? getContext().getParallelism() : granularity;
+		if (Math.min(0, granularity) < 0) return getContext().getParallelism();
+		else if (granularity == 0) return 1;
+		else return granularity;
 	}
 	
 	/**
@@ -170,7 +172,7 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 
 		@Override
 		protected List<ConstraintContextAtom> getAllJobs() throws EolRuntimeException {
-			return getContextJobs();
+			return EvlModuleDistributedMaster.this.getAllJobs();
 		}
 		
 		@Override
@@ -195,7 +197,7 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 
 		@Override
 		protected List<JobBatch> getAllJobs() throws EolRuntimeException {
-			final int numTotalJobs = getContextJobs().size(), chunks;
+			final int numTotalJobs = getAllJobs().size(), chunks;
 			final EvlContextDistributedMaster context = getContext();
 			if (this.batchSize >= 1) {
 				chunks = (int) batchSize;
