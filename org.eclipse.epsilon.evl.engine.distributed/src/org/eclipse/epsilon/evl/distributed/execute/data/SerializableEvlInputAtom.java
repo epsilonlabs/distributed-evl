@@ -79,11 +79,11 @@ public class SerializableEvlInputAtom extends SerializableEvlAtom {
 	public static ArrayList<SerializableEvlInputAtom> serializeJobs(Collection<ConstraintContextAtom> atoms, IEvlContext context) throws EolModelElementTypeNotFoundException, EolModelNotFoundException {
 		ArrayList<SerializableEvlInputAtom> serAtoms = new ArrayList<>(atoms.size());	
 		for (ConstraintContextAtom cca : atoms) {
-			EolModelElementType modelType = cca.unit.getType(context);
+			EolModelElementType modelType = cca.rule.getType(context);
 			SerializableEvlInputAtom sa = new SerializableEvlInputAtom();
 			sa.modelName = modelType.getModelName();
 			sa.modelElementID = modelType.getModel().getElementId(cca.element);
-			sa.contextName = cca.unit.getTypeName();
+			sa.contextName = cca.rule.getTypeName();
 			serAtoms.add(sa);
 		}
 		return serAtoms;
