@@ -2,10 +2,14 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Crossflow
 Bundle-SymbolicName: org.eclipse.epsilon.evl.engine.distributed.crossflow
-Bundle-Version: 1.0.0.qualifier
+Bundle-Version: 1.6.0.qualifier
 Automatic-Module-Name: org.eclipse.epsilon.evl.engine.distributed.crossflow
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: org.eclipse.epsilon.evl.engine.distributed,
  org.eclipse.scava.crossflow,
  org.eclipse.scava.crossflow.language,
  org.eclipse.scava.crossflow.runtime
+Export-Package: org.eclipse.epsilon.evl.distributed.crossflow,
+ org.eclipse.epsilon.evl.distributed.crossflow.atomic,
+ org.eclipse.epsilon.evl.distributed.crossflow.batch,
+ org.eclipse.epsilon.evl.distributed.crossflow.launch

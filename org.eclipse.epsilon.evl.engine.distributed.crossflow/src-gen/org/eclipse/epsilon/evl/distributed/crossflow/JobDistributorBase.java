@@ -33,11 +33,9 @@ public abstract class JobDistributorBase extends Task  implements ConfigTopicCon
 	
 	public void sendToValidationDataQueue(ValidationData validationData) {
 		validationData.setCacheable(this.cacheable);
-		hasSentToValidationDataQueue = true;
 		getValidationDataQueue().send(validationData, this.getClass().getName());
 	}
 	
-	boolean hasSentToValidationDataQueue = false;
 	
 	
 	boolean hasProcessedConfigTopic = false;

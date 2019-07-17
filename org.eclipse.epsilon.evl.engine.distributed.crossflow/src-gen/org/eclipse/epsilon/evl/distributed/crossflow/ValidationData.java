@@ -1,11 +1,10 @@
 package org.eclipse.epsilon.evl.distributed.crossflow;
 
+import org.eclipse.scava.crossflow.runtime.Job;
 import java.io.Serializable;
 import java.util.UUID;
-import org.eclipse.scava.crossflow.runtime.Job;
-import java.util.List;
-import java.util.ArrayList;
-import java.io.Serializable;
+import java.util.Collection;
+import java.util.Collections;
 
 public class ValidationData extends Job {
 	

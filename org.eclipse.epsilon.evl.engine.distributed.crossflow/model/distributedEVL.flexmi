@@ -2,7 +2,7 @@
 <_>
 	<workflow name="DistributedEVL">
 		
-		<task configurations="Config" masterOnly="true" multipleOutputs="true" name="JobDistributor" out="ValidationDataQueue"/>
+		<task configurations="Config" masterOnly="true" multipleOutputs="false" name="JobDistributor" out="ValidationDataQueue"/>
 		
 		<queue name="ValidationDataQueue" type="ValidationData"/>
 		

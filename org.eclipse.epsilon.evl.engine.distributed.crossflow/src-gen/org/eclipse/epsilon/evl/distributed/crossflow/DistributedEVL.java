@@ -95,6 +95,10 @@ public class DistributedEVL extends Workflow {
 				}
 			}
 		}
+		
+		this.serializer.register(Config.class);
+		this.serializer.register(ValidationData.class);
+		this.serializer.register(ValidationResult.class);
 
 	}
 	
