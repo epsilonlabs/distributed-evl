@@ -41,6 +41,7 @@ public abstract class EvlModuleDistributed extends EvlModuleParallelContextAtoms
 	 * @throws EolRuntimeException If an exception occurs when executing the job using this module.
 	 * @throws IllegalArgumentException If the job type was not recognised.
 	 */
+	@Override
 	public final Collection<SerializableEvlResultAtom> executeJob(Object job) throws EolRuntimeException {
 		if (job == null) {
 			return null;
@@ -56,7 +57,7 @@ public abstract class EvlModuleDistributed extends EvlModuleParallelContextAtoms
 		context.setUnsatisfiedConstraints(tempUc);
 		
 		try {
-			executeJobImpl(job, false);
+			super.executeJob(job);
 			return serializeResults(tempUc);
 		}
 		finally {
