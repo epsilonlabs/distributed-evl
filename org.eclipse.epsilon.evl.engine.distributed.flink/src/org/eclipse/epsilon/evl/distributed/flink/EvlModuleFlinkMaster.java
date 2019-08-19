@@ -10,6 +10,7 @@
 package org.eclipse.epsilon.evl.distributed.flink;
 
 import java.io.Serializable;
+import java.util.Objects;
 import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
@@ -22,6 +23,7 @@ import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlResultAtom;
 import org.eclipse.epsilon.evl.distributed.flink.execute.context.EvlContextFlinkMaster;
+import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
 
 /**
  * Convenience base class for Flink EVL modules.
@@ -35,26 +37,10 @@ public abstract class EvlModuleFlinkMaster<D extends Serializable> extends EvlMo
 
 	private ExecutionEnvironment executionEnv;
 	
-	protected EvlModuleFlinkMaster(int distributedParallelism, boolean shuffle) {
-		super(distributedParallelism, 0, shuffle);
-		setContext(new EvlContextFlinkMaster(distributedParallelism));
+	protected EvlModuleFlinkMaster(EvlContextFlinkMaster context, JobSplitter<?, D> jobSplitter) {
+		super(Objects.requireNonNull(context), jobSplitter);
 	}
 
-	protected EvlModuleFlinkMaster(int distributedParallelism, boolean shuffle, double batchFactor) {
-		super(distributedParallelism, 0, shuffle, batchFactor);
-		setContext(new EvlContextFlinkMaster(distributedParallelism));
-	}
-
-
-	public EvlModuleFlinkMaster() {
-		this(-1);
-	}
-	
-	public EvlModuleFlinkMaster(int distributedParallelism) {
-		super(distributedParallelism);
-		setContext(new EvlContextFlinkMaster(distributedParallelism));
-	}
-	
 	@Override
 	protected final void prepareExecution() throws EolRuntimeException {
 		super.prepareExecution();		
@@ -96,6 +82,12 @@ public abstract class EvlModuleFlinkMaster<D extends Serializable> extends EvlMo
 	public void setContext(IEolContext context) {
 		if (context instanceof EvlContextFlinkMaster) {
 			super.setContext(context);
+		}
+		else if (context != null) {
+			throw new IllegalArgumentException(
+				"Invalid context type: expected "+EvlContextFlinkMaster.class.getName()
+				+ " but got "+context.getClass().getName()
+			);
 		}
 	}
 	

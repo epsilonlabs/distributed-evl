@@ -45,8 +45,12 @@ public class EvlContextDistributed extends EvlContextParallel {
 		super(other);
 	}
 
-	public EvlContextDistributed(int parallelism) {
-		super(parallelism);
+	public EvlContextDistributed() {
+		super();
+	}
+	
+	public EvlContextDistributed(int localParallelism) {
+		super(localParallelism);
 	}
 
 	public void setUnsatisfiedConstraints(Set<UnsatisfiedConstraint> unsatisfiedConstraints) {

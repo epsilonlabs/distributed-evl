@@ -30,8 +30,12 @@ public abstract class DistributedEvlRunConfiguration extends EvlRunConfiguration
 	public static class Builder<R extends DistributedEvlRunConfiguration, B extends Builder<R, B>> extends EvlRunConfiguration.Builder<R, B> {
 		
 		public String basePath, host;
-		public int sessionID;
+		public int sessionID, localParallelism;
 		
+		public B withLocalParallelism(int parallelism) {
+			this.localParallelism = parallelism;
+			return (B) this;
+		}
 		public B withSessionID(int sid) {
 			this.sessionID = sid;
 			return (B) this;
@@ -40,7 +44,6 @@ public abstract class DistributedEvlRunConfiguration extends EvlRunConfiguration
 			this.host = host;
 			return (B) this;
 		}
-		
 		public B withBasePath(String base) {
 			this.basePath = base;
 			return (B) this;
@@ -92,13 +95,14 @@ public abstract class DistributedEvlRunConfiguration extends EvlRunConfiguration
 	}
 	
 	protected final String basePath, host;
-	protected final int sessionID;
+	protected final int sessionID, localParallelism;
 	
 	public DistributedEvlRunConfiguration(DistributedEvlRunConfiguration other) {
 		super(other);
 		this.basePath = other.basePath;
 		this.host = other.host;
 		this.sessionID = other.sessionID;
+		this.localParallelism = other.localParallelism;
 	}
 	
 	public DistributedEvlRunConfiguration(Builder<? extends DistributedEvlRunConfiguration, ?> builder) {
@@ -106,6 +110,7 @@ public abstract class DistributedEvlRunConfiguration extends EvlRunConfiguration
 		this.sessionID = builder.sessionID;
 		this.basePath = builder.basePath;
 		this.host = builder.host;
+		this.localParallelism = builder.localParallelism;
 	}
 	
 	@Override

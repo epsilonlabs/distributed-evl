@@ -13,6 +13,8 @@ import java.util.List;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.erl.execute.data.JobBatch;
 import org.eclipse.epsilon.evl.distributed.crossflow.EvlModuleCrossflowMaster;
+import org.eclipse.epsilon.evl.distributed.crossflow.execute.context.EvlContextCrossflowMaster;
+import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
 
 /**
  * 
@@ -21,9 +23,9 @@ import org.eclipse.epsilon.evl.distributed.crossflow.EvlModuleCrossflowMaster;
  * @since 1.6
  */
 public class EvlModuleCrossflowMasterBatch extends EvlModuleCrossflowMaster {
-
-	public EvlModuleCrossflowMasterBatch(String instanceId, int distributedParallelism, double masterProportion, boolean shuffle, double batchFactor) {
-		super(instanceId, distributedParallelism, masterProportion, shuffle, batchFactor);
+	
+	public EvlModuleCrossflowMasterBatch(EvlContextCrossflowMaster context, JobSplitter<?, ?> strategy) {
+		super(context, strategy);
 	}
 
 	@SuppressWarnings("unchecked")

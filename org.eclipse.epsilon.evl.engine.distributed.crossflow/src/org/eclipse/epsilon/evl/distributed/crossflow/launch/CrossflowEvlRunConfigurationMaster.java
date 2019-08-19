@@ -11,7 +11,9 @@ package org.eclipse.epsilon.evl.distributed.crossflow.launch;
 
 import org.eclipse.epsilon.evl.distributed.crossflow.EvlModuleCrossflowMaster;
 import org.eclipse.epsilon.evl.distributed.crossflow.batch.EvlModuleCrossflowMasterBatch;
+import org.eclipse.epsilon.evl.distributed.crossflow.execute.context.EvlContextCrossflowMaster;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfigurationMaster;
+import org.eclipse.epsilon.evl.distributed.strategy.BatchJobSplitter;
 
 /**
  * 
@@ -56,6 +58,8 @@ public class CrossflowEvlRunConfigurationMaster extends DistributedEvlRunConfigu
 
 	@Override
 	protected EvlModuleCrossflowMaster getDefaultModule() {
-		return new EvlModuleCrossflowMasterBatch(instanceID, expectedWorkers, masterProportion, shuffle, batchFactor);
+		EvlContextCrossflowMaster context = new EvlContextCrossflowMaster(localParallelism, distributedParallelism, instanceID);
+		BatchJobSplitter strategy = new BatchJobSplitter(context, masterProportion, shuffle, batchFactor);
+		return new EvlModuleCrossflowMasterBatch(context, strategy);
 	}
 }

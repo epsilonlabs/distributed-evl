@@ -23,9 +23,17 @@ import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributed
  * @since 1.6
  */
 public class EvlContextFlinkMaster extends EvlContextDistributedMaster {
-
+	
+	public EvlContextFlinkMaster() {
+		super(-1);
+	}
+	
 	public EvlContextFlinkMaster(int distributedParallelism) {
-		super(0, distributedParallelism);
+		super(distributedParallelism);
+	}
+	
+	public EvlContextFlinkMaster(int localParallelism, int distributedParallelism) {
+		super(localParallelism, distributedParallelism);
 	}
 	
 	public EvlContextFlinkMaster(EvlContextDistributedMaster other) {

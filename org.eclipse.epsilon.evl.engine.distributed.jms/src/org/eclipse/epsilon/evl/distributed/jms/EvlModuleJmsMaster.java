@@ -10,7 +10,6 @@
 package org.eclipse.epsilon.evl.distributed.jms;
 
 import java.io.Serializable;
-import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.util.Collection;
@@ -24,8 +23,11 @@ import org.eclipse.epsilon.common.function.CheckedConsumer;
 import org.eclipse.epsilon.common.function.CheckedRunnable;
 import org.eclipse.epsilon.common.function.ExceptionContainer;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
+import org.eclipse.epsilon.eol.execute.context.IEolContext;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
+import org.eclipse.epsilon.evl.distributed.jms.execute.context.EvlContextJmsMaster;
+import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
 
 /**
  * This module co-ordinates a message-based architecture. The workflow is as follows: <br/>
@@ -84,8 +86,6 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 		WORKER_ID_PROPERTY = "workerID",
 		CONFIG_HASH_PROPERTY = "configChecksum";
 	
-	protected final String host;
-	protected final int sessionID;
 	protected final int expectedSlaves;
 	protected final Map<String, Map<String, Duration>> slaveWorkers;
 	protected final Collection<Serializable> failedJobs = new java.util.HashSet<>();
@@ -96,20 +96,19 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	private CheckedRunnable<JMSException> completionSender;
 	private Thread jobSenderThread;
 
-	public EvlModuleJmsMaster(int expectedWorkers, String host, int sessionID) throws URISyntaxException {
-		super(expectedWorkers);
-		this.host = host;
-		this.sessionID = sessionID;
+	protected EvlModuleJmsMaster(EvlContextJmsMaster context, JobSplitter<?, ?> strategy) {
+		super(context, strategy);
 		slaveWorkers = new java.util./*Hashtable*/concurrent.ConcurrentHashMap<>(
-			this.expectedSlaves = expectedWorkers
+			this.expectedSlaves = getContext().getDistributedParallelism()
 		);
 	}
 	
 	@Override
 	protected void prepareExecution() throws EolRuntimeException {
 		super.prepareExecution();
-		connectionFactory = ConnectionFactoryProvider.getDefault(host);
-		log("Connected to "+host+" session "+sessionID);
+		EvlContextJmsMaster context = getContext();
+		connectionFactory = ConnectionFactoryProvider.getDefault(context.getBrokerHost());
+		log("Connected to "+context.getBrokerHost()+" session "+context.getSessionId());
 	}
 	
 	@Override
@@ -244,7 +243,7 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	 * @throws JMSException
 	 */
 	protected Queue createRegistrationQueue(JMSContext regContext) throws JMSException {
-		return regContext.createQueue(REGISTRATION_QUEUE+sessionID);
+		return regContext.createQueue(REGISTRATION_QUEUE + getContext().getSessionId());
 	}
 	
 	/**
@@ -254,7 +253,7 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	 * @throws JMSException
 	 */
 	protected Queue createResultsQueue(JMSContext session) throws JMSException {
-		return session.createQueue(RESULTS_QUEUE_NAME+sessionID);
+		return session.createQueue(RESULTS_QUEUE_NAME + getContext().getSessionId());
 	}
 	
 	/**
@@ -265,7 +264,7 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	 * @throws JMSException
 	 */
 	protected Topic createEndOfJobsTopic(JMSContext session) throws JMSException {
-		return session.createTopic(END_JOBS_TOPIC+sessionID);
+		return session.createTopic(END_JOBS_TOPIC + getContext().getSessionId());
 	}
 	
 	/**
@@ -275,7 +274,7 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	 * @throws JMSException
 	 */
 	protected Queue createJobQueue(JMSContext session) throws JMSException {
-		return session.createQueue(JOBS_QUEUE+sessionID);
+		return session.createQueue(JOBS_QUEUE + getContext().getSessionId());
 	}
 	
 	/**
@@ -285,7 +284,7 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	 * @throws JMSException
 	 */
 	protected Topic createShortCircuitTopic(JMSContext session) throws JMSException {
-		return session.createTopic(STOP_TOPIC+sessionID);
+		return session.createTopic(STOP_TOPIC + getContext().getSessionId());
 	}
 	
 	/**
@@ -584,5 +583,23 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	 */
 	protected void log(Object message) {
 		System.out.println("[MASTER] "+LocalTime.now()+" "+message);
+	}
+	
+	@Override
+	public EvlContextJmsMaster getContext() {
+		return (EvlContextJmsMaster) super.getContext();
+	}
+	
+	@Override
+	public void setContext(IEolContext context) {
+		if (context instanceof EvlContextJmsMaster) {
+			super.setContext(context);
+		}
+		else if (context != null) {
+			throw new IllegalArgumentException(
+				"Invalid context type: expected "+EvlContextJmsMaster.class.getName()
+				+ " but got "+context.getClass().getName()
+			);
+		}
 	}
 }

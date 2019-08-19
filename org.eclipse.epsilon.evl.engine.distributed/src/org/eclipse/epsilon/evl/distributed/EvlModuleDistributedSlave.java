@@ -31,12 +31,11 @@ import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
 public class EvlModuleDistributedSlave extends EvlModuleDistributed {
 	
 	public EvlModuleDistributedSlave() {
-		this(0);
+		this(new EvlContextDistributedSlave());
 	}
 	
-	public EvlModuleDistributedSlave(int parallelism) {
-		super(parallelism);
-		setContext(new EvlContextDistributedSlave(parallelism));
+	public EvlModuleDistributedSlave(EvlContextDistributedSlave context) {
+		super(context);
 	}
 	
 	@Override

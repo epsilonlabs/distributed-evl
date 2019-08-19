@@ -29,7 +29,8 @@ public class DistributedEvlConfigParser<R extends DistributedEvlRunConfiguration
 	private final String
 		hostOpt = "host",
 		basePathOpt = "basePath",
-		sessionIdOpt = "session";
+		sessionIdOpt = "session",
+		localParallelismOpt = "localParallelism";
 	
 	@SuppressWarnings("unchecked")
 	public DistributedEvlConfigParser() {
@@ -43,17 +44,22 @@ public class DistributedEvlConfigParser<R extends DistributedEvlRunConfiguration
 			.desc("Address of the JMS broker host")
 			.hasArg()
 			.build()
-		).addOption(Option.builder()
+		).addOption(Option.builder("base")
 			.longOpt(basePathOpt)
 			.desc("Base directory to start looking for resources from")
 			.hasArg()
 			.build()
-		).addOption(Option.builder()
+		).addOption(Option.builder("id")
 			.longOpt(sessionIdOpt)
 			.desc("Identifier for the execution session")
 			.hasArg()
 			.build()
-		);
+		).addOption(Option.builder("threads")
+			.longOpt(localParallelismOpt)
+			.desc("Maximum number of simulatenously active threads for this machine")
+			.hasArg()
+			.build()
+		);;
 	}
 	
 	@Override
@@ -62,6 +68,7 @@ public class DistributedEvlConfigParser<R extends DistributedEvlRunConfiguration
 		builder.host = cmdLine.getOptionValue(hostOpt);
 		builder.basePath = cmdLine.getOptionValue(basePathOpt);
 		builder.sessionID = tryParse(sessionIdOpt, builder.sessionID);
+		builder.localParallelism = tryParse(localParallelismOpt, builder.localParallelism);
 	}
 
 	protected double tryParse(String opt, double absentDefault) throws IllegalArgumentException {

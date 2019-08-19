@@ -38,6 +38,10 @@ public class EvlContextDistributedMaster extends EvlContextDistributed {
 	protected int distributedParallelism;
 	protected String outputDir, basePath;
 	
+	public EvlContextDistributedMaster(int distributedParallelism) {
+		this(0, distributedParallelism);
+	}
+	
 	public EvlContextDistributedMaster(EvlContextDistributedMaster other) {
 		super(other);
 		this.modelProperties = other.modelProperties;

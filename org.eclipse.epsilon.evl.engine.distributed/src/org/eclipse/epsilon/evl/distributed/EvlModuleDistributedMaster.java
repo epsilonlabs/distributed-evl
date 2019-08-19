@@ -9,17 +9,15 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed;
 
-import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.eol.execute.context.IEolContext;
-import org.eclipse.epsilon.erl.execute.data.JobBatch;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.execute.data.*;
+import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
 import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
-import org.eclipse.epsilon.evl.execute.atoms.ConstraintContextAtom;
 
 /**
  * Base implementation of EVL with distributed execution semantics.
@@ -40,178 +38,13 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 	
 	protected JobSplitter<?, ?> jobSplitter;
 	
-	/**
-	 * 
-	 * @param distributedParallelism Expected number of workers.
-	 */
-	public EvlModuleDistributedMaster(int distributedParallelism) {
-		super(distributedParallelism);
-		setContext(new EvlContextDistributedMaster(0, distributedParallelism));
+	public EvlModuleDistributedMaster(EvlContextDistributedMaster context) {
+		this(context, null);
 	}
 	
-	/**
-	 * Validates the masterProportion parameter, providing a default fallback value if out of range.
-	 * 
-	 * @param percent01 The supplied masterProportion argument.
-	 * @return A value between 0 and 1.
-	 */
-	protected double sanitizeMasterProportion(double percent01) {
-		if (getContext().getDistributedParallelism() == 0) return 1;
-		return Math.max(percent01, 1) > 1 || Math.min(percent01, 0) < 0 ?
-			1/(1+getContext().getDistributedParallelism()) : percent01;
-	}
-	
-	/**
-	 * Validates the batchSize parameter, providing a default fallback value if out of bounds.
-	 * 
-	 * @param granularity The supplied batchSize argument.
-	 * @return A positive value.
-	 */
-	protected double sanitizeBatchSize(double granularity) {
-		if (Math.min(0, granularity) < 0) return getContext().getParallelism();
-		else if (granularity == 0) return 1;
-		else return granularity;
-	}
-	
-	/**
-	 * Constructor for atom-based modules.
-	 * 
-	 * @param distributedParallelism
-	 * @param masterProportion Percentage of jobs (i.e. between 0 and 1) to assign to the master
-	 * @param shuffle Whether to randomise order of jobs.
-	 * @see #EvlModuleDistributedMaster(int)
-	 */
-	protected EvlModuleDistributedMaster(int distributedParallelism, double masterProportion, boolean shuffle) {
-		this(distributedParallelism);
-		this.jobSplitter = new AtomicJobSplitter(
-			sanitizeMasterProportion(masterProportion),
-			shuffle
-		);
-	}
-	
-	/**
-	 * Constructor for batch-based modules.
-	 * 
-	 * @param distributedParallelism
-	 * @param masterProportion
-	 * @param shuffle
-	 * @param batches Granularity of batches, where 0 is one job per batch and 1 is all jobs in one batch.
-	 * If this is greater than 1, then the specified number will be the batch size (i.e. the <code>batch.to - batch.from</code>).
-	 * @see #EvlModuleDistributedMaster(int, double, boolean)
-	 */
-	protected EvlModuleDistributedMaster(int distributedParallelism, double masterProportion, boolean shuffle, double batches) {
-		this(distributedParallelism);
-		this.jobSplitter = new BatchJobSplitter(
-			sanitizeMasterProportion(masterProportion),
-			shuffle,
-			sanitizeBatchSize(batches)
-		);
-	}
-	
-	// Job division
-
-	protected static abstract class JobSplitter<T, S extends Serializable> {
-		protected final double masterProportion;
-		protected final boolean shuffle;
-		protected ArrayList<S> workerJobs;
-		protected List<T> masterJobs;
-		
-		/**
-		 * 
-		 * @param masterProportion The percentage of jobs to be performed by the master. Must be between 0 and 1.
-		 * @param shuffle Whether to randomise thr order of jobs.
-		 * @throws IllegalArgumentException If the percentage is out of bounds.
-		 */
-		public JobSplitter(double masterProportion, boolean shuffle) {
-			if (Math.max(1, this.masterProportion = masterProportion) > 1 || Math.min(0, masterProportion) < 0)
-				throw new IllegalArgumentException("Proportion of master jobs must be a valid percentage");
-			this.shuffle = shuffle;
-		}
-		
-		public ArrayList<S> getWorkerJobs() throws EolRuntimeException {
-			if (workerJobs == null) split();
-			return workerJobs;
-		}
-		
-		public List<T> getMasterJobs() throws EolRuntimeException {
-			if (masterJobs == null) split();
-			return masterJobs;
-		}
-		
-		protected void split() throws EolRuntimeException {
-			List<T> allJobs = getAllJobs();
-			if (shuffle) Collections.shuffle(allJobs);
-			
-			int numTotalJobs = allJobs.size();
-			int numMasterJobs = (int) (masterProportion * numTotalJobs);
-			if (numMasterJobs >= numTotalJobs) {
-				masterJobs = allJobs;
-				workerJobs = new ArrayList<>(0);
-			}
-			else if (numMasterJobs <= 0) {
-				masterJobs = null;
-				Collection<S> wj = convertToWorkerJobs(allJobs);
-				workerJobs = wj instanceof ArrayList ? (ArrayList<S>) wj : new ArrayList<>(wj);
-			}
-			else {
-				masterJobs = allJobs.subList(0, numMasterJobs);
-				Collection<S> wj = convertToWorkerJobs(allJobs.subList(numMasterJobs-1, numTotalJobs));
-				workerJobs = wj instanceof ArrayList ? (ArrayList<S>) wj : new ArrayList<>(wj);
-			}
-		}
-		
-		protected abstract List<T> getAllJobs() throws EolRuntimeException;
-
-		protected abstract Collection<S> convertToWorkerJobs(List<T> masterJobs) throws EolRuntimeException;
-	}
-	
-	public class AtomicJobSplitter extends JobSplitter<ConstraintContextAtom, SerializableEvlInputAtom> {
-		public AtomicJobSplitter(double masterProportion, boolean shuffle) {
-			super(masterProportion, shuffle);
-		}
-
-		@Override
-		protected List<ConstraintContextAtom> getAllJobs() throws EolRuntimeException {
-			return EvlModuleDistributedMaster.this.getAllJobs();
-		}
-		
-		@Override
-		protected List<SerializableEvlInputAtom> convertToWorkerJobs(List<ConstraintContextAtom> masterJobs) throws EolRuntimeException {
-			return SerializableEvlInputAtom.serializeJobs(masterJobs, getContext());
-		}
-	}
-
-	public class BatchJobSplitter extends JobSplitter<JobBatch, JobBatch> {
-		protected final double batchSize;
-		
-		public BatchJobSplitter(double masterProportion, boolean shuffle, double batchSize) {
-			super(masterProportion, shuffle);
-			if (Math.min(this.batchSize = batchSize, 0) < 0)
-				throw new IllegalArgumentException("Batches can't be negative!");
-		}
-		
-		@Override
-		protected List<JobBatch> convertToWorkerJobs(List<JobBatch> masterJobs) throws EolRuntimeException {
-			return masterJobs;
-		}
-
-		@Override
-		protected List<JobBatch> getAllJobs() throws EolRuntimeException {
-			final int numTotalJobs = getAllJobs().size(), chunks;
-			final EvlContextDistributedMaster context = getContext();
-			if (this.batchSize >= 1) {
-				chunks = (int) batchSize;
-			}
-			else {
-				final int adjusted = Math.max(context.getDistributedParallelism(), 1);
-				chunks = (int) (numTotalJobs * (batchSize / adjusted));
-			}
-			return JobBatch.getBatches(numTotalJobs, chunks);
-		}
-	}
-	
-	protected List<? extends Serializable> getWorkerJobs() throws EolRuntimeException {
-		return Objects.requireNonNull(jobSplitter, "JobSplitter must be set!").getWorkerJobs();
+	protected EvlModuleDistributedMaster(EvlContextDistributedMaster context, JobSplitter<?, ?> strategy) {
+		super(context);
+		this.jobSplitter = strategy;
 	}
 	
 	// UnsatisfiedConstraint resolution
@@ -302,6 +135,12 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 	public void setContext(IEolContext context) {
 		if (context instanceof EvlContextDistributedMaster) {
 			super.setContext(context);
+		}
+		else if (context != null) {
+			throw new IllegalArgumentException(
+				"Invalid context type: expected "+EvlContextDistributedMaster.class.getName()
+				+ " but got "+context.getClass().getName()
+			);
 		}
 	}
 }

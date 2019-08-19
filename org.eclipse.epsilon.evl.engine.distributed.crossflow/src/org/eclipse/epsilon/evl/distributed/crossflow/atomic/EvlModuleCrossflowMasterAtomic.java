@@ -12,7 +12,9 @@ package org.eclipse.epsilon.evl.distributed.crossflow.atomic;
 import java.util.List;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.evl.distributed.crossflow.EvlModuleCrossflowMaster;
+import org.eclipse.epsilon.evl.distributed.crossflow.execute.context.EvlContextCrossflowMaster;
 import org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlInputAtom;
+import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
 
 /**
  * 
@@ -22,8 +24,8 @@ import org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlInputAtom
  */
 public class EvlModuleCrossflowMasterAtomic extends EvlModuleCrossflowMaster {
 
-	public EvlModuleCrossflowMasterAtomic(String instanceId, int distributedParallelism, double masterProportion, boolean shuffle) {
-		super(instanceId, distributedParallelism, masterProportion, shuffle);
+	public EvlModuleCrossflowMasterAtomic(EvlContextCrossflowMaster context, JobSplitter<?, ?> strategy) {
+		super(context, strategy);
 	}
 
 	@SuppressWarnings("unchecked")

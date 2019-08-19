@@ -9,10 +9,11 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.jms.batch;
 
-import java.net.URISyntaxException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.eclipse.epsilon.erl.execute.data.JobBatch;
 import org.eclipse.epsilon.evl.distributed.jms.EvlModuleJmsMaster;
+import org.eclipse.epsilon.evl.distributed.jms.execute.context.EvlContextJmsMaster;
+import org.eclipse.epsilon.evl.distributed.strategy.BatchJobSplitter;
 import org.eclipse.epsilon.evl.execute.atoms.ConstraintContextAtom;
 
 /**
@@ -26,11 +27,10 @@ import org.eclipse.epsilon.evl.execute.atoms.ConstraintContextAtom;
  */
 public class EvlModuleJmsMasterBatch extends EvlModuleJmsMaster {
 	
-	public EvlModuleJmsMasterBatch(int expectedWorkers, double masterProportion, double batchFactor, boolean shuffle, String host, int sessionID) throws URISyntaxException {
-		super(expectedWorkers, host, sessionID);
-		jobSplitter = new BatchJobSplitter(sanitizeMasterProportion(masterProportion), shuffle, sanitizeBatchSize(batchFactor));
+	public EvlModuleJmsMasterBatch(EvlContextJmsMaster context, BatchJobSplitter strategy) {
+		super(context, strategy);
 	}
-	
+
 	@Override
 	protected void processJobs(AtomicInteger workersReady) throws Exception {
 		waitForWorkersToConnect(workersReady);

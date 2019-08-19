@@ -12,6 +12,7 @@ package org.eclipse.epsilon.evl.distributed.jms.launch;
 import java.net.URI;
 import org.eclipse.epsilon.evl.distributed.jms.atomic.EvlModuleJmsMasterAtomic;
 import org.eclipse.epsilon.evl.distributed.jms.batch.EvlModuleJmsMasterBatch;
+import org.eclipse.epsilon.evl.distributed.jms.execute.context.EvlContextJmsMaster;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlMasterConfigParser;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfigurationMaster.Builder;
 
@@ -52,15 +53,13 @@ public class JmsEvlMasterConfigParser<R extends JmsEvlRunConfigurationMaster, B 
 			if (hostUri.getPort() <= 0) builder.host += ":61616";
 		}
 		
+		EvlContextJmsMaster context = new EvlContextJmsMaster(builder.localParallelism, builder.distributedParallelism, builder.host, builder.sessionID);
+		
 		if (builder.batchFactor != Builder.UNINTIALIZED_VALUE) {
-			builder.module = new EvlModuleJmsMasterBatch(
-				builder.distributedParallelism, builder.masterProportion, builder.batchFactor, builder.shuffle, builder.host, builder.sessionID
-			);
+			builder.module = new EvlModuleJmsMasterBatch(context, getBatchStrategy(context));
 		}
 		else {
-			builder.module = new EvlModuleJmsMasterAtomic(
-				builder.distributedParallelism, builder.masterProportion, builder.shuffle, builder.host, builder.sessionID
-			);
+			builder.module = new EvlModuleJmsMasterAtomic(context, getAtomicStrategy(context));
 		}
 	}
 }

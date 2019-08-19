@@ -10,11 +10,13 @@
 package org.eclipse.epsilon.evl.distributed.launch;
 
 import org.apache.commons.cli.Option;
+import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
+import org.eclipse.epsilon.evl.distributed.strategy.*;
 
 public class DistributedEvlMasterConfigParser<R extends DistributedEvlRunConfigurationMaster, B extends DistributedEvlRunConfigurationMaster.Builder<R, B>> extends DistributedEvlConfigParser<R, B> {
 	
 	private final String
-		expectedWorkersOpt = "workers",
+		distributedParallelismOpt = "distributedParallelism",
 		shuffleOpt = "no-shuffle",
 		batchesOpt = "batches",
 		masterProportionOpt = "masterProportion";
@@ -32,8 +34,8 @@ public class DistributedEvlMasterConfigParser<R extends DistributedEvlRunConfigu
 			.longOpt(shuffleOpt)
 			.desc("Disables order randomisation of jobs")
 			.build()
-		).addOption(Option.builder()
-			.longOpt(expectedWorkersOpt)
+		).addOption(Option.builder("workers")
+			.longOpt(distributedParallelismOpt)
 			.desc("The expected number of slave workers")
 			.hasArg()
 			.build()
@@ -49,8 +51,16 @@ public class DistributedEvlMasterConfigParser<R extends DistributedEvlRunConfigu
 	public void parseArgs(String[] args) throws Exception {
 		super.parseArgs(args);
 		builder.shuffle = !cmdLine.hasOption(shuffleOpt);
-		builder.distributedParallelism = tryParse(expectedWorkersOpt, builder.distributedParallelism);
+		builder.distributedParallelism = tryParse(distributedParallelismOpt, builder.distributedParallelism);
 		builder.batchFactor = tryParse(batchesOpt, builder.batchFactor);
 		builder.masterProportion = tryParse(masterProportionOpt, builder.masterProportion);
+	}
+	
+	protected AtomicJobSplitter getAtomicStrategy(EvlContextDistributedMaster context) {
+		return new AtomicJobSplitter(context, builder.masterProportion, builder.shuffle);
+	}
+	
+	protected BatchJobSplitter getBatchStrategy(EvlContextDistributedMaster context) {
+		return new BatchJobSplitter(context, builder.masterProportion, builder.shuffle, builder.batchFactor);
 	}
 }

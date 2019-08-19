@@ -12,6 +12,7 @@ package org.eclipse.epsilon.evl.distributed.crossflow.launch;
 import org.apache.commons.cli.Option;
 import org.eclipse.epsilon.evl.distributed.crossflow.atomic.EvlModuleCrossflowMasterAtomic;
 import org.eclipse.epsilon.evl.distributed.crossflow.batch.EvlModuleCrossflowMasterBatch;
+import org.eclipse.epsilon.evl.distributed.crossflow.execute.context.EvlContextCrossflowMaster;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlMasterConfigParser;
 
 /**
@@ -51,11 +52,12 @@ public class CrossflowEvlMasterConfigParser<R extends CrossflowEvlRunConfigurati
 		if (cmdLine.hasOption(instanceIdOpt)) {
 			builder.instanceID = cmdLine.getOptionValue(instanceIdOpt);
 		}
+		EvlContextCrossflowMaster context = new EvlContextCrossflowMaster(builder.localParallelism, builder.distributedParallelism, builder.instanceID);
 		if (builder.batchFactor > 0) {
-			builder.module = new EvlModuleCrossflowMasterBatch(builder.instanceID, builder.distributedParallelism, builder.masterProportion, builder.shuffle, builder.batchFactor);
+			builder.module = new EvlModuleCrossflowMasterBatch(context, getBatchStrategy(context));
 		}
 		else {
-			builder.module = new EvlModuleCrossflowMasterAtomic(builder.instanceID, builder.distributedParallelism, builder.masterProportion, builder.shuffle);
+			builder.module = new EvlModuleCrossflowMasterAtomic(context, getAtomicStrategy(context));
 		}
 	}
 }

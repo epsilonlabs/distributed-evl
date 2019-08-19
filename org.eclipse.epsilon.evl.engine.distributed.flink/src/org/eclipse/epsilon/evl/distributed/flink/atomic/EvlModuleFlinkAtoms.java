@@ -16,7 +16,9 @@ import org.apache.flink.api.java.operators.DataSource;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlInputAtom;
 import org.eclipse.epsilon.evl.distributed.flink.EvlModuleFlinkMaster;
+import org.eclipse.epsilon.evl.distributed.flink.execute.context.EvlContextFlinkMaster;
 import org.eclipse.epsilon.evl.distributed.flink.format.FlinkInputFormat;
+import org.eclipse.epsilon.evl.distributed.strategy.AtomicJobSplitter;
 
 /**
  * Data-parallel evaluation strategy which works over elements.
@@ -25,23 +27,14 @@ import org.eclipse.epsilon.evl.distributed.flink.format.FlinkInputFormat;
  * @since 1.6
  */
 public class EvlModuleFlinkAtoms extends EvlModuleFlinkMaster<SerializableEvlInputAtom> {
-	
-	public EvlModuleFlinkAtoms() {
-		this(-1);
-	}
-	
-	public EvlModuleFlinkAtoms(int parallelism) {
-		this(parallelism, false);
-	}
-	
-	public EvlModuleFlinkAtoms(int parallelism, boolean shuffle) {
-		super(parallelism, shuffle);
+
+	public EvlModuleFlinkAtoms(EvlContextFlinkMaster context, AtomicJobSplitter strategy) {
+		super(context, strategy);
 	}
 
 	@SuppressWarnings("unchecked")
-	@Override
 	protected List<SerializableEvlInputAtom> getWorkerJobs() throws EolRuntimeException {
-		return (List<SerializableEvlInputAtom>) super.getWorkerJobs();
+		return (List<SerializableEvlInputAtom>) jobSplitter.getWorkerJobs();
 	}
 	
 	@Override

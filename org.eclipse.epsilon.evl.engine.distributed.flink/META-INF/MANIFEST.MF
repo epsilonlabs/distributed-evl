@@ -10,5 +10,7 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: org.eclipse.epsilon.evl.distributed.flink,
  org.eclipse.epsilon.evl.distributed.flink.atomic,
  org.eclipse.epsilon.evl.distributed.flink.batch,
+ org.eclipse.epsilon.evl.distributed.flink.execute.context,
+ org.eclipse.epsilon.evl.distributed.flink.format,
  org.eclipse.epsilon.evl.distributed.flink.launch
 Require-Bundle: org.eclipse.epsilon.evl.engine.distributed

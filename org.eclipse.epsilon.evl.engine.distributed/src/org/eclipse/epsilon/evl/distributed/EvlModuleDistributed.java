@@ -27,9 +27,8 @@ import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
  */
 public abstract class EvlModuleDistributed extends EvlModuleParallelContextAtoms {
 
-	public EvlModuleDistributed(int distributedParallelism) {
-		super(distributedParallelism);
-		setContext(new EvlContextDistributed(distributedParallelism));
+	public EvlModuleDistributed(EvlContextDistributed context) {
+		super(context);
 	}
 	
 	/**
@@ -82,6 +81,12 @@ public abstract class EvlModuleDistributed extends EvlModuleParallelContextAtoms
 	public void setContext(IEolContext context) {
 		if (context instanceof EvlContextDistributed) {
 			super.setContext(context);
+		}
+		else if (context != null) {
+			throw new IllegalArgumentException(
+				"Invalid context type: expected "+EvlContextDistributed.class.getName()
+				+ " but got "+context.getClass().getName()
+			);
 		}
 	}
 }

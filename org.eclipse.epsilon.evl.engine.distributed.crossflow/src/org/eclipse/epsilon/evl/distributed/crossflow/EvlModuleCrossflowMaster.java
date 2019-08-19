@@ -12,33 +12,27 @@ package org.eclipse.epsilon.evl.distributed.crossflow;
 import java.io.Serializable;
 import java.util.List;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
+import org.eclipse.epsilon.eol.execute.context.IEolContext;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedMaster;
+import org.eclipse.epsilon.evl.distributed.crossflow.execute.context.EvlContextCrossflowMaster;
+import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
 import org.eclipse.scava.crossflow.runtime.Mode;
 
 public abstract class EvlModuleCrossflowMaster extends EvlModuleDistributedMaster {
-
-	protected final String instanceID;
-
-	public EvlModuleCrossflowMaster(String instanceId, int distributedParallelism, double masterProportion, boolean shuffle, double batchFactor) {
-		super(distributedParallelism, masterProportion, shuffle, batchFactor);
-		this.instanceID = instanceId;
+	
+	public EvlModuleCrossflowMaster(EvlContextCrossflowMaster context, JobSplitter<?, ?> strategy) {
+		super(context, strategy);
 	}
 
-	protected EvlModuleCrossflowMaster(String instanceId, int distributedParallelism, double masterProportion, boolean shuffle) {
-		super(distributedParallelism, masterProportion, shuffle);
-		this.instanceID = instanceId;
+	public List<? extends Serializable> getWorkerJobs() throws EolRuntimeException {
+		return jobSplitter.getWorkerJobs();
 	}
-
-	protected EvlModuleCrossflowMaster(String instanceId, int distributedParallelism) {
-		super(distributedParallelism);
-		this.instanceID = instanceId;
-	}
-
+	
 	@Override
 	protected void checkConstraints() throws EolRuntimeException {
 		try {
 			DistributedEVL crossflow = new DistributedEVL(Mode.MASTER_BARE);
-			crossflow.setInstanceId(instanceID);
+			crossflow.setInstanceId(getContext().getInstanceId());
 			crossflow.getConfigConfigSource().masterModule = this;
 			crossflow.run(5000L);
 			crossflow.awaitTermination();
@@ -51,17 +45,26 @@ public abstract class EvlModuleCrossflowMaster extends EvlModuleDistributedMaste
 	
 	@Override
 	protected boolean deserializeResults(Object response) throws EolRuntimeException {
-		boolean result = super.deserializeResults(response);
-		if (!result && response instanceof ValidationResult) {
-			result = super.deserializeResults(((ValidationResult) response).getAtoms());
-		}
-		return result;
+		return super.deserializeResults(response instanceof ValidationResult ?
+			((ValidationResult) response).getAtoms() : response
+		);
 	}
 	
-	// METHOD VISIBILITY
+	@Override
+	public EvlContextCrossflowMaster getContext() {
+		return (EvlContextCrossflowMaster) super.getContext();
+	}
 	
 	@Override
-	public List<? extends Serializable> getWorkerJobs() throws EolRuntimeException {
-		return super.getWorkerJobs();
+	public void setContext(IEolContext context) {
+		if (context instanceof EvlContextCrossflowMaster) {
+			super.setContext(context);
+		}
+		else if (context != null) {
+			throw new IllegalArgumentException(
+				"Invalid context type: expected "+EvlContextCrossflowMaster.class.getName()
+				+ " but got "+context.getClass().getName()
+			);
+		}
 	}
 }

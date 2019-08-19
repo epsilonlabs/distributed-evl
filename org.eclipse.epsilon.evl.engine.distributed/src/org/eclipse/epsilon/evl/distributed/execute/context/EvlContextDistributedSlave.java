@@ -49,6 +49,10 @@ public class EvlContextDistributedSlave extends EvlContextDistributed {
 		}
 	};
 	
+	public EvlContextDistributedSlave() {
+		super();
+	}
+	
 	public EvlContextDistributedSlave(int localParallelism) {
 		super(localParallelism);
 	}
@@ -103,7 +107,7 @@ public class EvlContextDistributedSlave extends EvlContextDistributed {
 		);
 		
 		EvlModuleDistributedSlave localModule = new EvlModuleDistributedSlave(
-			Integer.parseInt(Objects.toString(config.get(LOCAL_PARALLELISM), "0"))
+			new EvlContextDistributedSlave(Integer.parseInt(Objects.toString(config.get(LOCAL_PARALLELISM), "0")))
 		);
 		
 		return new DistributedEvlRunConfigurationSlave(

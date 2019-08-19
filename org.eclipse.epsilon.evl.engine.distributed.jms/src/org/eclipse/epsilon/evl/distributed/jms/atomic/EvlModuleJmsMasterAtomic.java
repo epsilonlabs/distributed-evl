@@ -9,10 +9,11 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.jms.atomic;
 
-import java.net.URISyntaxException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlInputAtom;
 import org.eclipse.epsilon.evl.distributed.jms.EvlModuleJmsMaster;
+import org.eclipse.epsilon.evl.distributed.jms.execute.context.EvlContextJmsMaster;
+import org.eclipse.epsilon.evl.distributed.strategy.AtomicJobSplitter;
 import org.eclipse.epsilon.evl.execute.atoms.ConstraintContextAtom;
 
 /**
@@ -26,9 +27,8 @@ import org.eclipse.epsilon.evl.execute.atoms.ConstraintContextAtom;
  */
 public class EvlModuleJmsMasterAtomic extends EvlModuleJmsMaster {
 	
-	public EvlModuleJmsMasterAtomic(int expectedWorkers, double masterProportion, boolean shuffle, String host, int sessionID) throws URISyntaxException {
-		super(expectedWorkers, host, sessionID);
-		jobSplitter = new AtomicJobSplitter(sanitizeMasterProportion(masterProportion), shuffle);
+	public EvlModuleJmsMasterAtomic(EvlContextJmsMaster context, AtomicJobSplitter strategy) {
+		super(context, strategy);
 	}
 
 	@Override

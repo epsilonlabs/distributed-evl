@@ -53,7 +53,7 @@ public abstract class DistributedEvlRunConfigurationMaster extends DistributedEv
 		}
 	}
 	
-	protected final int expectedWorkers;
+	protected final int distributedParallelism;
 	protected final double batchFactor, masterProportion;
 	protected final boolean shuffle;
 	
@@ -61,13 +61,13 @@ public abstract class DistributedEvlRunConfigurationMaster extends DistributedEv
 		super(other);
 		this.shuffle = other.shuffle;
 		this.batchFactor = other.batchFactor;
-		this.expectedWorkers = other.expectedWorkers;
+		this.distributedParallelism = other.distributedParallelism;
 		this.masterProportion = other.masterProportion;
 	}
 	
 	public DistributedEvlRunConfigurationMaster(Builder<? extends DistributedEvlRunConfiguration, ?> builder) {
 		super(builder);
-		this.expectedWorkers = builder.distributedParallelism;
+		this.distributedParallelism = builder.distributedParallelism;
 		this.shuffle = builder.shuffle;
 		this.batchFactor = builder.batchFactor;
 		this.masterProportion = builder.masterProportion;
