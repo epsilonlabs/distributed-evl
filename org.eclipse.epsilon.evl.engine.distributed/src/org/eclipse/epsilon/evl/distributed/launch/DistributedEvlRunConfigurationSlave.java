@@ -25,6 +25,20 @@ import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedSlave;
  */
 public class DistributedEvlRunConfigurationSlave extends DistributedEvlRunConfiguration {
 
+	public static class Builder<R extends DistributedEvlRunConfigurationSlave, B extends Builder<R, B>> extends DistributedEvlRunConfiguration.Builder<R, B> {
+		@Override
+		protected EvlModuleDistributedSlave createModule() {
+			return new EvlModuleDistributedSlave();
+		}
+		
+		protected Builder() {
+			super();
+		}
+		protected Builder(Class<R> runConfigClass) {
+			super(runConfigClass);
+		}
+	}
+	
 	/**
 	 * This constructor is to be called by workers as a convenient
 	 * data holder for initializing Epsilon.
@@ -73,11 +87,6 @@ public class DistributedEvlRunConfigurationSlave extends DistributedEvlRunConfig
 	@Override
 	public EvlModuleDistributedSlave getModule() {
 		return (EvlModuleDistributedSlave) super.getModule();
-	}
-	
-	@Override
-	protected EvlModuleDistributedSlave getDefaultModule() {
-		return new EvlModuleDistributedSlave();
 	}
 	
 	@Override

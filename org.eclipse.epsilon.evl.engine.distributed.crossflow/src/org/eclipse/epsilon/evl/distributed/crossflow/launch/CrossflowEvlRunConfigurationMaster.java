@@ -26,12 +26,18 @@ public class CrossflowEvlRunConfigurationMaster extends DistributedEvlRunConfigu
 	
 	@SuppressWarnings("unchecked")
 	public static class Builder<R extends CrossflowEvlRunConfigurationMaster, B extends Builder<R, B>> extends DistributedEvlRunConfigurationMaster.Builder<R, B> {
-		
 		public String instanceID = "DistributedEVL";
 		
 		public B withInstanceID(String id) {
 			this.instanceID = id;
 			return (B) this;
+		}
+		
+		@Override
+		protected EvlModuleCrossflowMaster createModule() {
+			EvlContextCrossflowMaster context = new EvlContextCrossflowMaster(parallelism, distributedParallelism, instanceID);
+			BatchJobSplitter strategy = new BatchJobSplitter(context, masterProportion, shuffle, batchFactor);
+			return new EvlModuleCrossflowMasterBatch(context, strategy);
 		}
 		
 		@Override
@@ -54,12 +60,5 @@ public class CrossflowEvlRunConfigurationMaster extends DistributedEvlRunConfigu
 	public CrossflowEvlRunConfigurationMaster(Builder<? extends CrossflowEvlRunConfigurationMaster, ?> builder) {
 		super(builder);
 		this.instanceID = builder.instanceID;
-	}
-
-	@Override
-	protected EvlModuleCrossflowMaster getDefaultModule() {
-		EvlContextCrossflowMaster context = new EvlContextCrossflowMaster(localParallelism, distributedParallelism, instanceID);
-		BatchJobSplitter strategy = new BatchJobSplitter(context, masterProportion, shuffle, batchFactor);
-		return new EvlModuleCrossflowMasterBatch(context, strategy);
 	}
 }

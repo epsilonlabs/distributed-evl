@@ -29,8 +29,7 @@ public class DistributedEvlConfigParser<R extends DistributedEvlRunConfiguration
 	private final String
 		hostOpt = "host",
 		basePathOpt = "basePath",
-		sessionIdOpt = "session",
-		localParallelismOpt = "localParallelism";
+		sessionIdOpt = "session";
 	
 	@SuppressWarnings("unchecked")
 	public DistributedEvlConfigParser() {
@@ -54,12 +53,7 @@ public class DistributedEvlConfigParser<R extends DistributedEvlRunConfiguration
 			.desc("Identifier for the execution session")
 			.hasArg()
 			.build()
-		).addOption(Option.builder("threads")
-			.longOpt(localParallelismOpt)
-			.desc("Maximum number of simulatenously active threads for this machine")
-			.hasArg()
-			.build()
-		);;
+		);
 	}
 	
 	@Override
@@ -68,54 +62,5 @@ public class DistributedEvlConfigParser<R extends DistributedEvlRunConfiguration
 		builder.host = cmdLine.getOptionValue(hostOpt);
 		builder.basePath = cmdLine.getOptionValue(basePathOpt);
 		builder.sessionID = tryParse(sessionIdOpt, builder.sessionID);
-		builder.localParallelism = tryParse(localParallelismOpt, builder.localParallelism);
-	}
-
-	protected double tryParse(String opt, double absentDefault) throws IllegalArgumentException {
-		if (cmdLine.hasOption(opt)) {
-			String value = cmdLine.getOptionValue(opt);
-			if (value != null && !value.isEmpty()) try {
-				return Double.parseDouble(value);
-			}
-			catch (NumberFormatException nan) {
-				throw new IllegalArgumentException(
-					"Invalid value for option '"+opt
-					+ "': expected double but got "+value
-				);
-			}
-		}
-		return absentDefault;
-	}
-	
-	protected int tryParse(String opt, int absentDefault) throws IllegalArgumentException {
-		if (cmdLine.hasOption(opt)) {
-			String value = cmdLine.getOptionValue(opt);
-			if (value != null && !value.isEmpty()) try {
-				return Integer.parseInt(value);
-			}
-			catch (NumberFormatException nan) {
-				throw new IllegalArgumentException(
-					"Invalid value for option '"+opt
-					+ "': expected int but got "+value
-				);
-			}
-		}
-		return absentDefault;
-	}
-	
-	protected long tryParse(String opt, long absentDefault) throws IllegalArgumentException {
-		if (cmdLine.hasOption(opt)) {
-			String value = cmdLine.getOptionValue(opt);
-			if (value != null && !value.isEmpty()) try {
-				return Long.parseLong(value);
-			}
-			catch (NumberFormatException nan) {
-				throw new IllegalArgumentException(
-					"Invalid value for option '"+opt
-					+ "': expected long but got "+value
-				);
-			}
-		}
-		return absentDefault;
 	}
 }

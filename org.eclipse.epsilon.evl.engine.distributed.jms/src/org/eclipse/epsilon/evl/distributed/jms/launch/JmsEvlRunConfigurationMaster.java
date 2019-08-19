@@ -25,6 +25,12 @@ import org.eclipse.epsilon.evl.distributed.strategy.BatchJobSplitter;
 public class JmsEvlRunConfigurationMaster extends DistributedEvlRunConfigurationMaster {
 
 	public static class Builder<R extends JmsEvlRunConfigurationMaster, B extends Builder<R, B>> extends DistributedEvlRunConfigurationMaster.Builder<R, B> {
+		@Override
+		protected EvlModuleJmsMaster createModule() {
+			EvlContextJmsMaster context = new EvlContextJmsMaster(parallelism, distributedParallelism, host, sessionID);
+			BatchJobSplitter strategy = new BatchJobSplitter(context, masterProportion, shuffle, batchFactor);
+			return new EvlModuleJmsMasterBatch(context, strategy);
+		}
 		
 		protected Builder() {
 			super();
@@ -41,12 +47,4 @@ public class JmsEvlRunConfigurationMaster extends DistributedEvlRunConfiguration
 	public JmsEvlRunConfigurationMaster(Builder<? extends DistributedEvlRunConfiguration, ?> builder) {
 		super(builder);
 	}
-
-	@Override
-	protected EvlModuleJmsMaster getDefaultModule() {
-		EvlContextJmsMaster context = new EvlContextJmsMaster(localParallelism, distributedParallelism, host, sessionID);
-		BatchJobSplitter strategy = new BatchJobSplitter(context, masterProportion, shuffle, batchFactor);
-		return new EvlModuleJmsMasterBatch(context, strategy);
-	}
-
 }

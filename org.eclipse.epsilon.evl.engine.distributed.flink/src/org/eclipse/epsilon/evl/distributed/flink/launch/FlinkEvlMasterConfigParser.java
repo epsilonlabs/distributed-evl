@@ -40,7 +40,7 @@ public class FlinkEvlMasterConfigParser<R extends FlinkEvlRunConfigurationMaster
 	@Override
 	public void parseArgs(String[] args) throws Exception {
 		super.parseArgs(args);
-		EvlContextFlinkMaster context = new EvlContextFlinkMaster(builder.localParallelism, builder.distributedParallelism);
+		EvlContextFlinkMaster context = new EvlContextFlinkMaster(builder.parallelism, builder.distributedParallelism);
 		if (builder.batchFactor != Double.MIN_VALUE) {
 			builder.module = new EvlModuleFlinkSubset(context, getBatchStrategy(context));
 		}

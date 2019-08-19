@@ -20,7 +20,7 @@ import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributed
 public abstract class DistributedEvlRunConfigurationMaster extends DistributedEvlRunConfiguration {
 
 	@SuppressWarnings("unchecked")
-	public static class Builder<R extends DistributedEvlRunConfigurationMaster, B extends Builder<R, B>> extends DistributedEvlRunConfiguration.Builder<R, B> {
+	public static abstract class Builder<R extends DistributedEvlRunConfigurationMaster, B extends Builder<R, B>> extends DistributedEvlRunConfiguration.Builder<R, B> {
 		public static final double UNINTIALIZED_VALUE = -Double.MAX_VALUE;
 		
 		public int distributedParallelism;
@@ -44,6 +44,9 @@ public abstract class DistributedEvlRunConfigurationMaster extends DistributedEv
 			this.shuffle = shuffle;
 			return (B) this;
 		}
+		
+		@Override
+		protected abstract EvlModuleDistributedMaster createModule();
 		
 		protected Builder() {
 			super();
@@ -83,8 +86,4 @@ public abstract class DistributedEvlRunConfigurationMaster extends DistributedEv
 	public EvlModuleDistributedMaster getModule() {
 		return (EvlModuleDistributedMaster) super.getModule();
 	}
-	
-	@Override
-	protected abstract EvlModuleDistributedMaster getDefaultModule();
-	
 }
