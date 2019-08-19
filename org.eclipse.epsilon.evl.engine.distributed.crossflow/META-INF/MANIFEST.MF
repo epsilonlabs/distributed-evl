@@ -12,4 +12,5 @@ Require-Bundle: org.eclipse.epsilon.evl.engine.distributed,
 Export-Package: org.eclipse.epsilon.evl.distributed.crossflow,
  org.eclipse.epsilon.evl.distributed.crossflow.atomic,
  org.eclipse.epsilon.evl.distributed.crossflow.batch,
+ org.eclipse.epsilon.evl.distributed.crossflow.execute.context,
  org.eclipse.epsilon.evl.distributed.crossflow.launch

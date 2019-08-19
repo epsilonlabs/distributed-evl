@@ -11,6 +11,5 @@ Require-Bundle: org.eclipse.epsilon.evl.engine;visibility:=reexport,
 Export-Package: org.eclipse.epsilon.evl.distributed,
  org.eclipse.epsilon.evl.distributed.execute.context,
  org.eclipse.epsilon.evl.distributed.execute.data,
- org.eclipse.epsilon.evl.distributed.execute.data.model,
  org.eclipse.epsilon.evl.distributed.launch,
  org.eclipse.epsilon.evl.distributed.strategy
