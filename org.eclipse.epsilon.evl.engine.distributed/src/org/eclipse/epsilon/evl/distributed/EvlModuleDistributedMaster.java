@@ -42,7 +42,7 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 	}
 	
 	protected EvlModuleDistributedMaster(EvlContextDistributedMaster context, JobSplitter<?, ?> strategy) {
-		super(context);
+		super(context != null ? context : new EvlContextDistributedMaster(-1));
 		this.jobSplitter = strategy;
 	}
 	

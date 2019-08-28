@@ -26,8 +26,12 @@ import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
  */
 public abstract class EvlModuleDistributed extends EvlModuleParallelContextAtoms {
 
+	public EvlModuleDistributed() {
+		this(null);
+	}
+	
 	public EvlModuleDistributed(EvlContextDistributed context) {
-		super(context);
+		super(context != null ? context : new EvlContextDistributed());
 	}
 	
 	/**
