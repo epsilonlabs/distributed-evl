@@ -13,7 +13,6 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
-import org.eclipse.epsilon.eol.execute.context.IEolContext;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.execute.data.*;
 import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
@@ -129,18 +128,5 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 	@Override
 	public EvlContextDistributedMaster getContext() {
 		return (EvlContextDistributedMaster) super.getContext();
-	}
-	
-	@Override
-	public void setContext(IEolContext context) {
-		if (context instanceof EvlContextDistributedMaster) {
-			super.setContext(context);
-		}
-		else if (context != null) {
-			throw new IllegalArgumentException(
-				"Invalid context type: expected "+EvlContextDistributedMaster.class.getName()
-				+ " but got "+context.getClass().getName()
-			);
-		}
 	}
 }

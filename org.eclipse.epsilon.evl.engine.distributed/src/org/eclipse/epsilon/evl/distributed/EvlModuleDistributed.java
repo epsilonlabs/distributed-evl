@@ -13,7 +13,6 @@ import java.util.*;
 import java.util.stream.*;
 import org.eclipse.epsilon.common.concurrent.ConcurrencyUtils;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
-import org.eclipse.epsilon.eol.execute.context.IEolContext;
 import org.eclipse.epsilon.evl.concurrent.atomic.EvlModuleParallelContextAtoms;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributed;
 import org.eclipse.epsilon.evl.distributed.execute.data.*;
@@ -75,18 +74,5 @@ public abstract class EvlModuleDistributed extends EvlModuleParallelContextAtoms
 	@Override
 	public EvlContextDistributed getContext() {
 		return (EvlContextDistributed) super.getContext();
-	}
-	
-	@Override
-	public void setContext(IEolContext context) {
-		if (context instanceof EvlContextDistributed) {
-			super.setContext(context);
-		}
-		else if (context != null) {
-			throw new IllegalArgumentException(
-				"Invalid context type: expected "+EvlContextDistributed.class.getName()
-				+ " but got "+context.getClass().getName()
-			);
-		}
 	}
 }

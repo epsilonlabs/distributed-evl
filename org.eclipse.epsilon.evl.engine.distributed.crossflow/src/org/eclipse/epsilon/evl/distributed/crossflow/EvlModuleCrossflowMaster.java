@@ -12,7 +12,6 @@ package org.eclipse.epsilon.evl.distributed.crossflow;
 import java.io.Serializable;
 import java.util.List;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
-import org.eclipse.epsilon.eol.execute.context.IEolContext;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.crossflow.execute.context.EvlContextCrossflowMaster;
 import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
@@ -53,18 +52,5 @@ public abstract class EvlModuleCrossflowMaster extends EvlModuleDistributedMaste
 	@Override
 	public EvlContextCrossflowMaster getContext() {
 		return (EvlContextCrossflowMaster) super.getContext();
-	}
-	
-	@Override
-	public void setContext(IEolContext context) {
-		if (context instanceof EvlContextCrossflowMaster) {
-			super.setContext(context);
-		}
-		else if (context != null) {
-			throw new IllegalArgumentException(
-				"Invalid context type: expected "+EvlContextCrossflowMaster.class.getName()
-				+ " but got "+context.getClass().getName()
-			);
-		}
 	}
 }

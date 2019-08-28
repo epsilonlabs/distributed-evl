@@ -23,7 +23,6 @@ import org.eclipse.epsilon.common.function.CheckedConsumer;
 import org.eclipse.epsilon.common.function.CheckedRunnable;
 import org.eclipse.epsilon.common.function.ExceptionContainer;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
-import org.eclipse.epsilon.eol.execute.context.IEolContext;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.jms.execute.context.EvlContextJmsMaster;
@@ -96,6 +95,10 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	private CheckedRunnable<JMSException> completionSender;
 	private Thread jobSenderThread;
 
+	public EvlModuleJmsMaster(EvlContextJmsMaster context) {
+		this(context, null);
+	}
+	
 	protected EvlModuleJmsMaster(EvlContextJmsMaster context, JobSplitter<?, ?> strategy) {
 		super(context, strategy);
 		slaveWorkers = new java.util./*Hashtable*/concurrent.ConcurrentHashMap<>(
@@ -588,18 +591,5 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	@Override
 	public EvlContextJmsMaster getContext() {
 		return (EvlContextJmsMaster) super.getContext();
-	}
-	
-	@Override
-	public void setContext(IEolContext context) {
-		if (context instanceof EvlContextJmsMaster) {
-			super.setContext(context);
-		}
-		else if (context != null) {
-			throw new IllegalArgumentException(
-				"Invalid context type: expected "+EvlContextJmsMaster.class.getName()
-				+ " but got "+context.getClass().getName()
-			);
-		}
 	}
 }

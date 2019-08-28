@@ -18,7 +18,6 @@ import org.apache.flink.api.java.operators.DataSource;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.fs.FileSystem.WriteMode;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
-import org.eclipse.epsilon.eol.execute.context.IEolContext;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlResultAtom;
@@ -75,19 +74,6 @@ public abstract class EvlModuleFlinkMaster<D extends Serializable> extends EvlMo
 		}
 		catch (Exception ex) {
 			EolRuntimeException.propagate(ex);
-		}
-	}
-
-	@Override
-	public void setContext(IEolContext context) {
-		if (context instanceof EvlContextFlinkMaster) {
-			super.setContext(context);
-		}
-		else if (context != null) {
-			throw new IllegalArgumentException(
-				"Invalid context type: expected "+EvlContextFlinkMaster.class.getName()
-				+ " but got "+context.getClass().getName()
-			);
 		}
 	}
 	
