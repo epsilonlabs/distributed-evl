@@ -57,7 +57,7 @@ import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
  * execution strategy. See the {@link #checkConstraints()} method for where these "checkpoint" methods are.
  * <br/><br/>
  * 
- * It is the responsibility of subclasses to handled failed jobs sent from workers. The {@link #failedJobs}
+ * It is the responsibility of subclasses to handle failed jobs sent from workers. The {@link #failedJobs}
  * collection gets appended to every time a failure message is received. This message will usually be the job that
  * was sent to the worker. Every time a failure is added, the collection object's monitor is notified.
  * Implementations can use this to listen for failures and take appropriate action, such as re-scheduling the jobs
@@ -66,7 +66,7 @@ import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
  * {@linkplain #waitForWorkersToFinishJobs(AtomicInteger, JMSContext)} so any remaining jobs will be processed
  * if they have not been handled. This therefore requires that implementations should remove jobs if they process
  * them during execution to avoid unnecessary duplicate processing. <br/>
- * It should also be noted that the {@link #failedJobs} is not thread-safe, so manual synchronization is required.
+ * It should also be noted that the {@link #failedJobs} collection is not thread-safe, so manual synchronization is required.
  * 
  * @see EvlJmsWorker
  * @author Sina Madani
@@ -88,8 +88,6 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	protected final int expectedSlaves;
 	protected final Map<String, Map<String, Duration>> slaveWorkers;
 	protected final Collection<Serializable> failedJobs = new java.util.HashSet<>();
-	protected boolean refuseAdditionalWorkersRegistration = true;
-	protected boolean refuseAdditionalWorkersConfirm = true;
 	ConnectionFactory connectionFactory;
 	private CheckedConsumer<Serializable, JMSException> jobSender;
 	private CheckedRunnable<JMSException> completionSender;
@@ -129,7 +127,8 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 			// Triggered when a worker announces itself to the registration queue
 			regContext.createConsumer(createRegistrationQueue(regContext)).setMessageListener(msg -> {
 				// For security / load purposes, stop additional workers from being picked up.
-				if (refuseAdditionalWorkersRegistration && registeredWorkers.get() >= expectedSlaves) {
+				int currentWorkers = registeredWorkers.get();
+				if (refuseAdditionalWorkersRegistration(currentWorkers) && currentWorkers >= expectedSlaves) {
 					String logMsg = "Ignoring additional worker registration";
 					try {
 						log(logMsg+" "+msg.getJMSMessageID());
@@ -141,7 +140,7 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 				}
 				try {
 					// Assign worker ID
-					int currentWorkers = registeredWorkers.incrementAndGet();
+					currentWorkers = registeredWorkers.incrementAndGet();
 					String workerID = createWorker(currentWorkers, msg);
 					slaveWorkers.put(workerID, Collections.emptyMap());
 					// Tell the worker what their ID is along with the configuration parameters
@@ -169,7 +168,8 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 				// Triggered when a worker has completed loading the configuration
 				regContext.createConsumer(tempDest).setMessageListener(response -> {
 					try {
-						if (refuseAdditionalWorkersConfirm && readyWorkers.get() >= expectedSlaves) {
+						int currentWorkers = readyWorkers.get();
+						if (refuseAdditionalWorkersConfirm(currentWorkers) && currentWorkers >= expectedSlaves) {
 							String logMsg = "Ignoring additional worker confirmation ";
 							try {
 								log(logMsg+" "+response.getJMSMessageID());
@@ -220,6 +220,27 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 			if (ex instanceof JMSException) throw new JMSRuntimeException(ex.getMessage());
 			else throw new EolRuntimeException(ex);
 		}
+	}
+	
+	/**
+	 * Whether to prevent additional workers from connecting.
+	 * 
+	 * @param workersRegistered The current number of registered workers.
+	 * @return <code>true</code> to prevent additional worker registrations.
+	 */
+	protected boolean refuseAdditionalWorkersRegistration(int workersRegistered) {
+		return true;
+	}
+	
+	/**
+	 * Whether to ignore responses from additional workers after they have signalled
+	 * that they are ready to begin processing.
+	 * 
+	 * @param workersReady The current number of workers which are ready to receive and process jobs.
+	 * @return <code>true</code> to ignore additional workers for job processing.
+	 */
+	protected boolean refuseAdditionalWorkersConfirm(int workersReady) {
+		return true;
 	}
 	
 	/**

@@ -151,6 +151,13 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 		}
 	}
 	
+	/**
+	 * Synchronous job processing.
+	 * 
+	 * @param jobConsumer
+	 * @param replyContext
+	 * @throws Exception
+	 */
 	void processJobs(JMSConsumer jobConsumer, JMSContext replyContext) throws Exception {
 		JMSProducer resultSender = replyContext.createProducer().setAsync(null);
 		Destination resultDest = replyContext.createQueue(RESULTS_QUEUE_NAME+sessionID);
