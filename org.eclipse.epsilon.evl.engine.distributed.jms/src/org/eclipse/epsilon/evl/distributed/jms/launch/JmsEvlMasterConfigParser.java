@@ -10,8 +10,8 @@
 package org.eclipse.epsilon.evl.distributed.jms.launch;
 
 import java.net.URI;
-import org.eclipse.epsilon.evl.distributed.jms.atomic.EvlModuleJmsMasterAtomic;
-import org.eclipse.epsilon.evl.distributed.jms.batch.EvlModuleJmsMasterBatch;
+import org.eclipse.epsilon.evl.distributed.jms.atomic.*;
+import org.eclipse.epsilon.evl.distributed.jms.batch.*;
 import org.eclipse.epsilon.evl.distributed.jms.execute.context.EvlContextJmsMaster;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlMasterConfigParser;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfigurationMaster.Builder;
@@ -58,8 +58,11 @@ public class JmsEvlMasterConfigParser<R extends JmsEvlRunConfigurationMaster, B 
 		if (builder.batchFactor != Builder.UNINTIALIZED_VALUE) {
 			builder.module = new EvlModuleJmsMasterBatch(context, getBatchStrategy(context));
 		}
-		else {
+		else if (builder.masterProportion != Builder.UNINTIALIZED_VALUE) {
 			builder.module = new EvlModuleJmsMasterAtomic(context, getAtomicStrategy(context));
+		}
+		else {
+			builder.module = new EvlModuleJmsMasterAnnotation(context, getAnnotationStrategy(context));
 		}
 	}
 }

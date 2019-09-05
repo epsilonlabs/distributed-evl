@@ -25,22 +25,21 @@ import org.eclipse.epsilon.evl.execute.exceptions.EvlConstraintNotFoundException
  * @since 1.6
  */
 public class SerializableEvlResultAtom extends SerializableEvlAtom {
-
-	private static final long serialVersionUID = 8866819399226925799L;
 	
-	public String constraintName, message;
+	private static final long serialVersionUID = -3282567716226853604L;
+	
+	public String message;
 	
 	@Override
 	protected SerializableEvlResultAtom clone() {
 		SerializableEvlResultAtom clone = (SerializableEvlResultAtom) super.clone();
-		clone.constraintName = this.constraintName != null ? ""+this.constraintName : null;
 		clone.message = this.message != null ? ""+this.message : null;
 		return clone;
 	}
 	
 	@Override
 	public int hashCode() {
-		return Objects.hash(super.hashCode(), constraintName, message);
+		return Objects.hash(super.hashCode(), message);
 	}
 
 	@Override
@@ -49,7 +48,6 @@ public class SerializableEvlResultAtom extends SerializableEvlAtom {
 		if (!super.equals(obj)) return false;
 		SerializableEvlResultAtom other = (SerializableEvlResultAtom) obj;
 		return
-			Objects.equals(this.constraintName, other.constraintName) &&
 			Objects.equals(this.message, other.message);
 	}
 
@@ -57,7 +55,7 @@ public class SerializableEvlResultAtom extends SerializableEvlAtom {
 	public String toString() {
 		String start = super.toString();
 		start = start.substring(0, start.length() - 1);
-		return start+", constraintName=" + constraintName + ", message=" + message+"]";
+		return start + ", message=" + message+"]";
 	}
 	
 	/**

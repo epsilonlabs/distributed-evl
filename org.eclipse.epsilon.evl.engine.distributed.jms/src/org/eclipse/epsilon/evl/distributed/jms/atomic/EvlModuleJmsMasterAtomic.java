@@ -13,7 +13,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlInputAtom;
 import org.eclipse.epsilon.evl.distributed.jms.EvlModuleJmsMaster;
 import org.eclipse.epsilon.evl.distributed.jms.execute.context.EvlContextJmsMaster;
-import org.eclipse.epsilon.evl.distributed.strategy.AtomicJobSplitter;
+import org.eclipse.epsilon.evl.distributed.strategy.ContextAtomJobSplitter;
+import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
 import org.eclipse.epsilon.evl.execute.atoms.ConstraintContextAtom;
 
 /**
@@ -27,7 +28,11 @@ import org.eclipse.epsilon.evl.execute.atoms.ConstraintContextAtom;
  */
 public class EvlModuleJmsMasterAtomic extends EvlModuleJmsMaster {
 	
-	public EvlModuleJmsMasterAtomic(EvlContextJmsMaster context, AtomicJobSplitter strategy) {
+	public EvlModuleJmsMasterAtomic(EvlContextJmsMaster context, ContextAtomJobSplitter strategy) {
+		this(context, (JobSplitter<?, ?>) strategy);
+	}
+	
+	EvlModuleJmsMasterAtomic(EvlContextJmsMaster context, JobSplitter<?, ?> strategy) {
 		super(context, strategy);
 	}
 

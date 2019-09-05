@@ -10,11 +10,11 @@
 package org.eclipse.epsilon.evl.distributed.flink.launch;
 
 import org.eclipse.epsilon.evl.distributed.flink.EvlModuleFlinkMaster;
-import org.eclipse.epsilon.evl.distributed.flink.atomic.EvlModuleFlinkAtoms;
+import org.eclipse.epsilon.evl.distributed.flink.atomic.EvlModuleFlinkMasterAtoms;
 import org.eclipse.epsilon.evl.distributed.flink.execute.context.EvlContextFlinkMaster;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfiguration;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfigurationMaster;
-import org.eclipse.epsilon.evl.distributed.strategy.AtomicJobSplitter;
+import org.eclipse.epsilon.evl.distributed.strategy.ContextAtomJobSplitter;
 
 /**
  * 
@@ -27,8 +27,8 @@ public class FlinkEvlRunConfigurationMaster extends DistributedEvlRunConfigurati
 		@Override
 		protected EvlModuleFlinkMaster<?> createModule() {
 			EvlContextFlinkMaster context = new EvlContextFlinkMaster(parallelism, distributedParallelism);
-			AtomicJobSplitter strategy = new AtomicJobSplitter(context, masterProportion, shuffle);
-			return new EvlModuleFlinkAtoms(context, strategy);
+			ContextAtomJobSplitter strategy = new ContextAtomJobSplitter(context, masterProportion, shuffle);
+			return new EvlModuleFlinkMasterAtoms(context, strategy);
 		}
 		
 		protected Builder() {

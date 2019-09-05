@@ -22,9 +22,9 @@ import org.eclipse.epsilon.eol.execute.context.IEolContext;
  */
 public abstract class SerializableEvlAtom implements java.io.Serializable, Cloneable {
 
-	private static final long serialVersionUID = 4500436500647882020L;
+	private static final long serialVersionUID = 3622228119018264366L;
 	
-	public String modelElementID, modelName, contextName;
+	public String modelElementID, modelName, contextName, constraintName;
 
 	@Override
 	protected SerializableEvlAtom clone() {
@@ -38,12 +38,13 @@ public abstract class SerializableEvlAtom implements java.io.Serializable, Clone
 		clone.modelElementID = this.modelElementID != null ? ""+this.modelElementID : null;
 		clone.modelName = this.modelName != null ? ""+this.modelName : null;
 		clone.contextName = this.contextName != null ? ""+this.contextName : null;
+		clone.constraintName = this.constraintName != null ? ""+this.constraintName : null;
 		return clone;
 	}
 	
 	@Override
 	public int hashCode() {
-		return Objects.hash(getClass(), modelElementID, modelName, contextName);
+		return Objects.hash(getClass(), modelElementID, modelName, contextName, constraintName);
 	}
 
 	@Override
@@ -54,14 +55,16 @@ public abstract class SerializableEvlAtom implements java.io.Serializable, Clone
 		return
 			Objects.equals(this.modelElementID, other.modelElementID) &&
 			Objects.equals(this.modelName, other.modelName) &&
-			Objects.equals(this.contextName, other.contextName);
+			Objects.equals(this.contextName, other.contextName) &&
+			Objects.equals(this.constraintName, other.constraintName);
 	}
 	
 	@Override
 	public String toString() {
 		return getClass().getSimpleName()+" [modelElementID="
 				+ modelElementID + ", modelName=" + modelName
-				+ ", contextType=" + contextName+"]";
+				+ ", contextType=" + contextName
+				+ ", constraint=" + constraintName+"]";
 	}
 	
 	public Object findElement(IEolContext context) throws EolRuntimeException {

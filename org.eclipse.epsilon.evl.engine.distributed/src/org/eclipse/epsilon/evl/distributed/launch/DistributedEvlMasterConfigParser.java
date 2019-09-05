@@ -56,11 +56,15 @@ public class DistributedEvlMasterConfigParser<R extends DistributedEvlRunConfigu
 		builder.masterProportion = tryParse(masterProportionOpt, builder.masterProportion);
 	}
 	
-	protected AtomicJobSplitter getAtomicStrategy(EvlContextDistributedMaster context) {
-		return new AtomicJobSplitter(context, builder.masterProportion, builder.shuffle);
-	}
-	
 	protected BatchJobSplitter getBatchStrategy(EvlContextDistributedMaster context) {
 		return new BatchJobSplitter(context, builder.masterProportion, builder.shuffle, builder.batchFactor);
+	}
+	
+	protected AnnotationConstraintAtomJobSplitter getAnnotationStrategy(EvlContextDistributedMaster context) {
+		return new AnnotationConstraintAtomJobSplitter(context, builder.shuffle);
+	}
+	
+	protected ContextAtomJobSplitter getAtomicStrategy(EvlContextDistributedMaster context) {
+		return new ContextAtomJobSplitter(context, builder.masterProportion, builder.shuffle);
 	}
 }

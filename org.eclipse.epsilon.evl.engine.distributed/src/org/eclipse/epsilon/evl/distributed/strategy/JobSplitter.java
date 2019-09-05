@@ -25,6 +25,21 @@ public abstract class JobSplitter<T, S extends Serializable> {
 	protected ArrayList<S> workerJobs;
 	protected List<T> masterJobs;
 	
+	protected JobSplitter() {
+		this(null);
+	}
+	protected JobSplitter(boolean shuffle) {
+		this(null, shuffle);
+	}
+	protected JobSplitter(EvlContextDistributedMaster context) {
+		this(context, false);
+	}
+	protected JobSplitter(EvlContextDistributedMaster context, boolean shuffle) {
+		this.shuffle = shuffle;
+		this.context = context;
+		this.masterProportion = -1;
+	}
+	
 	/**
 	 * 
 	 * @param masterProportion The percentage of jobs to be performed by the master. Must be between 0 and 1.

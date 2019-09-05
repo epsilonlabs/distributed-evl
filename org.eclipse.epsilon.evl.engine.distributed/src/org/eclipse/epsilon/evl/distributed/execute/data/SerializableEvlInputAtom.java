@@ -11,6 +11,8 @@ package org.eclipse.epsilon.evl.distributed.execute.data;
 
 import java.util.ArrayList;
 import java.util.Collection;
+
+import org.eclipse.epsilon.common.util.StringUtil;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.eol.exceptions.models.EolModelElementTypeNotFoundException;
 import org.eclipse.epsilon.eol.exceptions.models.EolModelNotFoundException;
@@ -60,9 +62,11 @@ public class SerializableEvlInputAtom extends SerializableEvlAtom {
 	
 	public SerializableEvlResultAtom serializeUnsatisfiedConstraint(UnsatisfiedConstraint unsatisfiedConstraint) {
 		SerializableEvlResultAtom outputAtom = new SerializableEvlResultAtom();
-		outputAtom.contextName = this.contextName;
+		outputAtom.contextName = StringUtil.isEmpty(contextName) ?
+			unsatisfiedConstraint.getConstraint().getConstraintContext().getTypeName() : this.contextName;
 		outputAtom.modelName = this.modelName;
-		outputAtom.constraintName = unsatisfiedConstraint.getConstraint().getName();
+		outputAtom.constraintName = StringUtil.isEmpty(constraintName) ?
+			unsatisfiedConstraint.getConstraint().getName() : this.constraintName;
 		outputAtom.modelElementID = this.modelElementID;
 		outputAtom.message = unsatisfiedConstraint.getMessage();
 		return outputAtom;
