@@ -37,6 +37,22 @@ public class EvlFlinkFlatMapFunction<IN extends Serializable> extends RichFlatMa
 	protected transient EvlModuleDistributedSlave localModule;
 	protected transient DistributedEvlRunConfigurationSlave configContainer;
 	
+	@Override
+	public void flatMap(IN value, Collector<SerializableEvlResultAtom> out) throws Exception {
+		localModule.executeJob(value).forEach(out::collect);
+	}
+	
+	@Override
+	public void open(Configuration additionalParameters) throws Exception {
+		configContainer = EvlContextDistributedSlave.parseJobParameters(
+			getParameters(getRuntimeContext(), additionalParameters).toMap(), null
+		);
+		localModule = configContainer.getModule();
+		
+		configContainer.preExecute();
+		localModule.prepareExecution();
+	}
+	
 	public static Configuration getParameters(RuntimeContext context, Configuration additionalParameters) {
 		GlobalJobParameters globalParameters = context.getExecutionConfig().getGlobalJobParameters();
 		Configuration parameters = null;
@@ -52,21 +68,5 @@ public class EvlFlinkFlatMapFunction<IN extends Serializable> extends RichFlatMa
 		}
 		
 		return parameters;
-	}
-	
-	@Override
-	public void flatMap(IN value, Collector<SerializableEvlResultAtom> out) throws Exception {
-		localModule.executeJob(value).forEach(out::collect);
-	}
-	
-	@Override
-	public void open(Configuration additionalParameters) throws Exception {
-		configContainer = EvlContextDistributedSlave.parseJobParameters(
-			getParameters(getRuntimeContext(), additionalParameters).toMap(), null
-		);
-		localModule = configContainer.getModule();
-		
-		configContainer.preExecute();
-		localModule.prepareExecution();
 	}
 }

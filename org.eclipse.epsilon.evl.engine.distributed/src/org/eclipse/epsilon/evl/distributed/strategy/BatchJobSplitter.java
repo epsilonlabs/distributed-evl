@@ -45,7 +45,7 @@ public class BatchJobSplitter extends JobSplitter<JobBatch, JobBatch> {
 
 	@Override
 	protected List<JobBatch> getAllJobs() throws EolRuntimeException {
-		final int numTotalJobs = getAllJobs().size(), chunks;
+		final int numTotalJobs = context.getModule().getAllJobs().size(), chunks;
 		if (this.batchSize >= 1) {
 			chunks = (int) batchSize;
 		}

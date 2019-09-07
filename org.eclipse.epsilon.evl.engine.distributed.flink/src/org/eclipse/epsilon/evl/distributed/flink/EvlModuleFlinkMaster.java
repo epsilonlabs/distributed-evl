@@ -36,8 +36,8 @@ public abstract class EvlModuleFlinkMaster<D extends Serializable> extends EvlMo
 
 	private ExecutionEnvironment executionEnv;
 	
-	protected EvlModuleFlinkMaster(EvlContextFlinkMaster context, JobSplitter<?, D> jobSplitter) {
-		super(Objects.requireNonNull(context), jobSplitter);
+	protected EvlModuleFlinkMaster(EvlContextFlinkMaster context, JobSplitter<?, D> strategy) {
+		super(Objects.requireNonNull(context), strategy);
 	}
 
 	@Override
@@ -61,7 +61,7 @@ public abstract class EvlModuleFlinkMaster<D extends Serializable> extends EvlMo
 			String outputPath = getContext().getOutputPath();
 			executionEnv.getConfig().setGlobalJobParameters(config);
 			DataSet<SerializableEvlResultAtom> pipeline = getProcessingPipeline(executionEnv)
-				.flatMap(new EvlFlinkFlatMapFunction<>());
+				.flatMap(new EvlFlinkFlatMapFunction<D>());
 			
 			if (outputPath != null && !outputPath.isEmpty()) {
 				pipeline.writeAsText(outputPath, WriteMode.OVERWRITE);

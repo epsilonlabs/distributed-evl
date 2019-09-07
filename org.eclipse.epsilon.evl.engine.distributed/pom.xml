@@ -5,25 +5,24 @@
 
   <groupId>org.eclipse.epsilon.distributed-evl</groupId>
   <artifactId>org.eclipse.epsilon.evl.engine.distributed</artifactId>
-  <version>1.6.0-SNAPSHOT</version>
+  <version>1.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <modules>
     <module>org.eclipse.epsilon.evl.engine.distributed.jms</module>
     <module>org.eclipse.epsilon.evl.engine.distributed.flink</module>
+    <!--module>org.eclipse.epsilon.evl.engine.distributed.crossflow</module-->
   </modules>
 
   <!-->packaging>eclipse-plugin</packaging-->
 
-<dependencies>
+  <dependencies>
 	<!--dependency>
 		<groupId>org.eclipse.epsilon</groupId>
         <artifactId>epsilon-core</artifactId>
         <version>1.6.0</version>
 	</dependency-->
   </dependencies>
-
-  <!-- The rest is copy-pasted from Horacio ;) ->
 
    <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -87,22 +86,17 @@
         <version>${tycho.version}</version>
           <configuration>
           <executionEnvironment>JavaSE-1.8</executionEnvironment>
-          <target>
+          <!--target>
             <artifact>
                 <groupId>org.eclipse.epsilon</groupId>
                 <artifactId>org.eclipse.epsilon.targetplatform</artifactId>
-                <version>1.5.0-SNAPSHOT</version>
+                <version>1.6.0-SNAPSHOT</version>
             </artifact>
           </target>
             <dependency-resolution>
               <extraRequirements>
-              <requirement>
-                <type>eclipse-plugin</type>
-                <id>org.hamcrest.core</id>
-                <versionRange>0.0.0</versionRange>
-              </requirement>
             </extraRequirements>
-          </dependency-resolution>
+          </dependency-resolution-->
             <environments>
               <environment>
                 <os>linux</os>
@@ -149,7 +143,7 @@
     </plugins>
   </build>
 
-  <reporting>
+  <!--reporting>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

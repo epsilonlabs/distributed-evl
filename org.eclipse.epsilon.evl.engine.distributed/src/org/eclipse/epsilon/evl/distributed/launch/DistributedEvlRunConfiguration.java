@@ -9,8 +9,8 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.launch;
 
-import java.net.URI;
 import java.nio.file.Paths;
+import org.eclipse.epsilon.common.util.OperatingSystem;
 import org.eclipse.epsilon.common.util.StringProperties;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributed;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributed;
@@ -82,8 +82,21 @@ public abstract class DistributedEvlRunConfiguration extends EvlRunConfiguration
 		}
 	}
 	
+	static String removeProtocol(String path) {
+		String prot = "://";
+		if (path != null && path.contains(prot)) {
+			path = path.substring(path.indexOf(prot) + prot.length());
+		}
+		int driveIndex = path.indexOf(":/");
+		if (OperatingSystem.isWindows() && driveIndex > 1) {
+			path = path.substring(driveIndex - 1);
+		}
+		return path;
+	}
+	
 	protected static String appendBasePath(String basePath, String relPath) {
-		return Paths.get(basePath, URI.create(relPath).getPath()).toUri().toString();
+		String base = removeProtocol(basePath), relative = removeProtocol(relPath);
+		return Paths.get(base, relative).toUri().toString();
 	}
 	
 	public static Builder<? extends DistributedEvlRunConfiguration, ?> Builder() {
