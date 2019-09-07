@@ -25,18 +25,15 @@ import org.eclipse.epsilon.evl.distributed.flink.execute.context.EvlContextFlink
 import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
 
 /**
- * Convenience base class for Flink EVL modules.
- * 
- * @param <D> The type of inputs used for {@link EvlFlinkFlatMapFunction}.
  * 
  * @author Sina Madani
  * @since 1.6
  */
-public abstract class EvlModuleFlinkMaster extends EvlModuleDistributedMaster {
+public class EvlModuleFlinkMaster extends EvlModuleDistributedMaster {
 
 	private ExecutionEnvironment executionEnv;
 	
-	protected EvlModuleFlinkMaster(EvlContextFlinkMaster context, JobSplitter<?, ?> strategy) {
+	public EvlModuleFlinkMaster(EvlContextFlinkMaster context, JobSplitter<?, ?> strategy) {
 		super(Objects.requireNonNull(context), strategy);
 	}
 

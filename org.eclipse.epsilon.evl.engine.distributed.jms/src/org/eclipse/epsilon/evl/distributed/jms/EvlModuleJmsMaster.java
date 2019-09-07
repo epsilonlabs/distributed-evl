@@ -73,7 +73,7 @@ import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
  * @author Sina Madani
  * @since 1.6
  */
-public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
+public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	
 	public static final String
 		JOBS_QUEUE = "worker_jobs",
@@ -93,12 +93,8 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	private CheckedConsumer<Serializable, JMSException> jobSender;
 	private CheckedRunnable<JMSException> completionSender;
 	private Thread jobSenderThread;
-
-	public EvlModuleJmsMaster(EvlContextJmsMaster context) {
-		this(context, null);
-	}
 	
-	protected EvlModuleJmsMaster(EvlContextJmsMaster context, JobSplitter<?, ?> strategy) {
+	public EvlModuleJmsMaster(EvlContextJmsMaster context, JobSplitter<?, ?> strategy) {
 		super(context, strategy);
 		slaveWorkers = new java.util./*Hashtable*/concurrent.ConcurrentHashMap<>(
 			this.expectedSlaves = getContext().getDistributedParallelism()

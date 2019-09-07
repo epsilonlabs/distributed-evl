@@ -11,7 +11,7 @@ package org.eclipse.epsilon.evl.distributed.launch;
 
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
-
+import org.eclipse.epsilon.evl.distributed.strategy.*;
 /**
  * 
  * @author Sina Madani
@@ -43,6 +43,28 @@ public abstract class DistributedEvlRunConfigurationMaster extends DistributedEv
 		public B withShuffle(boolean shuffle) {
 			this.shuffle = shuffle;
 			return (B) this;
+		}
+		
+		public JobSplitter<?, ?> getStrategy(EvlContextDistributedMaster context) {
+			if (batchFactor != UNINTIALIZED_VALUE) {
+				return getBatchStrategy(context);
+			}
+			else if (masterProportion != UNINTIALIZED_VALUE) {
+				return getAtomicStrategy(context);
+			}
+			else {
+				return getAnnotationStrategy(context);
+			}
+		}
+		
+		protected BatchJobSplitter getBatchStrategy(EvlContextDistributedMaster context) {
+			return new BatchJobSplitter(context, masterProportion, shuffle, batchFactor);
+		}
+		protected AnnotationConstraintAtomJobSplitter getAnnotationStrategy(EvlContextDistributedMaster context) {
+			return new AnnotationConstraintAtomJobSplitter(context, shuffle);
+		}
+		protected ContextAtomJobSplitter getAtomicStrategy(EvlContextDistributedMaster context) {
+			return new ContextAtomJobSplitter(context, masterProportion, shuffle);
 		}
 		
 		@Override

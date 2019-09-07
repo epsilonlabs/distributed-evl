@@ -10,8 +10,6 @@
 package org.eclipse.epsilon.evl.distributed.launch;
 
 import org.apache.commons.cli.Option;
-import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
-import org.eclipse.epsilon.evl.distributed.strategy.*;
 
 public class DistributedEvlMasterConfigParser<R extends DistributedEvlRunConfigurationMaster, B extends DistributedEvlRunConfigurationMaster.Builder<R, B>> extends DistributedEvlConfigParser<R, B> {
 	
@@ -56,15 +54,4 @@ public class DistributedEvlMasterConfigParser<R extends DistributedEvlRunConfigu
 		builder.masterProportion = tryParse(masterProportionOpt, builder.masterProportion);
 	}
 	
-	protected BatchJobSplitter getBatchStrategy(EvlContextDistributedMaster context) {
-		return new BatchJobSplitter(context, builder.masterProportion, builder.shuffle, builder.batchFactor);
-	}
-	
-	protected AnnotationConstraintAtomJobSplitter getAnnotationStrategy(EvlContextDistributedMaster context) {
-		return new AnnotationConstraintAtomJobSplitter(context, builder.shuffle);
-	}
-	
-	protected ContextAtomJobSplitter getAtomicStrategy(EvlContextDistributedMaster context) {
-		return new ContextAtomJobSplitter(context, builder.masterProportion, builder.shuffle);
-	}
 }

@@ -9,8 +9,7 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.flink.launch;
 
-import org.eclipse.epsilon.evl.distributed.flink.atomic.*;
-import org.eclipse.epsilon.evl.distributed.flink.batch.*;
+import org.eclipse.epsilon.evl.distributed.flink.EvlModuleFlinkMaster;
 import org.eclipse.epsilon.evl.distributed.flink.execute.context.EvlContextFlinkMaster;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlMasterConfigParser;
 
@@ -41,14 +40,6 @@ public class FlinkEvlMasterConfigParser<R extends FlinkEvlRunConfigurationMaster
 	public void parseArgs(String[] args) throws Exception {
 		super.parseArgs(args);
 		EvlContextFlinkMaster context = new EvlContextFlinkMaster(builder.parallelism, builder.distributedParallelism);
-		if (builder.batchFactor != FlinkEvlRunConfigurationMaster.Builder.UNINTIALIZED_VALUE) {
-			builder.module = new EvlModuleFlinkSubset(context, getBatchStrategy(context));
-		}
-		else if (builder.masterProportion != FlinkEvlRunConfigurationMaster.Builder.UNINTIALIZED_VALUE) {
-			builder.module = new EvlModuleFlinkMasterAtoms(context, getAtomicStrategy(context));
-		}
-		else {
-			builder.module = new EvlModuleFlinkMasterAnnotation(context, getAnnotationStrategy(context));
-		}
+		builder.module = new EvlModuleFlinkMaster(context, builder.getStrategy(context));
 	}
 }

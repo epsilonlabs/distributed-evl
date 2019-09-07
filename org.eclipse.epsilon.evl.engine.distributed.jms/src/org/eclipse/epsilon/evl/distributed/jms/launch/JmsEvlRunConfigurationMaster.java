@@ -10,11 +10,9 @@
 package org.eclipse.epsilon.evl.distributed.jms.launch;
 
 import org.eclipse.epsilon.evl.distributed.jms.EvlModuleJmsMaster;
-import org.eclipse.epsilon.evl.distributed.jms.batch.EvlModuleJmsMasterBatch;
 import org.eclipse.epsilon.evl.distributed.jms.execute.context.EvlContextJmsMaster;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfiguration;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfigurationMaster;
-import org.eclipse.epsilon.evl.distributed.strategy.BatchJobSplitter;
 
 /**
  * 
@@ -28,8 +26,7 @@ public class JmsEvlRunConfigurationMaster extends DistributedEvlRunConfiguration
 		@Override
 		protected EvlModuleJmsMaster createModule() {
 			EvlContextJmsMaster context = new EvlContextJmsMaster(parallelism, distributedParallelism, host, sessionID);
-			BatchJobSplitter strategy = new BatchJobSplitter(context, masterProportion, shuffle, batchFactor);
-			return new EvlModuleJmsMasterBatch(context, strategy);
+			return new EvlModuleJmsMaster(context, getStrategy(context));
 		}
 		
 		protected Builder() {

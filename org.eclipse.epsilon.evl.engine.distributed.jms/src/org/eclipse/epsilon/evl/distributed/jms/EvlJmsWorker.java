@@ -135,6 +135,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 			log("Configuration and ID received");
 			configuredAckMsg.setStringProperty(WORKER_ID_PROPERTY, workerID);
 			
+			@SuppressWarnings("unchecked")
 			Map<String, ? extends Serializable> configMap = configMsg.getBody(Map.class);
 			configContainer = EvlContextDistributedSlave.parseJobParameters(configMap, basePath);
 			configContainer.preExecute();

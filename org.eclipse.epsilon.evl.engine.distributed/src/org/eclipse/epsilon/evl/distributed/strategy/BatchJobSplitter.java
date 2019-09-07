@@ -15,6 +15,12 @@ import org.eclipse.epsilon.erl.execute.data.JobBatch;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
 
 /**
+ * This distribution strategy splits the model elements into a preset
+ * number of batches based on the parallelism, so that each worker knows
+ * exactly which elements to evaluate in advance. The only data sent
+ * over the wire as input is the start and end index of the jobs for
+ * each node. It is expected that the distribution runtime algorithm
+ * sends each batch to a different node.
  * 
  * @author Sina Madani
  * @since 1.6

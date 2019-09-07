@@ -17,18 +17,14 @@ import org.eclipse.epsilon.evl.distributed.crossflow.execute.context.EvlContextC
 import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
 import org.eclipse.scava.crossflow.runtime.Mode;
 
-public abstract class EvlModuleCrossflowMaster extends EvlModuleDistributedMaster<JobSplitter<?, ?>> {
+public class EvlModuleCrossflowMaster extends EvlModuleDistributedMaster {
 	
 	public EvlModuleCrossflowMaster(EvlContextCrossflowMaster context, JobSplitter<?, ?> strategy) {
 		super(context, strategy);
 	}
-
-	public List<? extends Serializable> getWorkerJobs() throws EolRuntimeException {
-		return jobSplitter.getWorkerJobs();
-	}
 	
 	@Override
-	protected void executeWorkerJobs() throws EolRuntimeException {
+	protected void executeWorkerJobs(List<? extends Serializable> jobs) throws EolRuntimeException {
 		try {
 			DistributedEVL crossflow = new DistributedEVL(Mode.MASTER_BARE);
 			crossflow.setInstanceId(getContext().getInstanceId());
