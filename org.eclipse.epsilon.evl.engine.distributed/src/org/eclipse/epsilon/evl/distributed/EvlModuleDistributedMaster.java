@@ -9,6 +9,7 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
@@ -35,13 +36,9 @@ import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
  */
 public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 	
-	protected JobSplitter<?, ?> jobSplitter;
+	final JobSplitter<?, ?> jobSplitter;
 	
-	public EvlModuleDistributedMaster(EvlContextDistributedMaster context) {
-		this(context, null);
-	}
-	
-	protected EvlModuleDistributedMaster(EvlContextDistributedMaster context, JobSplitter<?, ?> strategy) {
+	public EvlModuleDistributedMaster(EvlContextDistributedMaster context, JobSplitter<?, ?> strategy) {
 		super(context != null ? context : new EvlContextDistributedMaster(-1));
 		this.jobSplitter = strategy;
 	}
@@ -117,6 +114,24 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 			return deserializeResults(((java.util.stream.BaseStream<?,?>) response).iterator());
 		}
 		else return false;
+	}
+	
+	protected void executeMasterJobs(List<?> jobs) throws EolRuntimeException {
+		executeJob(jobs);
+	}
+	
+	protected abstract void executeWorkerJobs(List<? extends Serializable> jobs) throws EolRuntimeException;
+	
+	@Override
+	protected final void checkConstraints() throws EolRuntimeException {
+		List<?> masterJobs = jobSplitter.getMasterJobs();
+		if (!masterJobs.isEmpty()) {
+			executeMasterJobs(masterJobs);
+		}
+		List<? extends Serializable> workerJobs = jobSplitter.getWorkerJobs();
+		if (!workerJobs.isEmpty()) {
+			executeWorkerJobs(workerJobs);
+		}
 	}
 	
 	@Override

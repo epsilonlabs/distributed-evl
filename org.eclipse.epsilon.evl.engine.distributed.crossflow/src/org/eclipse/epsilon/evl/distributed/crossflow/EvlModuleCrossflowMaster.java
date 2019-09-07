@@ -17,7 +17,7 @@ import org.eclipse.epsilon.evl.distributed.crossflow.execute.context.EvlContextC
 import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
 import org.eclipse.scava.crossflow.runtime.Mode;
 
-public abstract class EvlModuleCrossflowMaster extends EvlModuleDistributedMaster {
+public abstract class EvlModuleCrossflowMaster extends EvlModuleDistributedMaster<JobSplitter<?, ?>> {
 	
 	public EvlModuleCrossflowMaster(EvlContextCrossflowMaster context, JobSplitter<?, ?> strategy) {
 		super(context, strategy);
@@ -28,7 +28,7 @@ public abstract class EvlModuleCrossflowMaster extends EvlModuleDistributedMaste
 	}
 	
 	@Override
-	protected void checkConstraints() throws EolRuntimeException {
+	protected void executeWorkerJobs() throws EolRuntimeException {
 		try {
 			DistributedEVL crossflow = new DistributedEVL(Mode.MASTER_BARE);
 			crossflow.setInstanceId(getContext().getInstanceId());

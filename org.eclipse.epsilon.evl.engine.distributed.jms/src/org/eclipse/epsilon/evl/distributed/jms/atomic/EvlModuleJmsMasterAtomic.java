@@ -9,7 +9,6 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.jms.atomic;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlInputAtom;
 import org.eclipse.epsilon.evl.distributed.jms.EvlModuleJmsMaster;
 import org.eclipse.epsilon.evl.distributed.jms.execute.context.EvlContextJmsMaster;
@@ -34,16 +33,5 @@ public class EvlModuleJmsMasterAtomic extends EvlModuleJmsMaster {
 	
 	EvlModuleJmsMasterAtomic(EvlContextJmsMaster context, JobSplitter<?, ?> strategy) {
 		super(context, strategy);
-	}
-
-	@Override
-	protected void processJobs(AtomicInteger workersReady) throws Exception {
-		waitForWorkersToConnect(workersReady);
-		
-		sendAllJobs(jobSplitter.getWorkerJobs());
-		
-		log("Began processing own jobs");
-		executeJob(jobSplitter.getMasterJobs());
-		log("Finished processing own jobs");
 	}
 }

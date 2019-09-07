@@ -25,7 +25,7 @@ public class FlinkEvlRunConfigurationMaster extends DistributedEvlRunConfigurati
 	
 	public static class Builder<R extends FlinkEvlRunConfigurationMaster, B extends Builder<R, B>> extends DistributedEvlRunConfigurationMaster.Builder<R, B> {
 		@Override
-		protected EvlModuleFlinkMaster<?> createModule() {
+		protected EvlModuleFlinkMaster createModule() {
 			EvlContextFlinkMaster context = new EvlContextFlinkMaster(parallelism, distributedParallelism);
 			ContextAtomJobSplitter strategy = new ContextAtomJobSplitter(context, masterProportion, shuffle);
 			return new EvlModuleFlinkMasterAtoms(context, strategy);

@@ -15,6 +15,7 @@ import java.time.LocalTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -113,7 +114,14 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	}
 	
 	@Override
-	protected final void checkConstraints() throws EolRuntimeException {
+	protected void executeMasterJobs(List<?> jobs) throws EolRuntimeException {
+		log("Began processing own jobs");
+		super.executeMasterJobs(jobs);
+		log("Finished processing own jobs");
+	}
+	
+	@Override
+	protected final void executeWorkerJobs(List<? extends Serializable> jobs) throws EolRuntimeException {
 		try (JMSContext regContext = connectionFactory.createContext()) {
 			// Initial registration of workers
 			final Destination tempDest = regContext.createTemporaryQueue();
@@ -199,7 +207,7 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 					final Topic completionTopic = createEndOfJobsTopic(jobContext);
 					completionSender = () -> jobsProducer.send(completionTopic, jobContext.createMessage());
 					
-					processJobs(readyWorkers);
+					processWorkerJobs(jobs, readyWorkers);
 					if (jobSenderThread != null) jobSenderThread.join();
 					waitForWorkersToFinishJobs(workersFinished);
 					processFailedJobs();
@@ -424,13 +432,17 @@ public abstract class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	 * This method is called in the body of {@link #checkConstraints()}, and is intended
 	 * to be where the main processing logic goes. Immediately after this method, the
 	 * {@link #waitForWorkersToFinishJobs(JMSContext)} is called.
+	 * @param jobs The jobs to send to workers.
 	 * 
 	 * @param readyWorkers  Convenience handle which may be used for synchronization, e.g.
 	 * to call {@link #waitForWorkersToConnect(AtomicInteger)}.
 	 * @throws Exception
 	 */
-	abstract protected void processJobs(final AtomicInteger workersReady) throws Exception;
-
+	protected void processWorkerJobs(List<? extends Serializable> jobs, final AtomicInteger workersReady) throws Exception {
+		waitForWorkersToConnect(workersReady);
+		sendAllJobs(jobs);
+	}
+	
 	/**
 	 * Convenience method for bulk sending of jobs followed by a call to {@link #signalCompletion()}.
 	 * 

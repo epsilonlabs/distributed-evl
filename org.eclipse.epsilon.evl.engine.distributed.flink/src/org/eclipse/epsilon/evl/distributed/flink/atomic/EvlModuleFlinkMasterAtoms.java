@@ -9,15 +9,9 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.flink.atomic;
 
-import java.util.List;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.api.java.ExecutionEnvironment;
-import org.apache.flink.api.java.operators.DataSource;
-import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlInputAtom;
 import org.eclipse.epsilon.evl.distributed.flink.EvlModuleFlinkMaster;
 import org.eclipse.epsilon.evl.distributed.flink.execute.context.EvlContextFlinkMaster;
-import org.eclipse.epsilon.evl.distributed.flink.format.FlinkInputFormat;
 import org.eclipse.epsilon.evl.distributed.strategy.ContextAtomJobSplitter;
 import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
 
@@ -27,7 +21,7 @@ import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
  * @author Sina Madani
  * @since 1.6
  */
-public class EvlModuleFlinkMasterAtoms extends EvlModuleFlinkMaster<SerializableEvlInputAtom> {
+public class EvlModuleFlinkMasterAtoms extends EvlModuleFlinkMaster {
 
 	public EvlModuleFlinkMasterAtoms(EvlContextFlinkMaster context, ContextAtomJobSplitter strategy) {
 		this(context, (JobSplitter<?, SerializableEvlInputAtom>) strategy);
@@ -35,19 +29,5 @@ public class EvlModuleFlinkMasterAtoms extends EvlModuleFlinkMaster<Serializable
 
 	EvlModuleFlinkMasterAtoms(EvlContextFlinkMaster context, JobSplitter<?, SerializableEvlInputAtom> strategy) {
 		super(context, strategy);
-	}
-	
-	@SuppressWarnings("unchecked")
-	protected List<SerializableEvlInputAtom> getWorkerJobs() throws EolRuntimeException {
-		return (List<SerializableEvlInputAtom>) jobSplitter.getWorkerJobs();
-	}
-	
-	@Override
-	protected DataSource<SerializableEvlInputAtom> getProcessingPipeline(ExecutionEnvironment execEnv) throws Exception {
-		return execEnv
-			.createInput(
-				new FlinkInputFormat<>(getWorkerJobs()),
-				TypeInformation.of(SerializableEvlInputAtom.class)
-			);
 	}
 }

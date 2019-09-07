@@ -10,11 +10,11 @@
 package org.eclipse.epsilon.evl.distributed.flink;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Objects;
 import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
-import org.apache.flink.api.java.operators.DataSource;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.fs.FileSystem.WriteMode;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
@@ -32,11 +32,11 @@ import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
  * @author Sina Madani
  * @since 1.6
  */
-public abstract class EvlModuleFlinkMaster<D extends Serializable> extends EvlModuleDistributedMaster {
+public abstract class EvlModuleFlinkMaster extends EvlModuleDistributedMaster {
 
 	private ExecutionEnvironment executionEnv;
 	
-	protected EvlModuleFlinkMaster(EvlContextFlinkMaster context, JobSplitter<?, D> strategy) {
+	protected EvlModuleFlinkMaster(EvlContextFlinkMaster context, JobSplitter<?, ?> strategy) {
 		super(Objects.requireNonNull(context), strategy);
 	}
 
@@ -52,16 +52,16 @@ public abstract class EvlModuleFlinkMaster<D extends Serializable> extends EvlMo
 		executionEnv.setParallelism(parallelism);
 	}
 	
-	protected abstract DataSource<D> getProcessingPipeline(final ExecutionEnvironment execEnv) throws Exception;
 	
 	@Override
-	protected final void checkConstraints() throws EolRuntimeException {
+	protected final void executeWorkerJobs(List<? extends Serializable> jobs) throws EolRuntimeException {
 		try {
 			Configuration config = getContext().getJobConfiguration();
 			String outputPath = getContext().getOutputPath();
 			executionEnv.getConfig().setGlobalJobParameters(config);
-			DataSet<SerializableEvlResultAtom> pipeline = getProcessingPipeline(executionEnv)
-				.flatMap(new EvlFlinkFlatMapFunction<D>());
+			DataSet<SerializableEvlResultAtom> pipeline =
+				executionEnv.fromCollection(jobs)
+				.flatMap(new EvlFlinkFlatMapFunction<>());
 			
 			if (outputPath != null && !outputPath.isEmpty()) {
 				pipeline.writeAsText(outputPath, WriteMode.OVERWRITE);

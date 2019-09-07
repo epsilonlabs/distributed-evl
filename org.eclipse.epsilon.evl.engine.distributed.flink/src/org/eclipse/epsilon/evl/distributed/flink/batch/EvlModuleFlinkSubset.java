@@ -9,14 +9,8 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.flink.batch;
 
-import java.util.List;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.api.java.ExecutionEnvironment;
-import org.apache.flink.api.java.operators.DataSource;
-import org.eclipse.epsilon.erl.execute.data.JobBatch;
 import org.eclipse.epsilon.evl.distributed.flink.EvlModuleFlinkMaster;
 import org.eclipse.epsilon.evl.distributed.flink.execute.context.EvlContextFlinkMaster;
-import org.eclipse.epsilon.evl.distributed.flink.format.FlinkInputFormat;
 import org.eclipse.epsilon.evl.distributed.strategy.BatchJobSplitter;
 
 /**
@@ -30,19 +24,9 @@ import org.eclipse.epsilon.evl.distributed.strategy.BatchJobSplitter;
  * @author Sina Madani
  * @since 1.6
  */
-public class EvlModuleFlinkSubset extends EvlModuleFlinkMaster<JobBatch> {
+public class EvlModuleFlinkSubset extends EvlModuleFlinkMaster {
 	
 	public EvlModuleFlinkSubset(EvlContextFlinkMaster context, BatchJobSplitter jobSplitter) {
 		super(context, jobSplitter);
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	protected DataSource<JobBatch> getProcessingPipeline(ExecutionEnvironment execEnv) throws Exception {
-		return execEnv
-			.createInput(
-				new FlinkInputFormat<>((List<JobBatch>) jobSplitter.getWorkerJobs()),
-				TypeInformation.of(JobBatch.class)
-			);
 	}
 }
