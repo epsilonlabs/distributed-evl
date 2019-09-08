@@ -10,7 +10,7 @@
 package org.eclipse.epsilon.evl.distributed.flink;
 
 import java.io.Serializable;
-import java.util.List;
+import java.util.Collection;
 import java.util.Objects;
 import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.java.DataSet;
@@ -51,7 +51,7 @@ public class EvlModuleFlinkMaster extends EvlModuleDistributedMaster {
 	
 	
 	@Override
-	protected final void executeWorkerJobs(List<? extends Serializable> jobs) throws EolRuntimeException {
+	protected final void executeWorkerJobs(Collection<? extends Serializable> jobs) throws EolRuntimeException {
 		try {
 			Configuration config = getContext().getJobConfiguration();
 			String outputPath = getContext().getOutputPath();

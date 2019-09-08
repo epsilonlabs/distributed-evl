@@ -10,7 +10,7 @@
 package org.eclipse.epsilon.evl.distributed.crossflow;
 
 import java.io.Serializable;
-import java.util.List;
+import java.util.Collection;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.crossflow.execute.context.EvlContextCrossflowMaster;
@@ -24,7 +24,7 @@ public class EvlModuleCrossflowMaster extends EvlModuleDistributedMaster {
 	}
 	
 	@Override
-	protected void executeWorkerJobs(List<? extends Serializable> jobs) throws EolRuntimeException {
+	protected void executeWorkerJobs(Collection<? extends Serializable> jobs) throws EolRuntimeException {
 		try {
 			DistributedEVL crossflow = new DistributedEVL(Mode.MASTER_BARE);
 			crossflow.setInstanceId(getContext().getInstanceId());

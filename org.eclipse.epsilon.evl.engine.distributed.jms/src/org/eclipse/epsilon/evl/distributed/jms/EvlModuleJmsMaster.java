@@ -15,7 +15,6 @@ import java.time.LocalTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -110,14 +109,14 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	}
 	
 	@Override
-	protected void executeMasterJobs(List<?> jobs) throws EolRuntimeException {
+	protected void executeMasterJobs(Collection<?> jobs) throws EolRuntimeException {
 		log("Began processing own jobs");
 		super.executeMasterJobs(jobs);
 		log("Finished processing own jobs");
 	}
 	
 	@Override
-	protected final void executeWorkerJobs(List<? extends Serializable> jobs) throws EolRuntimeException {
+	protected final void executeWorkerJobs(Collection<? extends Serializable> jobs) throws EolRuntimeException {
 		try (JMSContext regContext = connectionFactory.createContext()) {
 			// Initial registration of workers
 			final Destination tempDest = regContext.createTemporaryQueue();
@@ -434,7 +433,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	 * to call {@link #waitForWorkersToConnect(AtomicInteger)}.
 	 * @throws Exception
 	 */
-	protected void processWorkerJobs(List<? extends Serializable> jobs, final AtomicInteger workersReady) throws Exception {
+	protected void processWorkerJobs(Collection<? extends Serializable> jobs, final AtomicInteger workersReady) throws Exception {
 		waitForWorkersToConnect(workersReady);
 		sendAllJobs(jobs);
 	}
