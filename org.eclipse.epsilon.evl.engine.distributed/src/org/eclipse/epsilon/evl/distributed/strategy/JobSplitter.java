@@ -22,8 +22,8 @@ public abstract class JobSplitter<T, S extends Serializable> {
 	protected final EvlContextDistributedMaster context;
 	protected final double masterProportion;
 	protected final boolean shuffle;
-	protected ArrayList<S> workerJobs;
-	protected List<T> masterJobs;
+	protected Collection<S> workerJobs;
+	protected Collection<T> masterJobs;
 	
 	protected JobSplitter() {
 		this(null);
@@ -64,12 +64,12 @@ public abstract class JobSplitter<T, S extends Serializable> {
 			1/(1+context.getDistributedParallelism()) : percent01;
 	}
 	
-	public ArrayList<S> getWorkerJobs() throws EolRuntimeException {
+	public Collection<S> getWorkerJobs() throws EolRuntimeException {
 		if (workerJobs == null) split();
 		return workerJobs;
 	}
 	
-	public List<T> getMasterJobs() throws EolRuntimeException {
+	public Collection<T> getMasterJobs() throws EolRuntimeException {
 		if (masterJobs == null) split();
 		return masterJobs;
 	}
@@ -82,21 +82,21 @@ public abstract class JobSplitter<T, S extends Serializable> {
 		int numMasterJobs = (int) (masterProportion * numTotalJobs);
 		if (numMasterJobs >= numTotalJobs) {
 			masterJobs = allJobs;
-			workerJobs = new ArrayList<>(0);
+			workerJobs = Collections.emptyList();
 		}
 		else if (numMasterJobs <= 0) {
-			masterJobs = null;
+			masterJobs = Collections.emptyList();
 			Collection<S> wj = convertToWorkerJobs(allJobs);
-			workerJobs = wj instanceof ArrayList ? (ArrayList<S>) wj : new ArrayList<>(wj);
+			workerJobs = wj instanceof Serializable ? wj : new ArrayList<>(wj);
 		}
 		else {
 			masterJobs = allJobs.subList(0, numMasterJobs);
 			Collection<S> wj = convertToWorkerJobs(allJobs.subList(numMasterJobs-1, numTotalJobs));
-			workerJobs = wj instanceof ArrayList ? (ArrayList<S>) wj : new ArrayList<>(wj);
+			workerJobs = wj instanceof Serializable ? wj : new ArrayList<>(wj);
 		}
 	}
 	
 	protected abstract List<T> getAllJobs() throws EolRuntimeException;
 
-	protected abstract Collection<S> convertToWorkerJobs(List<T> masterJobs) throws EolRuntimeException;
+	protected abstract Collection<S> convertToWorkerJobs(Collection<T> jobs) throws EolRuntimeException;
 }

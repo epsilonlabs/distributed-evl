@@ -9,6 +9,7 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.strategy;
 
+import java.util.Collection;
 import java.util.List;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.erl.execute.data.JobBatch;
@@ -45,13 +46,14 @@ public class BatchJobSplitter extends JobSplitter<JobBatch, JobBatch> {
 	}
 	
 	@Override
-	protected List<JobBatch> convertToWorkerJobs(List<JobBatch> masterJobs) throws EolRuntimeException {
+	protected Collection<JobBatch> convertToWorkerJobs(Collection<JobBatch> jobs) throws EolRuntimeException {
 		return masterJobs;
 	}
 
 	@Override
 	protected List<JobBatch> getAllJobs() throws EolRuntimeException {
-		final int numTotalJobs = context.getModule().getAllJobs().size(), chunks;
+		List<?> jobList = context.getModule().getAllJobs();
+		final int numTotalJobs = jobList.size(), chunks;
 		if (this.batchSize >= 1) {
 			chunks = (int) batchSize;
 		}

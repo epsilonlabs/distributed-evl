@@ -9,6 +9,7 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.strategy;
 
+import java.util.Collection;
 import java.util.List;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
@@ -32,7 +33,7 @@ public class ContextAtomJobSplitter extends JobSplitter<ConstraintContextAtom, S
 	}
 	
 	@Override
-	protected List<SerializableEvlInputAtom> convertToWorkerJobs(List<ConstraintContextAtom> masterJobs) throws EolRuntimeException {
+	protected Collection<SerializableEvlInputAtom> convertToWorkerJobs(Collection<ConstraintContextAtom> jobs) throws EolRuntimeException {
 		return SerializableEvlInputAtom.serializeJobs(masterJobs, context);
 	}
 }

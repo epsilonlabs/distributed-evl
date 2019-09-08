@@ -10,6 +10,7 @@
 package org.eclipse.epsilon.evl.distributed.strategy;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
@@ -57,7 +58,7 @@ public class AnnotationConstraintAtomJobSplitter extends JobSplitter<ConstraintA
 	}
 	
 	@Override
-	protected ArrayList<SerializableEvlInputAtom> convertToWorkerJobs(List<ConstraintAtom> masterJobs) throws EolRuntimeException {
+	protected Collection<SerializableEvlInputAtom> convertToWorkerJobs(Collection<ConstraintAtom> masterJobs) throws EolRuntimeException {
 		ArrayList<SerializableEvlInputAtom> workerJobs = new ArrayList<>(masterJobs.size());
 		for (ConstraintAtom ca : masterJobs) {
 			EolModelElementType modelType = ca.rule.getConstraintContext().getType(context);

@@ -116,19 +116,19 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 		else return false;
 	}
 	
-	protected void executeMasterJobs(List<?> jobs) throws EolRuntimeException {
+	protected void executeMasterJobs(Collection<?> jobs) throws EolRuntimeException {
 		executeJob(jobs);
 	}
 	
-	protected abstract void executeWorkerJobs(List<? extends Serializable> jobs) throws EolRuntimeException;
+	protected abstract void executeWorkerJobs(Collection<? extends Serializable> jobs) throws EolRuntimeException;
 	
 	@Override
 	protected final void checkConstraints() throws EolRuntimeException {
-		List<?> masterJobs = jobSplitter.getMasterJobs();
+		Collection<?> masterJobs = jobSplitter.getMasterJobs();
 		if (!masterJobs.isEmpty()) {
 			executeMasterJobs(masterJobs);
 		}
-		List<? extends Serializable> workerJobs = jobSplitter.getWorkerJobs();
+		Collection<? extends Serializable> workerJobs = jobSplitter.getWorkerJobs();
 		if (!workerJobs.isEmpty()) {
 			executeWorkerJobs(workerJobs);
 		}
