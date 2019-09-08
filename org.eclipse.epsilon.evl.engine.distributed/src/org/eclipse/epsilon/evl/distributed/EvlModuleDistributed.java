@@ -34,8 +34,26 @@ public abstract class EvlModuleDistributed extends EvlModuleParallelContextAtoms
 		super(context != null ? context : new EvlContextDistributed());
 	}
 	
+	@Override
+	public Object executeJob(Object job) throws EolRuntimeException {
+		if (job == null) {
+			return null;
+		}
+		else if (job instanceof SerializableEvlResultAtom) {
+			return Collections.singletonList((SerializableEvlResultAtom) job);
+		}
+		else if (job instanceof SerializableEvlInputAtom) {
+			((SerializableEvlInputAtom) job).execute(this);
+			return null;
+		}
+		else {
+			return super.executeJob(job);
+		}
+	}
+	
 	/**
 	 * Executes the provided Serializable job(s) and returns the Serializable result.
+	 * The context's state (i.e. the UnsatisfiedConstraints) is not modified.
 	 * 
 	 * @param job The Serializable input job(s).
 	 * @return A Serializable Collection containing zero or more {@link SerializableEvlResultAtom}s,
@@ -43,15 +61,7 @@ public abstract class EvlModuleDistributed extends EvlModuleParallelContextAtoms
 	 * @throws EolRuntimeException If an exception occurs when executing the job using this module.
 	 * @throws IllegalArgumentException If the job type was not recognised.
 	 */
-	@Override
-	public final Collection<SerializableEvlResultAtom> executeJob(Object job) throws EolRuntimeException {
-		if (job == null) {
-			return null;
-		}
-		else if (job instanceof SerializableEvlResultAtom) {
-			return Collections.singletonList((SerializableEvlResultAtom) job);
-		}
-		
+	public final Collection<SerializableEvlResultAtom> executeJobStateless(Object job) throws EolRuntimeException {
 		final EvlContextDistributed context = getContext();
 		final Set<UnsatisfiedConstraint>
 			originalUc = context.getUnsatisfiedConstraints(),
@@ -59,7 +69,7 @@ public abstract class EvlModuleDistributed extends EvlModuleParallelContextAtoms
 		context.setUnsatisfiedConstraints(tempUc);
 		
 		try {
-			super.executeJob(job);
+			executeJob(job);
 			return serializeResults(tempUc);
 		}
 		finally {

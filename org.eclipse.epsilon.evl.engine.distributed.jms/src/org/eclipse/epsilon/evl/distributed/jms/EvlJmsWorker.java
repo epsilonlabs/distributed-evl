@@ -171,7 +171,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 					Serializable currentJob = ((ObjectMessage) msg).getObject();
 					ObjectMessage resultsMsg = null;
 					try {
-						Serializable resultObj = (Serializable) module.executeJob(currentJob);
+						Serializable resultObj = (Serializable) module.executeJobStateless(currentJob);
 						resultsMsg = replyContext.createObjectMessage(resultObj);
 					}
 					catch (EolRuntimeException eox) {

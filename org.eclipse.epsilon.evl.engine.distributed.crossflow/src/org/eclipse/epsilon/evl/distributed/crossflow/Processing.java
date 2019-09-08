@@ -56,7 +56,7 @@ public class Processing extends ProcessingBase {
 		}
 		else {
 			assert workflow.isWorker() && slaveModule != null;
-			Collection<SerializableEvlResultAtom> results = slaveModule.executeJob(job);
+			Collection<SerializableEvlResultAtom> results = slaveModule.executeJobStateless(job);
 			if (results != null) {
 				sendToValidationOutput(new ValidationResult((List<SerializableEvlResultAtom>)results));
 			}

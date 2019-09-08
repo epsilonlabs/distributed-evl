@@ -39,7 +39,7 @@ public class EvlFlinkFlatMapFunction<IN extends Serializable> extends RichFlatMa
 	
 	@Override
 	public void flatMap(IN value, Collector<SerializableEvlResultAtom> out) throws Exception {
-		localModule.executeJob(value).forEach(out::collect);
+		localModule.executeJobStateless(value).forEach(out::collect);
 	}
 	
 	@Override
