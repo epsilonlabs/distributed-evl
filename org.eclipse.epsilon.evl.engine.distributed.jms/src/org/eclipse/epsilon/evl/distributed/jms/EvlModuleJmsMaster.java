@@ -101,22 +101,22 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	}
 	
 	@Override
-	protected void prepareExecution() throws EolRuntimeException {
-		super.prepareExecution();
-		EvlContextJmsMaster context = getContext();
-		connectionFactory = ConnectionFactoryProvider.getDefault(context.getBrokerHost());
-		log("Connected to "+context.getBrokerHost()+" session "+context.getSessionId());
-	}
-	
-	@Override
 	protected void executeMasterJobs(Collection<?> jobs) throws EolRuntimeException {
 		log("Began processing own jobs");
 		super.executeMasterJobs(jobs);
 		log("Finished processing own jobs");
 	}
 	
+	protected void connectToBroker() {
+		EvlContextJmsMaster context = getContext();
+		connectionFactory = ConnectionFactoryProvider.getDefault(context.getBrokerHost());
+		log("Connected to "+context.getBrokerHost()+" session "+context.getSessionId());
+	}
+	
 	@Override
 	protected final void executeWorkerJobs(Collection<? extends Serializable> jobs) throws EolRuntimeException {
+		// Only bother connecting if there are worker jobs
+		connectToBroker();
 		try (JMSContext regContext = connectionFactory.createContext()) {
 			// Initial registration of workers
 			final Destination tempDest = regContext.createTemporaryQueue();
@@ -153,11 +153,9 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 					configMsg.setIntProperty(CONFIG_HASH_PROPERTY, configHash);
 					regProducer.send(msg.getJMSReplyTo(), configMsg);
 				}
-				catch (JMSException jmx) {
-					throw new JMSRuntimeException(jmx.getMessage());
-				}
-				catch (NumberFormatException nan) {
-					throw new java.lang.IllegalStateException("Worker registration failed!");
+				catch (NumberFormatException | JMSException ex) {
+					log("Worker registration failed - discarding this worker. Reason: "+ex.getMessage());
+					ex.printStackTrace();
 				}
 			});
 			
@@ -184,11 +182,13 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 						}
 						final int receivedHash = response.getIntProperty(CONFIG_HASH_PROPERTY);
 						if (receivedHash != configHash) {
-							throw new java.lang.IllegalStateException(
+							log(
 								"Received invalid configuration checksum! Expected "+receivedHash+" but got "+configHash
+								+ ". Discarding this worker."
 							);
+							readyWorkers.decrementAndGet();
 						}
-						confirmWorker(response, readyWorkers);
+						else confirmWorker(response, readyWorkers);
 					}
 					catch (JMSException jmx) {
 						throw new JMSRuntimeException("Did not receive "+CONFIG_HASH_PROPERTY+": "+jmx.getMessage());

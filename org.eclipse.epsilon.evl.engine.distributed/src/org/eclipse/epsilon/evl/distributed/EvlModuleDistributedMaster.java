@@ -40,7 +40,7 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 	
 	public EvlModuleDistributedMaster(EvlContextDistributedMaster context, JobSplitter<?, ?> strategy) {
 		super(context != null ? context : new EvlContextDistributedMaster(-1));
-		this.jobSplitter = strategy;
+		this.jobSplitter = Objects.requireNonNull(strategy, "Job distribution strategy cannot be null!");
 	}
 	
 	// UnsatisfiedConstraint resolution

@@ -60,8 +60,8 @@ public abstract class JobSplitter<T, S extends Serializable> {
 	 */
 	protected double sanitizeMasterProportion(double percent01) {
 		if (context.getDistributedParallelism() == 0) return 1;
-		return Math.max(percent01, 1) > 1 || Math.min(percent01, 0) < 0 ?
-			1/(1+context.getDistributedParallelism()) : percent01;
+		return percent01 > 1 || percent01 < 0 ?
+			1/(1.0d + (double) context.getDistributedParallelism()) : percent01;
 	}
 	
 	public Collection<S> getWorkerJobs() throws EolRuntimeException {

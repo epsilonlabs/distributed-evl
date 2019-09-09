@@ -32,17 +32,19 @@ public class BatchJobSplitter extends JobSplitter<JobBatch, JobBatch> {
 	
 	public BatchJobSplitter(EvlContextDistributedMaster context, double masterProportion, boolean shuffle, double batchSize) {
 		super(context, masterProportion, shuffle);
-		this.batchSize = sanitizeBatchSize();
+		this.batchSize = sanitizeBatchSize(batchSize);
 	}
 	
 	/**
 	 * Validates the batchSize parameter, providing a default fallback value if out of bounds.
-	 * @return A positive value.
+	 * 
+	 * @param The raw input batchSize.
+	 * @return Either a positive integer or a value between 0 and 1.
 	 */
-	protected double sanitizeBatchSize() {
-		if (Math.min(0, masterProportion) < 0) return context.getParallelism();
-		else if (masterProportion == 0) return 1;
-		else return masterProportion;
+	protected double sanitizeBatchSize(double bf) {
+		if (Math.min(0, bf) < 0) return context.getParallelism();
+		else if (bf == 0) return 1;
+		else return bf;
 	}
 	
 	@Override
