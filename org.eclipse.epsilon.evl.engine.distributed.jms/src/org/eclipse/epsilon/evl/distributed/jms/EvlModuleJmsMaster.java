@@ -202,7 +202,17 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 					final Topic completionTopic = createEndOfJobsTopic(jobContext);
 					completionSender = () -> jobsProducer.send(completionTopic, jobContext.createMessage());
 					
-					processWorkerJobs(jobs, readyWorkers);
+					int workersReady;
+					while ((workersReady = readyWorkers.get()) < expectedSlaves && waitForAllWorkersToBeReady(workersReady)) {
+						try {
+							synchronized (readyWorkers) {
+								readyWorkers.wait();
+							}
+						}
+						catch (InterruptedException ie) {}
+					}
+					assert workersReady >= expectedSlaves && slaveWorkers.size() >= expectedSlaves;
+					sendAllJobs(jobs);
 					if (jobSenderThread != null) jobSenderThread.join();
 					waitForWorkersToFinishJobs(workersFinished);
 					processFailedJobs();
@@ -243,6 +253,17 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	 * @return <code>true</code> to ignore additional workers for job processing.
 	 */
 	protected boolean refuseAdditionalWorkersConfirm(int workersReady) {
+		return true;
+	}
+	
+	/**
+	 * Whether to wait for all expected workers to have signalled that they are ready
+	 * to begin processing jobs before proceeding to sending the jobs.
+	 * 
+	 * @param workersReady The current number of workers which are ready to receive and process jobs.
+	 * @return <code>true</code> if jobs should only be sent once all workers have registered successfully.
+	 */
+	protected boolean waitForAllWorkersToBeReady(int workersReady) {
 		return true;
 	}
 	
@@ -424,21 +445,6 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	}
 	
 	/**
-	 * This method is called in the body of {@link #checkConstraints()}, and is intended
-	 * to be where the main processing logic goes. Immediately after this method, the
-	 * {@link #waitForWorkersToFinishJobs(JMSContext)} is called.
-	 * @param jobs The jobs to send to workers.
-	 * 
-	 * @param readyWorkers  Convenience handle which may be used for synchronization, e.g.
-	 * to call {@link #waitForWorkersToConnect(AtomicInteger)}.
-	 * @throws Exception
-	 */
-	protected void processWorkerJobs(Collection<? extends Serializable> jobs, final AtomicInteger workersReady) throws Exception {
-		waitForWorkersToConnect(workersReady);
-		sendAllJobs(jobs);
-	}
-	
-	/**
 	 * Convenience method for bulk sending of jobs followed by a call to {@link #signalCompletion()}.
 	 * 
 	 * @param jobs The Serializable jobs to send.
@@ -542,24 +548,10 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 		log(worker+" ready");
 		
 		if (workersReady.incrementAndGet() >= expectedSlaves) synchronized (workersReady) {
+			assert slaveWorkers.size() >= expectedSlaves;
 			workersReady.notify();
+			log("All workers connected");
 		}
-	}
-	
-	/**
-	 * Blocks until all expected workers have connected.
-	 * 
-	 * @param workersReady The number of currently connected workers.
-	 */
-	protected void waitForWorkersToConnect(AtomicInteger workersReady) {
-		while (workersReady.get() < expectedSlaves) synchronized (workersReady) {
-			try {
-				workersReady.wait();
-			}
-			catch (InterruptedException ie) {}
-		}
-		assert workersReady.get() >= expectedSlaves && slaveWorkers.size() >= expectedSlaves;
-		log("All workers connected");
 	}
 	
 	/**

@@ -85,30 +85,32 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 			
 			try (JMSContext resultContext = regContext.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {
 				try (JMSContext jobContext = regContext.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {
-					resultContext.createConsumer(resultContext.createTopic(STOP_TOPIC+sessionID)).setMessageListener(msg -> {
-						log("Stopping execution!");
-						try {
-							stopBody = msg.getBody(Serializable.class);
-						}
-						catch (JMSException ex) {
-							stopBody = ex;
-						}
-						finished = true;
-					});
-				
-					jobContext.createConsumer(jobContext.createTopic(END_JOBS_TOPIC+sessionID)).setMessageListener(msg -> {
-						log("Acknowledged end of jobs");
-						finished = true;
-					});
+					try (JMSContext endContext = regContext.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {
+						resultContext.createConsumer(resultContext.createTopic(STOP_TOPIC+sessionID)).setMessageListener(msg -> {
+							log("Stopping execution!");
+							try {
+								stopBody = msg.getBody(Serializable.class);
+							}
+							catch (JMSException ex) {
+								stopBody = ex;
+							}
+							finished = true;
+						});
 					
-					JMSConsumer jobConsumer = jobContext.createConsumer(jobContext.createQueue(JOBS_QUEUE+sessionID));
-					
-					// Tell the master we're setup and ready to work. We need to send the message here
-					// because if the master is fast we may receive jobs before we have even created the listener!
-					ackSender.run();
-					
-					processJobs(jobConsumer, resultContext);
-					onCompletion(resultContext);
+						endContext.createConsumer(endContext.createTopic(END_JOBS_TOPIC+sessionID)).setMessageListener(msg -> {
+							log("Acknowledged end of jobs");
+							finished = true;
+						});
+						
+						JMSConsumer jobConsumer = jobContext.createConsumer(jobContext.createQueue(JOBS_QUEUE+sessionID));
+						
+						// Tell the master we're setup and ready to work. We need to send the message here
+						// because if the master is fast we may receive jobs before we have even created the listener!
+						ackSender.run();
+						
+						processJobs(jobConsumer, resultContext);
+						onCompletion(resultContext);
+					}
 				}
 			}
 		}
@@ -201,7 +203,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 			}
 		}
 		
-		if (!finished || stopBody == null) {
+		if (!finished && stopBody == null) {
 			log("Timeout threshold reached: no job received within "+JOB_RECV_TIMEOUT);
 		}
 		else {

@@ -12,8 +12,11 @@ package org.eclipse.epsilon.evl.distributed;
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
+import org.eclipse.epsilon.eol.function.CheckedEolRunnable;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.execute.data.*;
 import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
@@ -116,21 +119,52 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 		else return false;
 	}
 	
+	/**
+	 * This method is called asynchronously from {@link #checkConstraints()}.
+	 * 
+	 * @param jobs The jobs to execute locally using this module.
+	 * @throws EolRuntimeException
+	 */
 	protected void executeMasterJobs(Collection<?> jobs) throws EolRuntimeException {
 		executeJob(jobs);
 	}
 	
+	/**
+	 * This method is called asynchronously from {@link #checkConstraints()}.
+	 * 
+	 * @param jobs The jobs to distribute to workers.
+	 * @throws EolRuntimeException
+	 */
 	protected abstract void executeWorkerJobs(Collection<? extends Serializable> jobs) throws EolRuntimeException;
 	
 	@Override
 	protected final void checkConstraints() throws EolRuntimeException {
 		Collection<?> masterJobs = jobSplitter.getMasterJobs();
-		if (!masterJobs.isEmpty()) {
+		Collection<? extends Serializable> workerJobs = jobSplitter.getWorkerJobs();
+		
+		if (masterJobs.isEmpty() && workerJobs.isEmpty()) {
+			return;
+		}
+		else if (masterJobs.isEmpty() && !workerJobs.isEmpty()) {
+			executeWorkerJobs(workerJobs);
+		}
+		else if (!masterJobs.isEmpty() && workerJobs.isEmpty()) {
 			executeMasterJobs(masterJobs);
 		}
-		Collection<? extends Serializable> workerJobs = jobSplitter.getWorkerJobs();
-		if (!workerJobs.isEmpty()) {
-			executeWorkerJobs(workerJobs);
+		else {
+			CheckedEolRunnable masterAsync = () -> executeMasterJobs(masterJobs);
+			CheckedEolRunnable workerAsync = () -> executeWorkerJobs(workerJobs);
+			try {
+				CompletableFuture.runAsync(masterAsync)
+					.thenCombine(
+						CompletableFuture.runAsync(workerAsync),
+						(v1, v2) -> null
+					)
+				.get();
+			}
+			catch (InterruptedException | ExecutionException ex) {
+				EolRuntimeException.propagateDetailed(ex);
+			}
 		}
 	}
 	
