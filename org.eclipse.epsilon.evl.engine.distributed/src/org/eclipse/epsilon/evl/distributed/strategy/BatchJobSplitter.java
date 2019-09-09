@@ -49,7 +49,7 @@ public class BatchJobSplitter extends JobSplitter<JobBatch, JobBatch> {
 	
 	@Override
 	protected Collection<JobBatch> convertToWorkerJobs(Collection<JobBatch> jobs) throws EolRuntimeException {
-		return masterJobs;
+		return jobs;
 	}
 
 	@Override
