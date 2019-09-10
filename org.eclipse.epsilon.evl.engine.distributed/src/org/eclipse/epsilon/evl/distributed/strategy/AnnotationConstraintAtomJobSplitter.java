@@ -11,9 +11,9 @@ package org.eclipse.epsilon.evl.distributed.strategy;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
+import org.eclipse.epsilon.eol.execute.context.Variable;
 import org.eclipse.epsilon.eol.types.EolModelElementType;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlInputAtom;
@@ -24,32 +24,16 @@ import org.eclipse.epsilon.evl.execute.atoms.ConstraintAtom;
  * @author Sina Madani
  * @since 1.6
  */
-public class AnnotationConstraintAtomJobSplitter extends JobSplitter<ConstraintAtom, SerializableEvlInputAtom> {
+public class AnnotationConstraintAtomJobSplitter extends AnnotationJobSplitter<ConstraintAtom, SerializableEvlInputAtom> {
 
-	public static final String DISTRIBUTED_ANNOTATION_NAME = "distributed";
-	
 	public AnnotationConstraintAtomJobSplitter(EvlContextDistributedMaster context, boolean shuffle) {
 		super(context, shuffle);
 	}
 	
 	@Override
-	protected void split() throws EolRuntimeException {
-		List<ConstraintAtom> allJobs = getAllJobs();
-		if (shuffle) Collections.shuffle(allJobs);
-		int numTotalJobs = allJobs.size();
-		
-		masterJobs = new ArrayList<>(numTotalJobs/2);
-		ArrayList<ConstraintAtom> workersLocal = new ArrayList<>(numTotalJobs/2);
-		
-		for (ConstraintAtom ca : allJobs) {
-			if (ca.rule.getBooleanAnnotationValue(DISTRIBUTED_ANNOTATION_NAME, context)) {
-				workersLocal.add(ca);
-			}
-			else {
-				masterJobs.add(ca);
-			}
-		}
-		workerJobs = convertToWorkerJobs(workersLocal);
+	protected boolean shouldBeDistributed(ConstraintAtom job) throws EolRuntimeException {
+		Variable self = Variable.createReadOnlyVariable("self", job.element);
+		return job.rule.getBooleanAnnotationValue(DISTRIBUTED_ANNOTATION_NAME, context, self);
 	}
 	
 	@Override
@@ -58,9 +42,9 @@ public class AnnotationConstraintAtomJobSplitter extends JobSplitter<ConstraintA
 	}
 	
 	@Override
-	protected Collection<SerializableEvlInputAtom> convertToWorkerJobs(Collection<ConstraintAtom> masterJobs) throws EolRuntimeException {
-		ArrayList<SerializableEvlInputAtom> workerJobs = new ArrayList<>(masterJobs.size());
-		for (ConstraintAtom ca : masterJobs) {
+	protected Collection<SerializableEvlInputAtom> convertToWorkerJobs(Collection<ConstraintAtom> jobs) throws EolRuntimeException {
+		ArrayList<SerializableEvlInputAtom> workerJobs = new ArrayList<>(jobs.size());
+		for (ConstraintAtom ca : jobs) {
 			EolModelElementType modelType = ca.rule.getConstraintContext().getType(context);
 			SerializableEvlInputAtom seia = new SerializableEvlInputAtom();
 			seia.modelElementID = modelType.getModel().getElementId(ca.element);
