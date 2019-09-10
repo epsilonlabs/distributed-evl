@@ -58,12 +58,6 @@ public class EvlContextDistributed extends EvlContextParallel {
 	}
 	
 	@Override
-	public boolean isParallelisationLegal() {
-		// TODO Auto-generated method stub
-		return super.isParallelisationLegal();
-	}
-	
-	@Override
 	public void setModule(IModule module) {
 		if (module instanceof EvlModuleDistributed) {
 			super.setModule(module);

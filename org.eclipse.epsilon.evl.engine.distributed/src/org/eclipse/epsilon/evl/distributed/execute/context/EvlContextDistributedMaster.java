@@ -55,12 +55,6 @@ public class EvlContextDistributedMaster extends EvlContextDistributed {
 		super(localParallelism);
 		this.distributedParallelism = distributedParallelism;
 	}
-
-	@Override
-	public boolean isParallelisationLegal() {
-		// TODO find a generic way to implement this
-		return !isParallel();//super.isParallelisationLegal() || Thread.currentThread().getName().startsWith("ForkJoinPool.commonPool");
-	}
 	
 	@Override
 	public void setUnsatisfiedConstraints(Set<UnsatisfiedConstraint> unsatisfiedConstraints) {
