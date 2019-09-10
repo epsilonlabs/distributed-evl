@@ -9,12 +9,10 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.strategy;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.eol.execute.context.Variable;
-import org.eclipse.epsilon.eol.types.EolModelElementType;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlInputAtom;
 import org.eclipse.epsilon.evl.execute.atoms.ConstraintAtom;
@@ -43,17 +41,7 @@ public class AnnotationConstraintAtomJobSplitter extends AnnotationJobSplitter<C
 	
 	@Override
 	protected Collection<SerializableEvlInputAtom> convertToWorkerJobs(Collection<ConstraintAtom> jobs) throws EolRuntimeException {
-		ArrayList<SerializableEvlInputAtom> workerJobs = new ArrayList<>(jobs.size());
-		for (ConstraintAtom ca : jobs) {
-			EolModelElementType modelType = ca.rule.getConstraintContext().getType(context);
-			SerializableEvlInputAtom seia = new SerializableEvlInputAtom();
-			seia.modelElementID = modelType.getModel().getElementId(ca.element);
-			seia.contextName = ca.rule.getConstraintContext().getTypeName();
-			seia.modelName = modelType.getModelName();
-			seia.constraintName = ca.rule.getName();
-			workerJobs.add(seia);
-		}
-		return workerJobs;
+		return SerializableEvlInputAtom.serializeJobs(jobs, context);
 	}
 
 }
