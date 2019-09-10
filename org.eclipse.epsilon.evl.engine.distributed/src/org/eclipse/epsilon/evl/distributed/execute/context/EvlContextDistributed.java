@@ -59,7 +59,7 @@ public class EvlContextDistributed extends EvlContextParallel {
 	
 	@Override
 	public boolean isParallelisationLegal() {
-		// TODO find a generic way to implement this
+		// TODO Auto-generated method stub
 		return super.isParallelisationLegal();
 	}
 	
