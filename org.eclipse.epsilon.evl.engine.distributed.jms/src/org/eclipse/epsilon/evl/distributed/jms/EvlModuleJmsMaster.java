@@ -208,10 +208,11 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 							synchronized (readyWorkers) {
 								readyWorkers.wait();
 							}
+							assert workersReady >= expectedSlaves && slaveWorkers.size() >= expectedSlaves;
+							log("All workers connected");
 						}
 						catch (InterruptedException ie) {}
 					}
-					assert workersReady >= expectedSlaves && slaveWorkers.size() >= expectedSlaves;
 					sendAllJobs(jobs);
 					if (jobSenderThread != null) jobSenderThread.join();
 					waitForWorkersToFinishJobs(workersFinished);
@@ -550,7 +551,6 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 		if (workersReady.incrementAndGet() >= expectedSlaves) synchronized (workersReady) {
 			assert slaveWorkers.size() >= expectedSlaves;
 			workersReady.notify();
-			log("All workers connected");
 		}
 	}
 	
