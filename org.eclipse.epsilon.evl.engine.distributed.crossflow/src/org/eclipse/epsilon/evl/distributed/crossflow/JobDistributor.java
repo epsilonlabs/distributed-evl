@@ -19,7 +19,7 @@ public class JobDistributor extends JobDistributorBase {
 	
 	@Override
 	public void consumeConfigTopic(Config config) throws Exception {
-		for (java.io.Serializable job : workflow.getConfigConfigSource().masterModule.getWorkerJobs()) {
+		for (java.io.Serializable job : workflow.getConfigConfigSource().masterModule.workerJobs) {
 			sendToValidationDataQueue(new ValidationData(job));
 		}
 	}

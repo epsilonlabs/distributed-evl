@@ -23,8 +23,11 @@ public class EvlModuleCrossflowMaster extends EvlModuleDistributedMaster {
 		super(context, strategy);
 	}
 	
+	Collection<? extends Serializable> workerJobs;
+	
 	@Override
 	protected void executeWorkerJobs(Collection<? extends Serializable> jobs) throws EolRuntimeException {
+		this.workerJobs = jobs;
 		try {
 			DistributedEVL crossflow = new DistributedEVL(Mode.MASTER_BARE);
 			crossflow.setInstanceId(getContext().getInstanceId());

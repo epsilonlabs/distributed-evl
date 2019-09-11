@@ -11,8 +11,6 @@ package org.eclipse.epsilon.evl.distributed;
 
 import java.util.Collection;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
-import org.eclipse.epsilon.eol.execute.context.IEolContext;
-import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributed;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedSlave;
 import org.eclipse.epsilon.evl.distributed.execute.data.*;
 import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
@@ -41,13 +39,6 @@ public class EvlModuleDistributedSlave extends EvlModuleDistributed {
 	@Override
 	public EvlContextDistributedSlave getContext() {
 		return (EvlContextDistributedSlave) super.getContext();
-	}
-	
-	@Override
-	public void setContext(IEolContext context) {
-		if (context instanceof EvlContextDistributed) {
-			super.setContext(context);
-		}
 	}
 	
 	@Override
