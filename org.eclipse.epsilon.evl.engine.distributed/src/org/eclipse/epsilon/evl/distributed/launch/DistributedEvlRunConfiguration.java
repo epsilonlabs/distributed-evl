@@ -49,8 +49,8 @@ public abstract class DistributedEvlRunConfiguration extends EvlRunConfiguration
 			for (StringProperties props : modelsAndProperties.values()) {
 				props.replaceAll((k, v) -> {
 					// TODO better way to determine if there is a path?
-					if (v instanceof String && ((String)v).startsWith("file://")) {
-						return appendBasePath(basePath, (String) v);
+					if (v instanceof String) {
+						return appendBasePathIfNeeded(basePath, (String) v);
 					}
 					return v;
 				});
@@ -94,9 +94,14 @@ public abstract class DistributedEvlRunConfiguration extends EvlRunConfiguration
 		return path;
 	}
 	
-	protected static String appendBasePath(String basePath, String relPath) {
+	static String appendBasePathIfNeeded(String basePath, String relPath) {
 		String base = removeProtocol(basePath), relative = removeProtocol(relPath);
-		return Paths.get(base, relative).toUri().toString();
+		if (relative.startsWith(EvlContextDistributed.BASE_PATH_SUBSTITUTE)) {
+			return Paths.get(base,
+				relative.replace(EvlContextDistributed.BASE_PATH_SUBSTITUTE, "")
+			).toUri().toString();
+		}
+		return relative;
 	}
 	
 	public static Builder<? extends DistributedEvlRunConfiguration, ?> Builder() {

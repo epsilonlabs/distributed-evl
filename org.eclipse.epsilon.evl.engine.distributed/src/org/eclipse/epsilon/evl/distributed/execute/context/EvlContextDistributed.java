@@ -29,7 +29,6 @@ public class EvlContextDistributed extends EvlContextParallel {
 	protected static final String
 		ENCODING = java.nio.charset.StandardCharsets.UTF_8.toString(),
 		BASE_PATH = "basePath",
-		BASE_PATH_SUBSTITUTE = "//BASEPATH//",
 		LOCAL_PARALLELISM = "localParallelism",
 		DISTRIBUTED_PARALLELISM = "distributedParallelism",
 		EVL_SCRIPT = "evlScript",
@@ -39,7 +38,9 @@ public class EvlContextDistributed extends EvlContextParallel {
 		SCRIPT_PARAMS = "scriptParameters",
 		IGNORE_MODELS = "noModelLoading";
 	
-	public static final String BASE_PATH_SYSTEM_PROPERTY = "org.eclipse.epsilon.evl.distributed."+BASE_PATH;
+	public static final String
+		BASE_PATH_SUBSTITUTE = "$BASEPATH$",
+		BASE_PATH_SYSTEM_PROPERTY = "org.eclipse.epsilon.evl.distributed."+BASE_PATH;
 	
 	public EvlContextDistributed(IEvlContext other) {
 		super(other);

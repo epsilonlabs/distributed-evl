@@ -70,8 +70,7 @@ public class EvlContextDistributedSlave extends EvlContextDistributed {
 	
 	public static DistributedEvlRunConfigurationSlave parseJobParameters(Map<String, ? extends Serializable> config, String basePath) throws Exception {
 		String masterBasePath, normBasePath;
-		masterBasePath = Objects.toString(config.get(BASE_PATH), null);
-		boolean replaceBasePath = masterBasePath != null;
+		masterBasePath = Objects.toString(config.get(BASE_PATH), BASE_PATH_SUBSTITUTE);
 		if (basePath != null) {
 			normBasePath = basePath.replace("\\", "/");
 			if (!normBasePath.endsWith("/")) {
@@ -84,7 +83,7 @@ public class EvlContextDistributedSlave extends EvlContextDistributed {
 		
 		String evlScriptPath = Objects.toString(config.get(EVL_SCRIPT), null);
 		if (evlScriptPath == null) throw new IllegalStateException("No script path!");
-		if (replaceBasePath) evlScriptPath = evlScriptPath.replace(masterBasePath, normBasePath);
+		evlScriptPath = evlScriptPath.replace(masterBasePath, normBasePath);
 		
 		Map<IModel, StringProperties> localModelsAndProperties;
 		if (config.containsKey(IGNORE_MODELS)) {
@@ -96,7 +95,7 @@ public class EvlContextDistributedSlave extends EvlContextDistributed {
 			for (int i = 0; i < numModels; i++) {
 				String modelConfig = Objects.toString(config.get(MODEL_PREFIX+i), null);
 				if (modelConfig != null) {
-					modelsConfig[i] = replaceBasePath ? modelConfig.replace(masterBasePath, normBasePath) : modelConfig;
+					modelsConfig[i] = modelConfig.replace(masterBasePath, normBasePath);
 				}
 			}
 			localModelsAndProperties = parseModelParameters(modelsConfig);

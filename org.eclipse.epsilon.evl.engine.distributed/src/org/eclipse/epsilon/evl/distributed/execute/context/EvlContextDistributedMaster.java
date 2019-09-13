@@ -112,7 +112,6 @@ public class EvlContextDistributedMaster extends EvlContextDistributed {
 		try {
 			String fpNormal = fpStr
 				.replace("\\", "/")
-				.replace(basePath, BASE_PATH_SUBSTITUTE)
 				.replace(
 					java.net.URI.create(encode(basePath, ENCODING))
 					.normalize().toString(), BASE_PATH_SUBSTITUTE

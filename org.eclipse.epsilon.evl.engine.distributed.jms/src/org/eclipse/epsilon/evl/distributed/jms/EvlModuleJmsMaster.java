@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 import javax.jms.*;
 import org.eclipse.epsilon.common.function.CheckedConsumer;
 import org.eclipse.epsilon.common.function.CheckedRunnable;
-import org.eclipse.epsilon.common.function.ExceptionContainer;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
@@ -91,7 +90,6 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	ConnectionFactory connectionFactory;
 	private CheckedConsumer<Serializable, JMSException> jobSender;
 	private CheckedRunnable<JMSException> completionSender;
-	private Thread jobSenderThread;
 	
 	public EvlModuleJmsMaster(EvlContextJmsMaster context, JobSplitter<?, ?> strategy) {
 		super(context, strategy);
@@ -170,7 +168,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 				regContext.createConsumer(tempDest).setMessageListener(response -> {
 					try {
 						int currentWorkers = readyWorkers.get();
-						if (refuseAdditionalWorkersConfirm(currentWorkers) && currentWorkers >= expectedSlaves) {
+						if (currentWorkers >= expectedSlaves && refuseAdditionalWorkersConfirm(currentWorkers)) {
 							String logMsg = "Ignoring additional worker confirmation ";
 							try {
 								log(logMsg+" "+response.getJMSMessageID());
@@ -180,15 +178,28 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 							}
 							return;
 						}
+						
+						String worker = response.getStringProperty(WORKER_ID_PROPERTY);
+						if (!slaveWorkers.containsKey(worker)) {
+							throw new JMSRuntimeException("Could not find worker with id "+worker);
+						}
+						
 						final int receivedHash = response.getIntProperty(CONFIG_HASH_PROPERTY);
 						if (receivedHash != configHash) {
 							log(
 								"Received invalid configuration checksum! Expected "+receivedHash+" but got "+configHash
 								+ ". Discarding this worker."
 							);
-							readyWorkers.decrementAndGet();
+							return;
 						}
-						else confirmWorker(response, readyWorkers);
+						if (confirmWorker(response, currentWorkers)) {
+							log(worker + " ready");
+							if (readyWorkers.incrementAndGet() >= expectedSlaves) synchronized (readyWorkers) {
+								assert slaveWorkers.size() >= expectedSlaves;
+								readyWorkers.notify();
+							}
+						}
+						else return;
 					}
 					catch (JMSException jmx) {
 						throw new JMSRuntimeException("Did not receive "+CONFIG_HASH_PROPERTY+": "+jmx.getMessage());
@@ -202,19 +213,8 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 					final Topic completionTopic = createEndOfJobsTopic(jobContext);
 					completionSender = () -> jobsProducer.send(completionTopic, jobContext.createMessage());
 					
-					int workersReady;
-					while ((workersReady = readyWorkers.get()) < expectedSlaves && waitForAllWorkersToBeReady(workersReady)) {
-						try {
-							synchronized (readyWorkers) {
-								readyWorkers.wait();
-							}
-							assert workersReady >= expectedSlaves && slaveWorkers.size() >= expectedSlaves;
-							log("All workers connected");
-						}
-						catch (InterruptedException ie) {}
-					}
+					beforeSend(readyWorkers);
 					sendAllJobs(jobs);
-					if (jobSenderThread != null) jobSenderThread.join();
 					waitForWorkersToFinishJobs(workersFinished);
 					processFailedJobs();
 				}
@@ -256,16 +256,22 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	protected boolean refuseAdditionalWorkersConfirm(int workersReady) {
 		return true;
 	}
-	
+
 	/**
-	 * Whether to wait for all expected workers to have signalled that they are ready
-	 * to begin processing jobs before proceeding to sending the jobs.
+	 * Called before {@link #sendAllJobs(Iterable)}. Used to wait
+	 * for all workers to connect before proceeding.
 	 * 
-	 * @param workersReady The current number of workers which are ready to receive and process jobs.
-	 * @return <code>true</code> if jobs should only be sent once all workers have registered successfully.
+	 * @param workersReady The number of workers that are ready to receive jobs.
+	 * The object's lock can be used to wait for all workers to be ready.
 	 */
-	protected boolean waitForAllWorkersToBeReady(int workersReady) {
-		return true;
+	protected void beforeSend(final AtomicInteger workersReady) {
+		while (workersReady.get() < expectedSlaves) synchronized (workersReady) {
+			try {
+				workersReady.wait();
+			}
+			catch (InterruptedException ie) {}
+		}
+		log("All "+workersReady.get()+" workers ready");
 	}
 	
 	/**
@@ -460,31 +466,6 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	}
 	
 	/**
-	 * Sends all of the jobs in a new thread, returning immediately. If an exception is
-	 * raised, no further jobs are submitted and the thread terminates. If all jobs
-	 * were sent successfully, the {@link #signalCompletion()} method is called.
-	 * 
-	 * @param jobs The parameters to call {@link #sendJob(Serializable)} with.
-	 * @return A handle on an exception, which will be present if sending any jobs failed.
-	 */
-	protected ExceptionContainer<JMSException> sendAllJobsAsync(Iterable<? extends Serializable> jobs) {
-		ExceptionContainer<JMSException> exWrapper = new ExceptionContainer<>();
-		
-		jobSenderThread = new Thread(() -> {
-			try {
-				sendAllJobs(jobs);
-			}
-			catch (JMSException jmx) {
-				exWrapper.setException(jmx);
-				return;
-			}
-		});
-		jobSenderThread.setName("job-sender");
-		jobSenderThread.start();
-		return exWrapper;
-	}
-	
-	/**
 	 * Called when a worker has registered.
 	 * @param currentWorkers The number of currently registered workers.
 	 * @param outbox The channel used to contact this work.
@@ -529,29 +510,18 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 		}
 		log("All workers finished");
 	}
+
 	
 	/**
-	 * Called when a worker has completed loading its configuration. This method can be used to perform
-	 * additional tasks, but should always call {@link WorkerView#confirm(JMSContext)}.
+	 * Additional code to be run when a worker has connected and is ready to start processing jobs.
 	 * 
-	 * @param worker The worker that has been configured.
-	 * @param workerReady The number of workers that have currently been configured, excluding this one.
-	 * Implementations are expected to increment this number and can use the object's lock to signal
-	 * when all workers are connected by comparing this number to {@linkplain #expectedSlaves}.
-	 * @throws JMSException 
+	 * @param response The message received from the worker.
+	 * @param workersReady The number of workers ready, excluding this one.
+	 * @return Whether registration was successful.
+	 * @throws JMSException
 	 */
-	protected void confirmWorker(final Message response, final AtomicInteger workersReady) throws JMSException {
-		String worker = response.getStringProperty(WORKER_ID_PROPERTY);
-		if (!slaveWorkers.containsKey(worker)) {
-			throw new JMSRuntimeException("Could not find worker with id "+worker);
-		}
-		
-		log(worker+" ready");
-		
-		if (workersReady.incrementAndGet() >= expectedSlaves) synchronized (workersReady) {
-			assert slaveWorkers.size() >= expectedSlaves;
-			workersReady.notify();
-		}
+	protected boolean confirmWorker(final Message response, final int workersReady) throws JMSException {
+		return true;
 	}
 	
 	/**
