@@ -91,9 +91,10 @@ public abstract class JobSplitter<T, S extends Serializable> {
 		}
 		else {
 			masterJobs = allJobs.subList(0, numMasterJobs);
-			Collection<S> wj = convertToWorkerJobs(allJobs.subList(numMasterJobs-1, numTotalJobs));
+			Collection<S> wj = convertToWorkerJobs(allJobs.subList(numMasterJobs, numTotalJobs));
 			workerJobs = wj instanceof Serializable ? wj : new ArrayList<>(wj);
 		}
+		assert masterJobs.size() + workerJobs.size() == numTotalJobs : "Correct number of jobs";
 	}
 	
 	protected abstract List<T> getAllJobs() throws EolRuntimeException;
