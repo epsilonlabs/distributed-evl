@@ -60,7 +60,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 		}
 	}
 	
-	static final long JOB_RECV_TIMEOUT = Short.MAX_VALUE * 2;
+	static final long JOB_RECV_TIMEOUT = Short.MAX_VALUE;
 	
 	final ConnectionFactory connectionFactory;
 	final String basePath;
