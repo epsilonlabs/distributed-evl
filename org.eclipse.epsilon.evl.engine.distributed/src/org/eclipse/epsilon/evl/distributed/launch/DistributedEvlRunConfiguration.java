@@ -91,17 +91,11 @@ public abstract class DistributedEvlRunConfiguration extends EvlRunConfiguration
 		if (OperatingSystem.isWindows() && driveIndex > 1) {
 			path = path.substring(driveIndex - 1);
 		}
-		return path;
+		return path.replace("\\", "/");
 	}
 	
 	static String appendBasePathIfNeeded(String basePath, String relPath) {
-		String base = removeProtocol(basePath), relative = removeProtocol(relPath);
-		if (relative.startsWith(EvlContextDistributed.BASE_PATH_SUBSTITUTE)) {
-			return Paths.get(base,
-				relative.replace(EvlContextDistributed.BASE_PATH_SUBSTITUTE, "")
-			).toUri().toString();
-		}
-		return relative;
+		return relPath.replace(EvlContextDistributed.BASE_PATH_SUBSTITUTE, removeProtocol(basePath));
 	}
 	
 	public static Builder<? extends DistributedEvlRunConfiguration, ?> Builder() {
