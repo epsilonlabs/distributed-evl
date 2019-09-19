@@ -169,7 +169,7 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 	}
 	
 	@Override
-	protected void prepareContext() {
+	protected void prepareContext() throws EolRuntimeException {
 		getContext().storeInitialVariables();
 		super.prepareContext();
 	}
