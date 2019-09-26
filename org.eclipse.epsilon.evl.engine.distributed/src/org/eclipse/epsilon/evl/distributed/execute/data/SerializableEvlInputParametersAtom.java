@@ -128,7 +128,7 @@ public class SerializableEvlInputParametersAtom extends SerializableEvlInputAtom
 		for (Constraint constraint : constraintsToCheck) {
 			frameStack.enterLocal(FrameType.UNPROTECTED, entryPoint, variablesArr);
 			
-			constraint.execute(self, context)
+			constraint.execute(context, self)
 				.map(this::serializeUnsatisfiedConstraint)
 				.ifPresent(unsatisfied::add);
 			

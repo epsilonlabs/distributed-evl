@@ -22,6 +22,8 @@ import javax.jms.*;
 import org.eclipse.epsilon.common.function.CheckedConsumer;
 import org.eclipse.epsilon.common.function.CheckedRunnable;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
+import org.eclipse.epsilon.eol.execute.control.ExecutionController;
+import org.eclipse.epsilon.eol.execute.control.ExecutionProfiler;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.jms.execute.context.EvlContextJmsMaster;
@@ -537,17 +539,20 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	@Override
 	protected void postExecution() throws EolRuntimeException {
 		// Merge the workers' execution times with this one
-		getContext().getExecutorFactory().getRuleProfiler().mergeExecutionTimes(
-			slaveWorkers.values().stream()
-				.flatMap(execTimes -> execTimes.entrySet().stream())
-				.collect(Collectors.toMap(
-					e -> this.constraints.stream()
-						.filter(c -> c.getName().equals(e.getKey()))
-						.findAny().get(),
-					Map.Entry::getValue,
-					(t1, t2) -> t1.plus(t2)
-				))
-		);
+		ExecutionController controller = getContext().getExecutorFactory().getExecutionController();
+		if (controller instanceof ExecutionProfiler) {
+			((ExecutionProfiler) controller).mergeExecutionTimes(
+				slaveWorkers.values().stream()
+					.flatMap(execTimes -> execTimes.entrySet().stream())
+					.collect(Collectors.toMap(
+						e -> this.constraints.stream()
+							.filter(c -> c.getName().equals(e.getKey()))
+							.findAny().get(),
+						Map.Entry::getValue,
+						(t1, t2) -> t1.plus(t2)
+					))
+			);
+		}
 		
 		super.postExecution();
 		try {	
