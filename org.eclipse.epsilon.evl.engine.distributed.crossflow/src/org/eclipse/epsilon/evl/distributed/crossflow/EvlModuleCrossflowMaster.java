@@ -42,6 +42,14 @@ public class EvlModuleCrossflowMaster extends EvlModuleDistributedMaster {
 	}
 	
 	@Override
+	public Object executeJob(Object job) throws EolRuntimeException {
+		if (job instanceof ValidationData) {
+			job = ((ValidationData) job).getData();
+		}
+		return super.executeJob(job);
+	}
+	
+	@Override
 	protected boolean deserializeResults(Object response) throws EolRuntimeException {
 		return super.deserializeResults(response instanceof ValidationResult ?
 			((ValidationResult) response).getAtoms() : response

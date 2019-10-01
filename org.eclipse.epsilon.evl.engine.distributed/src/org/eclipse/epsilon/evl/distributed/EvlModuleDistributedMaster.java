@@ -163,6 +163,7 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 				.get();
 			}
 			catch (InterruptedException | ExecutionException ex) {
+				ex.printStackTrace();
 				EolRuntimeException.propagateDetailed(ex);
 			}
 		}

@@ -108,16 +108,19 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	}
 	
 	protected void connectToBroker() {
-		EvlContextJmsMaster context = getContext();
-		connectionFactory = ConnectionFactoryProvider.getDefault(context.getBrokerHost());
-		log("Connected to "+context.getBrokerHost()+" session "+context.getSessionId());
+		
+		
 	}
 	
 	@Override
 	protected final void executeWorkerJobs(Collection<? extends Serializable> jobs) throws EolRuntimeException {
+		EvlContextJmsMaster evlContext = getContext();
+		
 		// Only bother connecting if there are worker jobs
-		connectToBroker();
+		connectionFactory = ConnectionFactoryProvider.getDefault(evlContext.getBrokerHost());
 		try (JMSContext regContext = connectionFactory.createContext()) {
+			log("Connected to "+evlContext.getBrokerHost()+" session "+evlContext.getSessionId());
+			
 			// Initial registration of workers
 			final Destination tempDest = regContext.createTemporaryQueue();
 			final JMSProducer regProducer = regContext.createProducer();
