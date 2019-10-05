@@ -137,7 +137,7 @@ public class EvlContextDistributedMaster extends EvlContextDistributed {
 		HashMap<String, Serializable> config = new HashMap<>();
 		
 		if (stripBasePath) config.put(BASE_PATH, BASE_PATH_SUBSTITUTE);
-		config.put(LOCAL_PARALLELISM, numThreads);
+		config.put(LOCAL_PARALLELISM, getParallelism());
 		config.put(DISTRIBUTED_PARALLELISM, distributedParallelism);
 		String scriptPath = getModule().getFile().toPath().toString();
 		config.put(EVL_SCRIPT, stripBasePath ? removeBasePath(scriptPath) : scriptPath);
