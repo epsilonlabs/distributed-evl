@@ -19,7 +19,7 @@ public class ResultSink extends ResultSinkBase {
 	
 	@Override
 	public void consumeValidationOutput(ValidationResult validationResult) throws Exception {
-		workflow.configConfigSource.masterModule.deserializeResults(validationResult);
+		workflow.configConfigSource.masterContext.executeJob(validationResult);
 	}
 
 }

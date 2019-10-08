@@ -11,7 +11,8 @@ package org.eclipse.epsilon.evl.distributed.launch;
 
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
-import org.eclipse.epsilon.evl.distributed.strategy.*;
+import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
+
 /**
  * 
  * @author Sina Madani
@@ -23,6 +24,7 @@ public abstract class DistributedEvlRunConfigurationMaster extends DistributedEv
 	public static abstract class Builder<R extends DistributedEvlRunConfigurationMaster, B extends Builder<R, B>> extends DistributedEvlRunConfiguration.Builder<R, B> {
 		public static final double UNINTIALIZED_VALUE = -Double.MAX_VALUE;
 		
+		JobSplitter jobSplitter;
 		public int distributedParallelism;
 		public boolean shuffle = true;
 		public double
@@ -44,31 +46,26 @@ public abstract class DistributedEvlRunConfigurationMaster extends DistributedEv
 			this.shuffle = shuffle;
 			return (B) this;
 		}
-		
-		public JobSplitter<?, ?> getStrategy(EvlContextDistributedMaster context) {
-			if (batchFactor != UNINTIALIZED_VALUE) {
-				return getBatchStrategy(context);
-			}
-			else if (masterProportion != UNINTIALIZED_VALUE) {
-				return getAtomicStrategy(context);
-			}
-			else {
-				return getAnnotationStrategy(context);
-			}
-		}
-		
-		protected BatchJobSplitter getBatchStrategy(EvlContextDistributedMaster context) {
-			return new BatchJobSplitter(context, masterProportion, shuffle, batchFactor);
-		}
-		protected AnnotationConstraintAtomJobSplitter getAnnotationStrategy(EvlContextDistributedMaster context) {
-			return new AnnotationConstraintAtomJobSplitter(context, shuffle);
-		}
-		protected ContextAtomJobSplitter getAtomicStrategy(EvlContextDistributedMaster context) {
-			return new ContextAtomJobSplitter(context, masterProportion, shuffle);
+		public B withJobSplitter(JobSplitter splitter) {
+			this.jobSplitter = splitter;
+			return (B) this;
 		}
 		
 		@Override
 		protected abstract EvlModuleDistributedMaster createModule();
+		
+		public JobSplitter getJobSplitter() {
+			if (jobSplitter == null) {
+				jobSplitter = new JobSplitter(shuffle, masterProportion, batchFactor);
+			}
+			return jobSplitter;
+		}
+		
+		@Override
+		protected void preBuild() {
+			super.preBuild();
+			getJobSplitter();
+		}
 		
 		protected Builder() {
 			super();
@@ -79,29 +76,30 @@ public abstract class DistributedEvlRunConfigurationMaster extends DistributedEv
 	}
 	
 	protected final int distributedParallelism;
-	protected final double batchFactor, masterProportion;
-	protected final boolean shuffle;
+	protected final JobSplitter jobSplitter;
 	
 	public DistributedEvlRunConfigurationMaster(DistributedEvlRunConfigurationMaster other) {
 		super(other);
-		this.shuffle = other.shuffle;
-		this.batchFactor = other.batchFactor;
 		this.distributedParallelism = other.distributedParallelism;
-		this.masterProportion = other.masterProportion;
+		this.jobSplitter = other.jobSplitter;
 	}
 	
 	public DistributedEvlRunConfigurationMaster(Builder<? extends DistributedEvlRunConfiguration, ?> builder) {
 		super(builder);
 		this.distributedParallelism = builder.distributedParallelism;
-		this.shuffle = builder.shuffle;
-		this.batchFactor = builder.batchFactor;
-		this.masterProportion = builder.masterProportion;
+		this.jobSplitter = builder.jobSplitter;
 		EvlContextDistributedMaster context = getModule().getContext();
 		context.setModelProperties(modelsAndProperties.values());
 		context.setBasePath(basePath);
 		if (outputFile != null) {
 			context.setOutputPath(outputFile.toString());
 		}
+	}
+	
+	@Override
+	public void postExecute() throws Exception {
+		writeOut("Number of jobs: "+getModule().getAllJobs().size());
+		super.postExecute();
 	}
 	
 	@Override

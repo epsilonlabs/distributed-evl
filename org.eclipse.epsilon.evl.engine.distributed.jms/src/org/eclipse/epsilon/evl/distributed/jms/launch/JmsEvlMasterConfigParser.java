@@ -51,7 +51,7 @@ public class JmsEvlMasterConfigParser<R extends JmsEvlRunConfigurationMaster, B 
 			if (hostUri.getPort() <= 0) builder.host += ":61616";
 		}
 		
-		EvlContextJmsMaster context = new EvlContextJmsMaster(builder.parallelism, builder.distributedParallelism, builder.host, builder.sessionID);
-		builder.module = new EvlModuleJmsMaster(context, builder.getStrategy(context));
+		EvlContextJmsMaster context = new EvlContextJmsMaster(builder.parallelism, builder.distributedParallelism, builder.getJobSplitter(), builder.host, builder.sessionID);
+		builder.module = new EvlModuleJmsMaster(context);
 	}
 }

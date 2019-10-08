@@ -33,8 +33,8 @@ public class CrossflowEvlRunConfigurationMaster extends DistributedEvlRunConfigu
 		
 		@Override
 		protected EvlModuleCrossflowMaster createModule() {
-			EvlContextCrossflowMaster context = new EvlContextCrossflowMaster(parallelism, distributedParallelism, instanceID);
-			return new EvlModuleCrossflowMaster(context, getStrategy(context));
+			EvlContextCrossflowMaster context = new EvlContextCrossflowMaster(parallelism, distributedParallelism, getJobSplitter(), instanceID);
+			return new EvlModuleCrossflowMaster(context);
 		}
 		
 		@Override

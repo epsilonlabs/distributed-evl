@@ -9,24 +9,23 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.crossflow.execute.context;
 
+import org.eclipse.epsilon.common.module.IModule;
+import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
+import org.eclipse.epsilon.evl.distributed.crossflow.*;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
+import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
 
 public class EvlContextCrossflowMaster extends EvlContextDistributedMaster {
 	
 	protected String instanceID;
-	
-	public EvlContextCrossflowMaster(int distributedParallelism, String instanceId) {
-		super(distributedParallelism);
-		this.instanceID = instanceId;
-	}
 
 	public EvlContextCrossflowMaster(EvlContextCrossflowMaster other) {
 		super(other);
 		this.instanceID = other.instanceID;
 	}
 
-	public EvlContextCrossflowMaster(int localParallelism, int distributedParallelism, String instanceId) {
-		super(localParallelism, distributedParallelism);
+	public EvlContextCrossflowMaster(int localParallelism, int distributedParallelism, JobSplitter splitter, String instanceId) {
+		super(localParallelism, distributedParallelism, splitter);
 		this.instanceID = instanceId;
 	}
 
@@ -34,4 +33,26 @@ public class EvlContextCrossflowMaster extends EvlContextDistributedMaster {
 		return this.instanceID;
 	}
 	
+	@Override
+	public Object executeJob(Object job) throws EolRuntimeException {
+		if (job instanceof ValidationData) {
+			job = ((ValidationData) job).getData();
+		}
+		else if (job instanceof ValidationResult) {
+			job = ((ValidationResult) job).getAtoms();
+		}
+		return super.executeJob(job);
+	}
+	
+	@Override
+	public EvlModuleCrossflowMaster getModule() {
+		return (EvlModuleCrossflowMaster) super.getModule();
+	}
+	
+	@Override
+	public void setModule(IModule module) {
+		if (module instanceof EvlModuleCrossflowMaster) {
+			super.setModule(module);
+		}
+	}
 }

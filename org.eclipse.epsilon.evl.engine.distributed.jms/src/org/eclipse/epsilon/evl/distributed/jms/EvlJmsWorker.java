@@ -67,7 +67,6 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 	final int sessionID;
 	String workerID;
 	DistributedEvlRunConfigurationSlave configContainer;
-	EvlModuleDistributedSlave module;
 	Serializable stopBody;
 	volatile boolean finished;
 	
@@ -141,7 +140,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 			Map<String, ? extends Serializable> configMap = configMsg.getBody(Map.class);
 			configContainer = EvlContextDistributedSlave.parseJobParameters(configMap, basePath);
 			configContainer.preExecute();
-			(module = (EvlModuleDistributedSlave) configContainer.getModule()).prepareExecution();
+			configContainer.getModule().prepareExecution();
 
 			// This is to acknowledge when we have completed loading the script(s) and model(s) successfully
 			configuredAckMsg.setIntProperty(CONFIG_HASH_PROPERTY, configMap.hashCode());
@@ -165,6 +164,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 		JMSProducer resultSender = replyContext.createProducer().setAsync(null);
 		Destination resultDest = replyContext.createQueue(RESULTS_QUEUE_NAME+sessionID);
 		log("Began processing jobs");
+		EvlContextDistributedSlave context = configContainer.getModule().getContext();
 		
 		Message msg;
 		while ((msg = finished ? jobConsumer.receiveNoWait() : jobConsumer.receive(JOB_RECV_TIMEOUT)) != null) {
@@ -173,7 +173,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 					Serializable currentJob = ((ObjectMessage) msg).getObject();
 					ObjectMessage resultsMsg = null;
 					try {
-						Serializable resultObj = (Serializable) module.executeJobStateless(currentJob);
+						Serializable resultObj = (Serializable) context.executeJobStateless(currentJob);
 						resultsMsg = replyContext.createObjectMessage(resultObj);
 					}
 					catch (EolRuntimeException eox) {
@@ -213,7 +213,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 	
 	void onCompletion(JMSContext session) throws Exception {
 		// This is to ensure execution times are merged into main thread
-		module.getContext().endParallelTask();
+		configContainer.getModule().getContext().endParallelTask();
 		
 		ObjectMessage finishedMsg = session.createObjectMessage();
 		finishedMsg.setStringProperty(WORKER_ID_PROPERTY, workerID);

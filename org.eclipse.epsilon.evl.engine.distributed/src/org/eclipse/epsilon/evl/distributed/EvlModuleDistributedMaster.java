@@ -11,16 +11,15 @@ package org.eclipse.epsilon.evl.distributed;
 
 import java.io.Serializable;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.eol.function.CheckedEolRunnable;
+import org.eclipse.epsilon.evl.concurrent.atomic.EvlModuleParallelContextAtoms;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.execute.data.*;
 import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
-import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
 
 /**
  * Base implementation of EVL with distributed execution semantics.
@@ -37,86 +36,10 @@ import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
  * @author Sina Madani
  * @since 1.6
  */
-public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
+public abstract class EvlModuleDistributedMaster extends EvlModuleParallelContextAtoms {
 	
-	final JobSplitter<?, ?> jobSplitter;
-	
-	public EvlModuleDistributedMaster(EvlContextDistributedMaster context, JobSplitter<?, ?> strategy) {
-		super(context != null ? context : new EvlContextDistributedMaster(-1));
-		this.jobSplitter = Objects.requireNonNull(strategy, "Job distribution strategy cannot be null!");
-	}
-	
-	// UnsatisfiedConstraint resolution
-	
-	/**
-	 * Resolves the serialized unsatisfied constraints lazily.
-	 * 
-	 * @param serializedResults The serialized UnsatisfiedConstraint instances.
-	 * @return A Collection of lazily resolved UnsatisfiedConstraints.
-	 */
-	public Collection<LazyUnsatisfiedConstraint> deserializeLazy(Iterable<SerializableEvlResultAtom> serializedResults) {
-		Collection<LazyUnsatisfiedConstraint> results = serializedResults instanceof Collection ?
-			new ArrayList<>(((Collection<?>) serializedResults).size()) : new ArrayList<>();
-		
-		for (SerializableEvlResultAtom sr : serializedResults) {
-			results.add(sr.deserializeLazy(this));
-		}
-		
-		return results;
-	}
-	
-	/**
-	 * Deserializes the results eagerly in parallel using this context's ExecutorService.
-	 * @param results The serialized results.
-	 * @param eager Whether to fully resolve each UnsatisfiedConstraint.
-	 * @return The deserialized UnsatisfiedConstraints.
-	 * @throws EolRuntimeException
-	 */
-	public Collection<UnsatisfiedConstraint> deserializeEager(Iterable<? extends SerializableEvlResultAtom> results) throws EolRuntimeException {
-		EvlContextDistributedMaster context = getContext();
-		ArrayList<Callable<UnsatisfiedConstraint>> jobs = results instanceof Collection ?
-			new ArrayList<>(((Collection<?>)results).size()) : new ArrayList<>();
-		
-		for (SerializableEvlResultAtom sera : results) {
-			jobs.add(() -> sera.deserializeEager(this));
-		}
-		
-		return context.executeParallelTyped(null, jobs);
-	}
-	
-	/**
-	 * Deserializes the object lazily if it is a valid result type and adds it to
-	 * the unsatisfied constraints.
-	 * 
-	 * @param response The serializable result object.
-	 * @return Whether the object was a valid result
-	 * @throws EolRuntimeException
-	 */
-	@SuppressWarnings("unchecked")
-	protected boolean deserializeResults(Object response) throws EolRuntimeException {
-		if (response instanceof Iterable) {
-			Iterable<SerializableEvlResultAtom> srIter;
-			try {
-				srIter = (Iterable<SerializableEvlResultAtom>) response;
-			}
-			catch (ClassCastException ccx) {
-				return false;
-			}
-			getContext().getUnsatisfiedConstraints().addAll(deserializeLazy(srIter));
-			return true;
-		}
-		else if (response instanceof Iterator) {
-			java.util.function.Supplier<Iterator<Object>> iterSup = () -> (Iterator<Object>) response;
-			return deserializeResults((Iterable<Object>) iterSup::get);
-		}
-		else if (response instanceof SerializableEvlResultAtom) {
-			getContext().getUnsatisfiedConstraints().add(((SerializableEvlResultAtom) response).deserializeLazy(this));
-			return true;
-		}
-		else if (response instanceof java.util.stream.BaseStream<?,?>) {
-			return deserializeResults(((java.util.stream.BaseStream<?,?>) response).iterator());
-		}
-		else return false;
+	public EvlModuleDistributedMaster(EvlContextDistributedMaster context) {
+		super(Objects.requireNonNull(context));
 	}
 	
 	/**
@@ -126,7 +49,7 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 	 * @throws EolRuntimeException
 	 */
 	protected void executeMasterJobs(Collection<?> jobs) throws EolRuntimeException {
-		executeJob(jobs);
+		getContext().executeJob(jobs);
 	}
 	
 	/**
@@ -139,8 +62,10 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 	
 	@Override
 	protected final void checkConstraints() throws EolRuntimeException {
-		Collection<?> masterJobs = jobSplitter.getMasterJobs();
-		Collection<? extends Serializable> workerJobs = jobSplitter.getWorkerJobs();
+		JobSplitter splitter = getContext().getJobSplitter();
+		splitter.split(getAllJobs());
+		Collection<?> masterJobs = splitter.getMasterJobs();
+		Collection<? extends Serializable> workerJobs = splitter.getWorkerJobs();
 		
 		if (masterJobs.isEmpty() && workerJobs.isEmpty()) {
 			return;
@@ -179,4 +104,5 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 	public EvlContextDistributedMaster getContext() {
 		return (EvlContextDistributedMaster) super.getContext();
 	}
+	
 }

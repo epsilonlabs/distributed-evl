@@ -14,7 +14,6 @@ import java.time.Duration;
 import java.time.LocalTime;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -27,7 +26,6 @@ import org.eclipse.epsilon.eol.execute.control.ExecutionProfiler;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.jms.execute.context.EvlContextJmsMaster;
-import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
 
 /**
  * This module co-ordinates a message-based architecture. The workflow is as follows: <br/>
@@ -88,13 +86,13 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	
 	protected final int expectedSlaves;
 	protected final Map<String, Map<String, Duration>> slaveWorkers;
-	protected final Collection<Serializable> failedJobs = new java.util.HashSet<>();
+	protected final Collection<Serializable> responses = new java.util.HashSet<>();
 	ConnectionFactory connectionFactory;
 	private CheckedConsumer<Serializable, JMSException> jobSender;
 	private CheckedRunnable<JMSException> completionSender;
 	
-	public EvlModuleJmsMaster(EvlContextJmsMaster context, JobSplitter<?, ?> strategy) {
-		super(context, strategy);
+	public EvlModuleJmsMaster(EvlContextJmsMaster context) {
+		super(context);
 		slaveWorkers = new java.util./*Hashtable*/concurrent.ConcurrentHashMap<>(
 			this.expectedSlaves = getContext().getDistributedParallelism()
 		);
@@ -105,11 +103,6 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 		log("Began processing own jobs");
 		super.executeMasterJobs(jobs);
 		log("Finished processing own jobs");
-	}
-	
-	protected void connectToBroker() {
-		
-		
 	}
 	
 	@Override
@@ -221,19 +214,13 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 					beforeSend(readyWorkers);
 					sendAllJobs(jobs);
 					waitForWorkersToFinishJobs(workersFinished);
-					processFailedJobs();
+					processResponses(responses);
+					responses.clear();
 				}
 			}
 		}
 		catch (Exception ex) {
-			try {
-				stopAllWorkers(ex);
-			}
-			catch (JMSException jmx) {
-				throw new JMSRuntimeException(
-					"Couldn't stop workers! "+jmx.getMessage()+" (underlying: "+ex.getMessage()+")"
-				);
-			}
+			stopAllWorkers(ex);
 			if (ex instanceof RuntimeException) throw (RuntimeException) ex;
 			if (ex instanceof EolRuntimeException) throw (EolRuntimeException) ex;
 			if (ex instanceof JMSException) throw new JMSRuntimeException(ex.getMessage());
@@ -283,16 +270,15 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	 * Always called after execution, to finish unprocessed jobs. Implementations may override this
 	 * method to handle the processing differently, e.g. to re-distributed failed jobs. Subclasses
 	 * are free to call this method at any time prior to completion to avoid waiting.
+	 * Note that usually the jobs will be the results (i.e. SerializableEvlResultAtom).
+	 * The processed responses will be removed.
 	 * 
-	 * @see #failedJobs
 	 * @throws EolRuntimeException
 	 */
-	protected void processFailedJobs() throws EolRuntimeException {
-		if (!failedJobs.isEmpty()) {
-			log("Processing "+failedJobs.size()+" failed jobs...");
-			for (Iterator<Serializable> it = failedJobs.iterator(); it.hasNext(); it.remove()) {
-				executeJob(it.next());
-			}
+	protected void processResponses(Collection<? extends Serializable> responseJobs) throws EolRuntimeException {
+		if (!responseJobs.isEmpty()) {
+			log("Processing "+responseJobs.size()+" repsonses...");
+			getContext().executeJob(responseJobs);
 		}
 	}
 	
@@ -372,11 +358,16 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	 * @param reason The message body to send to workers.
 	 * @throws JMSException
 	 */
-	protected void stopAllWorkers(Exception exception) throws JMSException {
+	protected void stopAllWorkers(Exception exception) throws JMSRuntimeException {
 		try (JMSContext session = connectionFactory.createContext()) {
 			session.createProducer().send(
 				createShortCircuitTopic(session),
 				exception.getMessage()
+			);
+		}
+		catch (JMSException jmx) {
+			throw new JMSRuntimeException(
+				"Couldn't stop workers! "+jmx.getMessage()
 			);
 		}
 	}
@@ -426,23 +417,18 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 					if (contents instanceof Exception) {
 						handleExceptionFromWorker((Exception) contents, msg.getStringProperty(WORKER_ID_PROPERTY));
 					}
-					else if (!deserializeResults(contents)) synchronized (failedJobs) {
-						// Treat anything else (e.g. SerializableEvlInputAtom, DistributedEvlBatch) as a failure
-						if (failedJobs.add(contents)) {
-							failedJobs.notify();
-						}
+					if (!processResponse(contents)) synchronized (responses) {
+						responses.add(contents);
 					}
 				}
 			}
 			catch (JMSException jmx) {
+				
 				throw new JMSRuntimeException(jmx.getMessage());
 			}
 			catch (EolRuntimeException ex) {
-				try {
-					stopAllWorkers(ex);
-				}
-				catch (JMSException nested) {}
-				throw new RuntimeException(ex.getMessage());
+				stopAllWorkers(ex);
+				throw new RuntimeException(ex);
 			}
 			finally {
 				if (resultsInProgress.decrementAndGet() <= 1 &&
@@ -454,6 +440,20 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 				}
 			}
 		};
+	}
+	
+	/**
+	 * 
+	 * @param response
+	 * @return Whether the job was processed. Returning <code>true</code> will
+	 * not add the response to the collection for post-processing. Returning <code>false</code>
+	 * will deal with the job later once all other jobs have been executed.
+	 * 
+	 * @throws EolRuntimeException
+	 */
+	protected boolean processResponse(Serializable response) throws EolRuntimeException {
+		getContext().executeJob(response);
+		return true;
 	}
 	
 	/**

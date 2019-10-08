@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.apache.flink.configuration.Configuration;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
+import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
 
 /**
  * 
@@ -23,17 +24,9 @@ import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributed
  * @since 1.6
  */
 public class EvlContextFlinkMaster extends EvlContextDistributedMaster {
-	
-	public EvlContextFlinkMaster() {
-		super(-1);
-	}
-	
-	public EvlContextFlinkMaster(int distributedParallelism) {
-		super(distributedParallelism);
-	}
-	
-	public EvlContextFlinkMaster(int localParallelism, int distributedParallelism) {
-		super(localParallelism, distributedParallelism);
+
+	public EvlContextFlinkMaster(int localParallelism, int distributedParallelism, JobSplitter strategy) {
+		super(localParallelism, distributedParallelism, strategy);
 	}
 	
 	public EvlContextFlinkMaster(EvlContextDistributedMaster other) {

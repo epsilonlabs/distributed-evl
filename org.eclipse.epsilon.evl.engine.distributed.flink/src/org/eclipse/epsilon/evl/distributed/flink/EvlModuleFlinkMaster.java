@@ -11,7 +11,6 @@ package org.eclipse.epsilon.evl.distributed.flink;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.Objects;
 import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
@@ -19,10 +18,8 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.fs.FileSystem.WriteMode;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedMaster;
-import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlResultAtom;
 import org.eclipse.epsilon.evl.distributed.flink.execute.context.EvlContextFlinkMaster;
-import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
 
 /**
  * 
@@ -32,15 +29,15 @@ import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
 public class EvlModuleFlinkMaster extends EvlModuleDistributedMaster {
 
 	private ExecutionEnvironment executionEnv;
-	
-	public EvlModuleFlinkMaster(EvlContextFlinkMaster context, JobSplitter<?, ?> strategy) {
-		super(Objects.requireNonNull(context), strategy);
-	}
 
+	public EvlModuleFlinkMaster(EvlContextFlinkMaster context) {
+		super(context);
+	}
+	
 	@Override
 	protected final void prepareExecution() throws EolRuntimeException {
 		super.prepareExecution();		
-		EvlContextDistributedMaster context = getContext();
+		EvlContextFlinkMaster context = getContext();
 		executionEnv = ExecutionEnvironment.getExecutionEnvironment();
 		int parallelism = context.getDistributedParallelism();
 		if (parallelism < 1 && parallelism != ExecutionConfig.PARALLELISM_DEFAULT) {
@@ -65,8 +62,7 @@ public class EvlModuleFlinkMaster extends EvlModuleDistributedMaster {
 				executionEnv.execute();
 			}
 			else {
-				boolean valid = deserializeResults(pipeline.collect());
-				assert valid;
+				getContext().executeJob(pipeline.collect());
 			}
 		}
 		catch (Exception ex) {

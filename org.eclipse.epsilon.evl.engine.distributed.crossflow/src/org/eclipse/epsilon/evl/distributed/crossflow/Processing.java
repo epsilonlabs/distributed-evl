@@ -11,7 +11,6 @@ package org.eclipse.epsilon.evl.distributed.crossflow;
 
 import java.util.Collection;
 import java.util.List;
-import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedSlave;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributed;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedSlave;
 import org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlResultAtom;
@@ -26,7 +25,6 @@ public class Processing extends ProcessingBase {
 	
 	boolean isMaster;
 	DistributedEvlRunConfigurationSlave configuration;
-	EvlModuleDistributedSlave slaveModule;
 	
 	@SuppressWarnings("unchecked")
 	@Override
@@ -38,7 +36,6 @@ public class Processing extends ProcessingBase {
 			configuration = EvlContextDistributedSlave.parseJobParameters(config.data,
 				System.getProperty(EvlContextDistributed.BASE_PATH_SYSTEM_PROPERTY)
 			);
-			slaveModule = configuration.getModule();
 			notify();
 		}
 	}
@@ -52,11 +49,11 @@ public class Processing extends ProcessingBase {
 		final java.io.Serializable job = validationData.data;
 		
 		if (isMaster) {
-			workflow.configConfigSource.masterModule.executeJob(job);
+			workflow.configConfigSource.masterContext.executeJob(job);
 		}
 		else {
-			assert workflow.isWorker() && slaveModule != null;
-			Collection<SerializableEvlResultAtom> results = slaveModule.executeJobStateless(job);
+			assert workflow.isWorker() && configuration != null;
+			Collection<SerializableEvlResultAtom> results = configuration.getModule().getContext().executeJobStateless(job);
 			if (results != null) {
 				sendToValidationOutput(new ValidationResult((List<SerializableEvlResultAtom>)results));
 			}

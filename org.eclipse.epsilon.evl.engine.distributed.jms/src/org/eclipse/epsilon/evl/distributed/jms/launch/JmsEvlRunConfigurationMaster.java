@@ -25,8 +25,8 @@ public class JmsEvlRunConfigurationMaster extends DistributedEvlRunConfiguration
 	public static class Builder<R extends JmsEvlRunConfigurationMaster, B extends Builder<R, B>> extends DistributedEvlRunConfigurationMaster.Builder<R, B> {
 		@Override
 		protected EvlModuleJmsMaster createModule() {
-			EvlContextJmsMaster context = new EvlContextJmsMaster(parallelism, distributedParallelism, host, sessionID);
-			return new EvlModuleJmsMaster(context, getStrategy(context));
+			EvlContextJmsMaster context = new EvlContextJmsMaster(parallelism, distributedParallelism, getJobSplitter(), host, sessionID);
+			return new EvlModuleJmsMaster(context);
 		}
 		
 		protected Builder() {

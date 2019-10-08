@@ -9,14 +9,15 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.crossflow;
 
+import org.eclipse.epsilon.evl.distributed.crossflow.execute.context.EvlContextCrossflowMaster;
+
 public class ConfigConfigSource extends ConfigConfigSourceBase {
 	
-	protected EvlModuleCrossflowMaster masterModule;
+	protected EvlContextCrossflowMaster masterContext;
 
 	@Override
 	public void produce() throws Exception {
-		sendToConfigTopic(new Config(masterModule.getContext().getJobParameters(false)));
+		sendToConfigTopic(new Config(masterContext.getJobParameters(false)));
 	}
-
 
 }

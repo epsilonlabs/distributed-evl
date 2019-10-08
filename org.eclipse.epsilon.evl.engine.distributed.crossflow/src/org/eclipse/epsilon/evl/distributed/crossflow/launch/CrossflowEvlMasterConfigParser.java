@@ -51,7 +51,7 @@ public class CrossflowEvlMasterConfigParser<R extends CrossflowEvlRunConfigurati
 		if (cmdLine.hasOption(instanceIdOpt)) {
 			builder.instanceID = cmdLine.getOptionValue(instanceIdOpt);
 		}
-		EvlContextCrossflowMaster context = new EvlContextCrossflowMaster(builder.parallelism, builder.distributedParallelism, builder.instanceID);
-		builder.module = new EvlModuleCrossflowMaster(context, builder.getStrategy(context));
+		EvlContextCrossflowMaster context = new EvlContextCrossflowMaster(builder.parallelism, builder.distributedParallelism, builder.getJobSplitter(), builder.instanceID);
+		builder.module = new EvlModuleCrossflowMaster(context);
 	}
 }

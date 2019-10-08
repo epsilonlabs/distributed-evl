@@ -16,7 +16,6 @@ import org.apache.flink.api.common.functions.RuntimeContext;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.util.Collector;
-import org.eclipse.epsilon.evl.distributed.EvlModuleDistributed;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedSlave;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedSlave;
 import org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlResultAtom;
@@ -39,7 +38,7 @@ public class EvlFlinkFlatMapFunction<IN extends Serializable> extends RichFlatMa
 	
 	@Override
 	public void flatMap(IN value, Collector<SerializableEvlResultAtom> out) throws Exception {
-		localModule.executeJobStateless(value).forEach(out::collect);
+		localModule.getContext().executeJobStateless(value).forEach(out::collect);
 	}
 	
 	@Override
