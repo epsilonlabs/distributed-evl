@@ -93,8 +93,7 @@ public class EvlContextDistributedMaster extends EvlContextDistributed {
 	@Override
 	public Object executeJob(Object job) throws EolRuntimeException {
 		if (job instanceof SerializableEvlResultAtom) {
-			getUnsatisfiedConstraints().add(((SerializableEvlResultAtom) job).deserializeLazy(getModule()));
-			return true;
+			return getUnsatisfiedConstraints().add(((SerializableEvlResultAtom) job).deserializeLazy(getModule()));
 		}
 		return super.executeJob(job);
 	}

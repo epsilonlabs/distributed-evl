@@ -73,7 +73,7 @@ public class JobSplitter {
 		final boolean isBatch = batchSize != UNINTIALIZED_VALUE;
 		final List<?> actualJobs = isBatch ? getBatchJobs(allJobs) : allJobs;
 
-		if (shuffleJobs) Collections.shuffle(allJobs);
+		if (shuffleJobs) Collections.shuffle(actualJobs);
 		
 		final int
 			numTotalJobs = actualJobs.size(),
