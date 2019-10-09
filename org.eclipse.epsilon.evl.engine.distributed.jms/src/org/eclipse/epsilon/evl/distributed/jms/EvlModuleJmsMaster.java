@@ -108,7 +108,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	@Override
 	protected final void executeWorkerJobs(Collection<? extends Serializable> jobs) throws EolRuntimeException {
 		EvlContextJmsMaster evlContext = getContext();
-		
+
 		// Only bother connecting if there are worker jobs
 		connectionFactory = ConnectionFactoryProvider.getDefault(evlContext.getBrokerHost());
 		try (JMSContext regContext = connectionFactory.createContext()) {

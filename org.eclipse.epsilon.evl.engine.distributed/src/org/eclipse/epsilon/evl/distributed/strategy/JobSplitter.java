@@ -69,11 +69,14 @@ public class JobSplitter {
 		return workerJobs;
 	}
 	
-	public Entry<Collection<?>, Collection<? extends Serializable>> split(List<?> allJobs) throws EolRuntimeException {
+	public Entry<Collection<?>, Collection<? extends Serializable>> split(final List<?> allJobs) throws EolRuntimeException {
+		final boolean isBatch = batchSize != UNINTIALIZED_VALUE;
+		final List<?> actualJobs = isBatch ? getBatchJobs(allJobs) : allJobs;
+
 		if (shuffleJobs) Collections.shuffle(allJobs);
 		
 		final int
-			numTotalJobs = allJobs.size(),
+			numTotalJobs = actualJobs.size(),
 			distributedParallelism = context.getDistributedParallelism();		
 		
 		if (distributedParallelism == 0) {
@@ -85,21 +88,25 @@ public class JobSplitter {
 		
 		int numMasterJobs = (int) (masterProportion * numTotalJobs);
 		if (numMasterJobs >= numTotalJobs) {
-			masterJobs = allJobs;
+			masterJobs = actualJobs;
 			workerJobs = Collections.emptyList();
 		}
 		else {
 			Collection<?> toConvert;
 			if (numMasterJobs <= 0) {
 				masterJobs = Collections.emptyList();
-				toConvert = allJobs;
+				toConvert = actualJobs;
 			}
 			else {
-				masterJobs = allJobs.subList(0, numMasterJobs);
-				toConvert = allJobs.subList(numMasterJobs, numTotalJobs);
+				masterJobs = actualJobs.subList(0, numMasterJobs);
+				toConvert = actualJobs.subList(numMasterJobs, numTotalJobs);
 			}
 			
-			Collection<? extends Serializable> wj = convertToWorkerJobs(toConvert, context);
+			@SuppressWarnings("unchecked")
+			Collection<? extends Serializable> wj = isBatch ?
+				(List<? extends Serializable>) toConvert :
+				convertToWorkerJobs(toConvert, context);
+			
 			workerJobs = wj instanceof Serializable ? wj : new ArrayList<>(wj);
 		}
 		assert masterJobs.size() + workerJobs.size() == numTotalJobs : "Correct number of jobs";
@@ -121,6 +128,13 @@ public class JobSplitter {
 		return wjs;
 	}
 	
+	@Override
+	public String toString() {
+		return "JobSplitter [shuffleJobs=" + shuffleJobs +
+			", masterProportion=" + masterProportion +
+			", batchSize=" + batchSize + "]";
+	}
+
 	public JobSplitter() {
 		this(true);
 	}
