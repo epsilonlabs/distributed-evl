@@ -64,10 +64,7 @@ public class EvlContextDistributed extends EvlContextParallel {
 	
 	@Override
 	public Object executeJob(Object job) throws EolRuntimeException {
-		if (job == null) {
-			return null;
-		}
-		else if (job instanceof SerializableEvlResultAtom) {
+		if (job instanceof SerializableEvlResultAtom) {
 			return Collections.singletonList((SerializableEvlResultAtom) job);
 		}
 		else if (job instanceof SerializableEvlInputAtom) {

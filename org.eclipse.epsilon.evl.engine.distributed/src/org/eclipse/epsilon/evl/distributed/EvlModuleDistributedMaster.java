@@ -16,7 +16,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.eol.function.CheckedEolRunnable;
-import org.eclipse.epsilon.evl.concurrent.atomic.EvlModuleParallelContextAtoms;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.execute.data.*;
 import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
@@ -36,7 +35,7 @@ import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
  * @author Sina Madani
  * @since 1.6
  */
-public abstract class EvlModuleDistributedMaster extends EvlModuleParallelContextAtoms {
+public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 	
 	public EvlModuleDistributedMaster(EvlContextDistributedMaster context) {
 		super(Objects.requireNonNull(context));

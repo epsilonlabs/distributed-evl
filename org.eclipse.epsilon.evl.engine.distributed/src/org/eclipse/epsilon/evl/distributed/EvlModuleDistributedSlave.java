@@ -11,7 +11,6 @@ package org.eclipse.epsilon.evl.distributed;
 
 import java.util.Collection;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
-import org.eclipse.epsilon.evl.concurrent.atomic.EvlModuleParallelContextAtoms;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedSlave;
 import org.eclipse.epsilon.evl.distributed.execute.data.*;
 import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
@@ -27,7 +26,7 @@ import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
  * @author Sina Madani
  * @since 1.6
  */
-public class EvlModuleDistributedSlave extends EvlModuleParallelContextAtoms {
+public class EvlModuleDistributedSlave extends EvlModuleDistributed {
 	
 	public EvlModuleDistributedSlave() {
 		this(null);

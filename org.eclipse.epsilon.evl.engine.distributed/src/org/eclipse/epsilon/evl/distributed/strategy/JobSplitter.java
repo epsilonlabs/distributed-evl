@@ -53,19 +53,19 @@ public class JobSplitter {
 		return JobBatch.getBatches(numTotalJobs, chunks);
 	}
 
-	protected void screenSplit() throws IllegalArgumentException {
+	protected void requireSplit() throws IllegalArgumentException {
 		if (masterJobs == null || workerJobs == null) {
 			throw new IllegalStateException("Must call split() first!");
 		}
 	}
 	
 	public Collection<?> getMasterJobs() throws EolRuntimeException {
-		screenSplit();
+		requireSplit();
 		return masterJobs;
 	}
 	
 	public Collection<? extends Serializable> getWorkerJobs() throws EolRuntimeException {
-		screenSplit();
+		requireSplit();
 		return workerJobs;
 	}
 	

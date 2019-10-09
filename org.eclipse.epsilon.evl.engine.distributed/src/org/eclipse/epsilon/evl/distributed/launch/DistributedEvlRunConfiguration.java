@@ -12,6 +12,7 @@ package org.eclipse.epsilon.evl.distributed.launch;
 import java.nio.file.Paths;
 import org.eclipse.epsilon.common.util.OperatingSystem;
 import org.eclipse.epsilon.common.util.StringProperties;
+import org.eclipse.epsilon.evl.distributed.EvlModuleDistributed;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributed;
 import org.eclipse.epsilon.evl.launch.EvlRunConfiguration;
 
@@ -116,5 +117,10 @@ public abstract class DistributedEvlRunConfiguration extends EvlRunConfiguration
 		this.sessionID = builder.sessionID;
 		this.basePath = builder.basePath;
 		this.host = builder.host;
+	}
+	
+	@Override
+	public EvlModuleDistributed getModule() {
+		return (EvlModuleDistributed) super.getModule();
 	}
 }
