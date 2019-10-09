@@ -81,6 +81,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 		RESULTS_QUEUE_NAME = "results",
 		WORKER_ID_PREFIX = "EVL_jms",
 		LAST_MESSAGE_PROPERTY = "lastMsg",
+		NUM_JOBS_PROCESSED_PROPERTY = "jobsProcessed",
 		WORKER_ID_PROPERTY = "workerID",
 		CONFIG_HASH_PROPERTY = "configChecksum";
 	
@@ -90,6 +91,8 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	ConnectionFactory connectionFactory;
 	private CheckedConsumer<Serializable, JMSException> jobSender;
 	private CheckedRunnable<JMSException> completionSender;
+	int jobsSentToWorkers;
+	volatile int jobsProcessedByWorkers;
 	
 	public EvlModuleJmsMaster(EvlContextJmsMaster context) {
 		super(context);
@@ -100,9 +103,9 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	
 	@Override
 	protected void executeMasterJobs(Collection<?> jobs) throws EolRuntimeException {
-		log("Began processing own jobs");
+		log("Total number of jobs = "+getAllJobs().size());
 		super.executeMasterJobs(jobs);
-		log("Finished processing own jobs");
+		log("Finished processing "+jobs.size()+" master jobs");
 	}
 	
 	@Override
@@ -341,6 +344,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	 */
 	protected final void sendJob(Serializable msgBody) throws JMSException {
 		jobSender.acceptThrows(msgBody);
+		++jobsSentToWorkers;
 	}
 	
 	/**
@@ -467,7 +471,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 			sendJob(job);
 		}
 		signalCompletion();
-		log("Sent all jobs");
+		log("Sent "+jobsSentToWorkers+" jobs to workers");
 	}
 	
 	/**
@@ -489,13 +493,16 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	 */
 	@SuppressWarnings("unchecked")
 	protected void workerCompleted(String worker, Message msg) throws JMSException {
+		int processed = msg.getIntProperty(NUM_JOBS_PROCESSED_PROPERTY);
+		jobsProcessedByWorkers += processed;
+		
 		if (msg instanceof ObjectMessage) {
 			Serializable body = ((ObjectMessage) msg).getObject();
 			if (body instanceof Map) {
 				slaveWorkers.put(worker, (Map<String, Duration>) body);
 			}
 		}
-		log(worker + " finished");
+		log(worker + " finished (processed "+processed+" jobs)");
 	}
 
 	/**
@@ -513,7 +520,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 			}
 			catch (InterruptedException ie) {}
 		}
-		log("All workers finished");
+		log("All workers finished ("+jobsProcessedByWorkers+" processed jobs)");
 	}
 
 	
@@ -541,6 +548,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	
 	@Override
 	protected void postExecution() throws EolRuntimeException {
+		assert jobsProcessedByWorkers == jobsSentToWorkers : "All worker jobs processed";
 		// Merge the workers' execution times with this one
 		ExecutionController controller = getContext().getExecutorFactory().getExecutionController();
 		if (controller instanceof ExecutionProfiler) {

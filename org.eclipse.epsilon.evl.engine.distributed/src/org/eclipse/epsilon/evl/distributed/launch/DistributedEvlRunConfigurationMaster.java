@@ -97,12 +97,6 @@ public abstract class DistributedEvlRunConfigurationMaster extends DistributedEv
 	}
 	
 	@Override
-	public void postExecute() throws Exception {
-		writeOut("Number of jobs: "+getModule().getAllJobs().size());
-		super.postExecute();
-	}
-	
-	@Override
 	public EvlModuleDistributedMaster getModule() {
 		return (EvlModuleDistributedMaster) super.getModule();
 	}

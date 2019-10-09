@@ -69,6 +69,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 	DistributedEvlRunConfigurationSlave configContainer;
 	Serializable stopBody;
 	volatile boolean finished;
+	int jobsProcessed = 0;
 	
 	
 	public EvlJmsWorker(String host, String basePath, int sessionID) {
@@ -175,6 +176,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 					try {
 						Serializable resultObj = (Serializable) context.executeJobStateless(currentJob);
 						resultsMsg = replyContext.createObjectMessage(resultObj);
+						++jobsProcessed;
 					}
 					catch (EolRuntimeException eox) {
 						onFail(eox, msg);
@@ -218,12 +220,13 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 		ObjectMessage finishedMsg = session.createObjectMessage();
 		finishedMsg.setStringProperty(WORKER_ID_PROPERTY, workerID);
 		finishedMsg.setBooleanProperty(LAST_MESSAGE_PROPERTY, true);
+		finishedMsg.setIntProperty(NUM_JOBS_PROCESSED_PROPERTY, jobsProcessed);
 		finishedMsg.setObject(stopBody instanceof Serializable ? stopBody :
 			configContainer.getSerializableRuleExecutionTimes()
 		);
 		session.createProducer().send(session.createQueue(RESULTS_QUEUE_NAME+sessionID), finishedMsg);
 		
-		log("Signalled completion");
+		log("Signalled completion (processed "+jobsProcessed+" jobs)");
 	}
 	
 	void onFail(Exception ex, Message msg) {
