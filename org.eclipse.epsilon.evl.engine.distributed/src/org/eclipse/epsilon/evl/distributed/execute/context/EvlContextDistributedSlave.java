@@ -19,6 +19,7 @@ import org.eclipse.epsilon.eol.models.IModel;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedSlave;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfigurationSlave;
 import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
+import org.eclipse.epsilon.evl.execute.context.IEvlContext;
 
 /**
  * 
@@ -26,28 +27,6 @@ import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
  * @since 1.6
  */
 public class EvlContextDistributedSlave extends EvlContextDistributed {
-	
-	protected static final Set<UnsatisfiedConstraint> NOOP_UC = new AbstractSet<UnsatisfiedConstraint>() {	
-		@Override
-		public boolean add(UnsatisfiedConstraint uc) {
-			return true;
-		}
-		
-		@Override
-		public boolean addAll(Collection<? extends UnsatisfiedConstraint> c) {
-			return false;
-		}
-		
-		@Override
-		public Iterator<UnsatisfiedConstraint> iterator() {
-			throw new UnsupportedOperationException("This is a no-op collection!");
-		}
-
-		@Override
-		public int size() {
-			return 0;
-		}
-	};
 	
 	public EvlContextDistributedSlave() {
 		super();
@@ -57,10 +36,14 @@ public class EvlContextDistributedSlave extends EvlContextDistributed {
 		super(localParallelism);
 	}
 	
+	public EvlContextDistributedSlave(IEvlContext other) {
+		super(other);
+	}
+	
 	@Override
 	protected void initMainThreadStructures() {
 		super.initMainThreadStructures();
-		unsatisfiedConstraints = NOOP_UC;
+		unsatisfiedConstraints = Collections.emptySet();
 	}
 	
 	@Override

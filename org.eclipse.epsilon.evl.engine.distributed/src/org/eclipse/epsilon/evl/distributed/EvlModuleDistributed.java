@@ -9,6 +9,7 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed;
 
+import java.util.Objects;
 import org.eclipse.epsilon.evl.concurrent.atomic.EvlModuleParallelContextAtoms;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributed;
 
@@ -19,15 +20,9 @@ import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributed
  */
 public abstract class EvlModuleDistributed extends EvlModuleParallelContextAtoms {
 
-	public EvlModuleDistributed() {
-		// TODO Auto-generated constructor stub
-	}
-
 	public EvlModuleDistributed(EvlContextDistributed context) {
-		super(context);
-		// TODO Auto-generated constructor stub
+		super(Objects.requireNonNull(context));
 	}
-
 	
 	@Override
 	public EvlContextDistributed getContext() {
