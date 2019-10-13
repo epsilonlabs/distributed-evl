@@ -61,10 +61,10 @@ public abstract class SerializableEvlAtom implements java.io.Serializable, Clone
 	
 	@Override
 	public String toString() {
-		return getClass().getSimpleName()+" [modelElementID="
+		return getClass().getSimpleName()+" {modelElementID="
 				+ modelElementID + ", modelName=" + modelName
 				+ ", contextType=" + contextName
-				+ ", constraint=" + constraintName+"]";
+				+ ", constraint=" + constraintName+"}";
 	}
 	
 	public Object findElement(IEolContext context) throws EolRuntimeException {

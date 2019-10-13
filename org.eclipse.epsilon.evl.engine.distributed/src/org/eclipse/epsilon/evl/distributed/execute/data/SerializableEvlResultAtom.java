@@ -55,7 +55,7 @@ public class SerializableEvlResultAtom extends SerializableEvlAtom {
 	public String toString() {
 		String start = super.toString();
 		start = start.substring(0, start.length() - 1);
-		return start + ", message=" + message+"]";
+		return start + ", message=" + message+"}";
 	}
 	
 	/**
@@ -95,7 +95,7 @@ public class SerializableEvlResultAtom extends SerializableEvlAtom {
 		uc.setInstance(modelElement);
 		uc.setMessage(message);
 		Constraint constraint = module.getConstraint(
-				constraintName, module.getConstraintContext(contextName), modelElement, context, false
+				constraintName, module.getConstraintContext(contextName), modelElement, false
 			)
 			.orElseThrow(() -> new EvlConstraintNotFoundException(constraintName, module));
 		uc.setConstraint(constraint);

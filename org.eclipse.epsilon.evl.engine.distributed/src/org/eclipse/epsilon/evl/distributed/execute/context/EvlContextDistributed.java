@@ -14,11 +14,11 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import org.eclipse.epsilon.common.concurrent.ConcurrencyUtils;
+import org.eclipse.epsilon.common.module.IModule;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.evl.IEvlModule;
-import org.eclipse.epsilon.evl.distributed.execute.data.LazyUnsatisfiedConstraint;
-import org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlInputAtom;
-import org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlResultAtom;
+import org.eclipse.epsilon.evl.distributed.EvlModuleDistributed;
+import org.eclipse.epsilon.evl.distributed.execute.data.*;
 import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
 import org.eclipse.epsilon.evl.execute.context.IEvlContext;
 import org.eclipse.epsilon.evl.execute.context.concurrent.EvlContextParallel;
@@ -64,15 +64,18 @@ public class EvlContextDistributed extends EvlContextParallel {
 	
 	@Override
 	public Object executeJob(Object job) throws EolRuntimeException {
-		if (job instanceof SerializableEvlInputAtom) {
-			((SerializableEvlInputAtom) job).execute(getModule());
-			return null;
-		}
 		if (job instanceof SerializableEvlResultAtom) {
 			return ((SerializableEvlResultAtom) job).deserializeLazy(getModule());
 		}
+		if (job instanceof SerializableEvlResultPointer) {
+			return ((SerializableEvlResultPointer) job).resolveForModule(getModule());
+		}
 		if (job instanceof UnsatisfiedConstraint) {
 			return SerializableEvlResultAtom.serializeResult((UnsatisfiedConstraint) job, this);
+		}
+		if (job instanceof SerializableEvlInputAtom) {
+			((SerializableEvlInputAtom) job).execute(getModule());
+			return null;
 		}
 		return super.executeJob(job);
 	}
@@ -148,5 +151,17 @@ public class EvlContextDistributed extends EvlContextParallel {
 			jobs.add(() -> sera.deserializeEager(module));
 		}
 		return executeParallelTyped(null, jobs);
+	}
+	
+	@Override
+	public EvlModuleDistributed getModule() {
+		return (EvlModuleDistributed) super.getModule();
+	}
+	
+	@Override
+	public void setModule(IModule module) {
+		if (module instanceof EvlModuleDistributed) {
+			super.setModule(module);
+		}
 	}
 }

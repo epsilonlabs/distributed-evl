@@ -9,7 +9,7 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.execute.data;
 
-import java.util.Deque;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
@@ -68,7 +68,7 @@ public class LazyUnsatisfiedConstraint extends UnsatisfiedConstraint {
 	}
 
 	@Override
-	public Deque<FixInstance> getFixes() {
+	public List<FixInstance> getFixes() {
 		// TODO Support
 		return super.getFixes();
 	}
