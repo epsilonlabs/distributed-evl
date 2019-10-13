@@ -94,7 +94,7 @@ public class SerializableEvlResultPointer implements Serializable, Cloneable {
 	 * @return
 	 * @throws EolRuntimeException
 	 */
-	public Collection<UnsatisfiedConstraint> resolveForModule(EvlModuleParallelContextAtoms module) throws EolRuntimeException {
+	public Collection<UnsatisfiedConstraint> deserialize(EvlModuleParallelContextAtoms module) throws EolRuntimeException {
 		if (constraintNames == null || constraintNames.length == 0) return Collections.emptyList();
 		ConstraintContextAtom cca = module.getAllJobs().get(index);
 		ArrayList<UnsatisfiedConstraint> unsatisfieds = new ArrayList<>(constraintNames.length);

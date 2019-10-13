@@ -18,7 +18,6 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.util.Collector;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedSlave;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedSlave;
-import org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlResultAtom;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfigurationSlave;
 
 /**
@@ -29,7 +28,7 @@ import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfiguration
  * @author Sina Madani
  * @since 1.6
  */
-public class EvlFlinkFlatMapFunction<IN extends Serializable> extends RichFlatMapFunction<IN, SerializableEvlResultAtom> {
+public class EvlFlinkFlatMapFunction<IN extends Serializable> extends RichFlatMapFunction<IN, Serializable> {
 	
 	private static final long serialVersionUID = 4605327252632042575L;
 	
@@ -37,7 +36,7 @@ public class EvlFlinkFlatMapFunction<IN extends Serializable> extends RichFlatMa
 	protected transient DistributedEvlRunConfigurationSlave configContainer;
 	
 	@Override
-	public void flatMap(IN value, Collector<SerializableEvlResultAtom> out) throws Exception {
+	public void flatMap(IN value, Collector<Serializable> out) throws Exception {
 		localModule.getContext().executeJobStateless(value).forEach(out::collect);
 	}
 	

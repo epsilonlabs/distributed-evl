@@ -10,7 +10,6 @@
 package org.eclipse.epsilon.evl.distributed.crossflow;
 
 import java.util.Collection;
-import java.util.List;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributed;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedSlave;
 import org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlResultAtom;
@@ -55,7 +54,7 @@ public class Processing extends ProcessingBase {
 			assert workflow.isWorker() && configuration != null;
 			Collection<SerializableEvlResultAtom> results = configuration.getModule().getContext().executeJobStateless(job);
 			if (results != null) {
-				sendToValidationOutput(new ValidationResult((List<SerializableEvlResultAtom>)results));
+				sendToValidationOutput(new ValidationResult(results));
 			}
 		}
 	}

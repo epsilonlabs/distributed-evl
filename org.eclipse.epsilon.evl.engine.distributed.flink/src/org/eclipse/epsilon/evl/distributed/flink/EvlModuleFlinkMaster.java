@@ -18,7 +18,6 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.fs.FileSystem.WriteMode;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedMaster;
-import org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlResultAtom;
 import org.eclipse.epsilon.evl.distributed.flink.execute.context.EvlContextFlinkMaster;
 
 /**
@@ -53,7 +52,7 @@ public class EvlModuleFlinkMaster extends EvlModuleDistributedMaster {
 			Configuration config = getContext().getJobConfiguration();
 			String outputPath = getContext().getOutputPath();
 			executionEnv.getConfig().setGlobalJobParameters(config);
-			DataSet<SerializableEvlResultAtom> pipeline =
+			DataSet<? extends Serializable> pipeline =
 				executionEnv.fromCollection(jobs)
 				.flatMap(new EvlFlinkFlatMapFunction<>());
 			

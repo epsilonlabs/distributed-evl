@@ -9,6 +9,7 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.execute.context;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
@@ -40,7 +41,8 @@ public class EvlContextDistributed extends EvlContextParallel {
 		NUM_MODELS = "numberOfModels",
 		MODEL_PREFIX = "model",
 		SCRIPT_PARAMS = "scriptParameters",
-		IGNORE_MODELS = "noModelLoading";
+		IGNORE_MODELS = "noModelLoading",
+		BATCH_BASED = "batchBased";
 	
 	public static final String
 		BASE_PATH_SUBSTITUTE = "$BASEPATH$",
@@ -58,7 +60,7 @@ public class EvlContextDistributed extends EvlContextParallel {
 		super(localParallelism);
 	}
 	
-	public void setUnsatisfiedConstraints(Set<UnsatisfiedConstraint> unsatisfiedConstraints) {
+	protected void setUnsatisfiedConstraints(Set<UnsatisfiedConstraint> unsatisfiedConstraints) {
 		this.unsatisfiedConstraints = unsatisfiedConstraints;
 	}
 	
@@ -68,10 +70,10 @@ public class EvlContextDistributed extends EvlContextParallel {
 			return ((SerializableEvlResultAtom) job).deserializeLazy(getModule());
 		}
 		if (job instanceof SerializableEvlResultPointer) {
-			return ((SerializableEvlResultPointer) job).resolveForModule(getModule());
+			return ((SerializableEvlResultPointer) job).deserialize(getModule());
 		}
 		if (job instanceof UnsatisfiedConstraint) {
-			return SerializableEvlResultAtom.serializeResult((UnsatisfiedConstraint) job, this);
+			return SerializableEvlResultAtom.serialize((UnsatisfiedConstraint) job, this);
 		}
 		if (job instanceof SerializableEvlInputAtom) {
 			((SerializableEvlInputAtom) job).execute(getModule());
@@ -90,7 +92,7 @@ public class EvlContextDistributed extends EvlContextParallel {
 	 * @throws EolRuntimeException If an exception occurs when executing the job using this module.
 	 * @throws IllegalArgumentException If the job type was not recognised.
 	 */
-	public final Collection<SerializableEvlResultAtom> executeJobStateless(Object job) throws EolRuntimeException {
+	public Collection<? extends Serializable> executeJobStateless(Object job) throws EolRuntimeException {
 		final Set<UnsatisfiedConstraint>
 			originalUc = getUnsatisfiedConstraints(),
 			tempUc = ConcurrencyUtils.concurrentSet(16, getParallelism());
@@ -98,24 +100,24 @@ public class EvlContextDistributed extends EvlContextParallel {
 		
 		try {
 			executeJob(job);
-			return serializeResults(tempUc);
+			return serializeToResultAtoms(tempUc);
 		}
 		finally {
 			setUnsatisfiedConstraints(originalUc);
 		}
 	}
-	
+
 	/**
 	 * Transforms the {@linkplain UnsatisfiedConstraint}s into their Serializable form.
 	 * 
-	 * @param unsatisfiedConstraints The UnsatisfiedConstraints
+	 * @param unsatisfiedConstraints The UnsatisfiedConstraints.
 	 * @return A Serializable collection representing the UnsatisfiedConstraints.
 	 * @throws EolRuntimeException If anything goes wrong during the conversion to a serialized form.
 	 */
-	protected Collection<SerializableEvlResultAtom> serializeResults(Collection<UnsatisfiedConstraint> unsatisfiedConstraints) throws EolRuntimeException {
+	protected Collection<SerializableEvlResultAtom> serializeToResultAtoms(Collection<? extends UnsatisfiedConstraint> unsatisfiedConstraints) throws EolRuntimeException {
 		ArrayList<SerializableEvlResultAtom> results = new ArrayList<>(unsatisfiedConstraints.size());
 		for (UnsatisfiedConstraint uc : unsatisfiedConstraints) {
-			results.add(SerializableEvlResultAtom.serializeResult(uc, this));
+			results.add(SerializableEvlResultAtom.serialize(uc, this));
 		}
 		return results;
 	}
@@ -127,7 +129,7 @@ public class EvlContextDistributed extends EvlContextParallel {
 	 * @param serializedResults The serialized UnsatisfiedConstraint instances.
 	 * @return A Collection of lazily resolved UnsatisfiedConstraints.
 	 */
-	public Collection<LazyUnsatisfiedConstraint> deserializeLazy(Collection<SerializableEvlResultAtom> serializedResults) {
+	public Collection<LazyUnsatisfiedConstraint> deserializeResultAtomsLazy(Collection<? extends SerializableEvlResultAtom> serializedResults) {
 		IEvlModule module = getModule();
 		Collection<LazyUnsatisfiedConstraint> results = new ArrayList<>(serializedResults.size());		
 		for (SerializableEvlResultAtom sr : serializedResults) {
@@ -144,7 +146,7 @@ public class EvlContextDistributed extends EvlContextParallel {
 	 * @return The deserialized UnsatisfiedConstraints.
 	 * @throws EolRuntimeException
 	 */
-	public Collection<UnsatisfiedConstraint> deserializeEager(Collection<? extends SerializableEvlResultAtom> results) throws EolRuntimeException {
+	public Collection<UnsatisfiedConstraint> deserializeResultAtomsEager(Collection<? extends SerializableEvlResultAtom> results) throws EolRuntimeException {
 		IEvlModule module = getModule();
 		ArrayList<Callable<UnsatisfiedConstraint>> jobs = new ArrayList<>(results.size());	
 		for (SerializableEvlResultAtom sera : results) {
