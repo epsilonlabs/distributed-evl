@@ -1,3 +1,12 @@
+/*********************************************************************
+ * Copyright (c) 2019 The University of York.
+ *
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+**********************************************************************/
 package org.eclipse.epsilon.evl.distributed.strategy;
 
 import java.io.Serializable;
@@ -13,6 +22,11 @@ import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributed
 import org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlInputAtom;
 import org.eclipse.epsilon.evl.execute.atoms.EvlAtom;
 
+/**
+ * 
+ * @author Sina Madani
+ * @since 1.6
+ */
 public class JobSplitter {
 
 	static final double UNINTIALIZED_VALUE = -Double.MAX_VALUE;
@@ -83,7 +97,7 @@ public class JobSplitter {
 			masterProportion = 1;
 		}
 		else if (masterProportion > 1 || masterProportion < 0) {
-			masterProportion = 1/(1.0d + (double) distributedParallelism);
+			masterProportion = 1/(1.0d + distributedParallelism);
 		}
 		
 		int numMasterJobs = (int) (masterProportion * numTotalJobs);
