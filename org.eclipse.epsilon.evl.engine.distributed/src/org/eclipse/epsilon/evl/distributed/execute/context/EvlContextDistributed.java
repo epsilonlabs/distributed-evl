@@ -9,21 +9,14 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.execute.context;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
-import org.eclipse.epsilon.common.concurrent.ConcurrencyUtils;
 import org.eclipse.epsilon.common.module.IModule;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.eol.execute.control.ExecutionController;
 import org.eclipse.epsilon.eol.execute.control.ExecutionProfiler;
-import org.eclipse.epsilon.erl.execute.data.JobBatch;
-import org.eclipse.epsilon.evl.IEvlModule;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributed;
 import org.eclipse.epsilon.evl.distributed.execute.data.*;
 import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
@@ -69,14 +62,8 @@ public abstract class EvlContextDistributed extends EvlContextParallel {
 		this.unsatisfiedConstraints = unsatisfiedConstraints;
 	}
 	
-	boolean isBatchBased;
-	
 	@Override
 	public Object executeJob(Object job) throws EolRuntimeException {
-		if (job instanceof JobBatch) {
-			isBatchBased = true;
-		}
-		
 		if (job instanceof SerializableEvlResultAtom) {
 			return ((SerializableEvlResultAtom) job).deserializeLazy(getModule());
 		}
@@ -90,97 +77,6 @@ public abstract class EvlContextDistributed extends EvlContextParallel {
 		return super.executeJob(job);
 	}
 	
-	/**
-	 * Executes the provided Serializable job(s) and returns the Serializable result.
-	 * The context's state (i.e. the UnsatisfiedConstraints) is not modified.
-	 * 
-	 * @param job The Serializable input job(s).
-	 * @return A Serializable Collection containing zero or more {@link SerializableEvlResultAtom}s,
-	 * or <code>null</code> if this module is the master.
-	 * @throws EolRuntimeException If an exception occurs when executing the job using this module.
-	 * @throws IllegalArgumentException If the job type was not recognised.
-	 */
-	public Collection<? extends Serializable> executeJobStateless(Object job) throws EolRuntimeException {
-		isBatchBased = false;
-		
-		final Set<UnsatisfiedConstraint>
-			originalUc = getUnsatisfiedConstraints(),
-			tempUc = ConcurrencyUtils.concurrentSet(16, getParallelism());
-		setUnsatisfiedConstraints(tempUc);
-		
-		try {
-			executeJob(job);
-			return isBatchBased ? serializeToResultAtoms(tempUc) : serializeToResultPointers(tempUc);
-		}
-		finally {
-			setUnsatisfiedConstraints(originalUc);
-		}
-	}
-
-	/**
-	 * 
-	 * @param unsatisfiedConstraints
-	 * @return
-	 * @throws EolRuntimeException
-	 */
-	protected Collection<SerializableEvlResultPointer> serializeToResultPointers(Collection<? extends UnsatisfiedConstraint> unsatisfiedConstraints) throws EolRuntimeException {
-		ArrayList<SerializableEvlResultPointer> results = new ArrayList<>(unsatisfiedConstraints.size());
-		final EvlModuleDistributed module = getModule();
-		for (UnsatisfiedConstraint uc : unsatisfiedConstraints) {
-			results.add(SerializableEvlResultPointer.serialize(uc, module));
-		}
-		return results;
-	}
-
-	/**
-	 * Transforms the {@linkplain UnsatisfiedConstraint}s into their Serializable form.
-	 * 
-	 * @param unsatisfiedConstraints The UnsatisfiedConstraints.
-	 * @return A Serializable collection representing the UnsatisfiedConstraints.
-	 * @throws EolRuntimeException If anything goes wrong during the conversion to a serialized form.
-	 */
-	protected Collection<SerializableEvlResultAtom> serializeToResultAtoms(Collection<? extends UnsatisfiedConstraint> unsatisfiedConstraints) throws EolRuntimeException {
-		ArrayList<SerializableEvlResultAtom> results = new ArrayList<>(unsatisfiedConstraints.size());
-		for (UnsatisfiedConstraint uc : unsatisfiedConstraints) {
-			results.add(SerializableEvlResultAtom.serialize(uc, this));
-		}
-		return results;
-	}
-	
-	
-	/**
-	 * Resolves the serialized unsatisfied constraints lazily.
-	 * 
-	 * @param serializedResults The serialized UnsatisfiedConstraint instances.
-	 * @return A Collection of lazily resolved UnsatisfiedConstraints.
-	 */
-	public Collection<LazyUnsatisfiedConstraint> deserializeResultAtomsLazy(Collection<? extends SerializableEvlResultAtom> serializedResults) {
-		IEvlModule module = getModule();
-		Collection<LazyUnsatisfiedConstraint> results = new ArrayList<>(serializedResults.size());		
-		for (SerializableEvlResultAtom sr : serializedResults) {
-			results.add(sr.deserializeLazy(module));
-		}
-		return results;
-	}
-	
-	/**
-	 * Deserializes the results eagerly in parallel using this context's ExecutorService.
-	 * 
-	 * @param results The serialized results.
-	 * @param eager Whether to fully resolve each UnsatisfiedConstraint.
-	 * @return The deserialized UnsatisfiedConstraints.
-	 * @throws EolRuntimeException
-	 */
-	public Collection<UnsatisfiedConstraint> deserializeResultAtomsEager(Collection<? extends SerializableEvlResultAtom> results) throws EolRuntimeException {
-		IEvlModule module = getModule();
-		ArrayList<Callable<UnsatisfiedConstraint>> jobs = new ArrayList<>(results.size());	
-		for (SerializableEvlResultAtom sera : results) {
-			jobs.add(() -> sera.deserializeEager(module));
-		}
-		return executeParallelTyped(null, jobs);
-	}
-	
-
 	/**
 	 * Convenience method for serializing the profiling information of a
 	 * slave worker to be sent to the master.
