@@ -25,7 +25,6 @@ import org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlResultAto
 import org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlResultPointer;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfigurationSlave;
 import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
-import org.eclipse.epsilon.evl.execute.context.IEvlContext;
 
 /**
  * 
@@ -40,10 +39,6 @@ public class EvlContextDistributedSlave extends EvlContextDistributed {
 	
 	public EvlContextDistributedSlave(int localParallelism) {
 		super(localParallelism);
-	}
-	
-	public EvlContextDistributedSlave(IEvlContext other) {
-		super(other);
 	}
 	
 	@Override

@@ -20,7 +20,6 @@ import org.eclipse.epsilon.eol.execute.control.ExecutionProfiler;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributed;
 import org.eclipse.epsilon.evl.distributed.execute.data.*;
 import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
-import org.eclipse.epsilon.evl.execute.context.IEvlContext;
 import org.eclipse.epsilon.evl.execute.context.concurrent.EvlContextParallel;
 
 /**
@@ -45,10 +44,6 @@ public abstract class EvlContextDistributed extends EvlContextParallel {
 	public static final String
 		BASE_PATH_SUBSTITUTE = "$BASEPATH$",
 		BASE_PATH_SYSTEM_PROPERTY = "org.eclipse.epsilon.evl.distributed."+BASE_PATH;
-	
-	public EvlContextDistributed(IEvlContext other) {
-		super(other);
-	}
 
 	public EvlContextDistributed() {
 		super();

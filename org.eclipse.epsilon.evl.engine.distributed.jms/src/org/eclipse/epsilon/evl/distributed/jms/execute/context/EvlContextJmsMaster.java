@@ -23,12 +23,6 @@ public class EvlContextJmsMaster extends EvlContextDistributedMaster {
 	protected final int sessionID;
 	protected final String brokerHost;
 
-	public EvlContextJmsMaster(EvlContextJmsMaster other) {
-		super(other);
-		this.sessionID = other.sessionID;
-		this.brokerHost = other.brokerHost;
-	}
-
 	public EvlContextJmsMaster(int localParallelism, int expectedWorkers, JobSplitter splitter, String brokerHost, int sessionID) {
 		super(localParallelism, expectedWorkers, splitter);
 		this.sessionID = sessionID;

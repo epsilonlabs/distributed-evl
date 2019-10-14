@@ -190,14 +190,4 @@ public class EvlContextDistributedMaster extends EvlContextDistributed {
 			super.setModule(module);
 		}
 	}
-	
-	public EvlContextDistributedMaster(EvlContextDistributedMaster other) {
-		super(other);
-		this.modelProperties = other.modelProperties;
-		this.initialVariables = other.initialVariables;
-		this.distributedParallelism = other.distributedParallelism;
-		this.outputDir = other.outputDir;
-		this.basePath = other.basePath;
-		this.jobSplitter = other.jobSplitter;
-	}
 }

@@ -29,10 +29,6 @@ public class EvlContextFlinkMaster extends EvlContextDistributedMaster {
 		super(localParallelism, distributedParallelism, strategy);
 	}
 	
-	public EvlContextFlinkMaster(EvlContextDistributedMaster other) {
-		super(other);
-	}
-
 	public HashMap<String, Serializable> getJobParameters() {
 		return getJobParameters(false);
 	}
