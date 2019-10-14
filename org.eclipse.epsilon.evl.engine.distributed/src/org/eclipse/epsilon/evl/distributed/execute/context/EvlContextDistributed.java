@@ -12,11 +12,17 @@ package org.eclipse.epsilon.evl.distributed.execute.context;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 import org.eclipse.epsilon.common.concurrent.ConcurrencyUtils;
 import org.eclipse.epsilon.common.module.IModule;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
+import org.eclipse.epsilon.eol.execute.control.ExecutionController;
+import org.eclipse.epsilon.eol.execute.control.ExecutionProfiler;
+import org.eclipse.epsilon.erl.execute.data.JobBatch;
 import org.eclipse.epsilon.evl.IEvlModule;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributed;
 import org.eclipse.epsilon.evl.distributed.execute.data.*;
@@ -29,7 +35,7 @@ import org.eclipse.epsilon.evl.execute.context.concurrent.EvlContextParallel;
  * @author Sina Madani
  * @since 1.6
  */
-public class EvlContextDistributed extends EvlContextParallel {
+public abstract class EvlContextDistributed extends EvlContextParallel {
 	
 	protected static final String
 		ENCODING = java.nio.charset.StandardCharsets.UTF_8.toString(),
@@ -41,8 +47,7 @@ public class EvlContextDistributed extends EvlContextParallel {
 		NUM_MODELS = "numberOfModels",
 		MODEL_PREFIX = "model",
 		SCRIPT_PARAMS = "scriptParameters",
-		IGNORE_MODELS = "noModelLoading",
-		BATCH_BASED = "batchBased";
+		IGNORE_MODELS = "noModelLoading";
 	
 	public static final String
 		BASE_PATH_SUBSTITUTE = "$BASEPATH$",
@@ -64,16 +69,19 @@ public class EvlContextDistributed extends EvlContextParallel {
 		this.unsatisfiedConstraints = unsatisfiedConstraints;
 	}
 	
+	boolean isBatchBased;
+	
 	@Override
 	public Object executeJob(Object job) throws EolRuntimeException {
+		if (job instanceof JobBatch) {
+			isBatchBased = true;
+		}
+		
 		if (job instanceof SerializableEvlResultAtom) {
 			return ((SerializableEvlResultAtom) job).deserializeLazy(getModule());
 		}
 		if (job instanceof SerializableEvlResultPointer) {
 			return ((SerializableEvlResultPointer) job).deserialize(getModule());
-		}
-		if (job instanceof UnsatisfiedConstraint) {
-			return SerializableEvlResultAtom.serialize((UnsatisfiedConstraint) job, this);
 		}
 		if (job instanceof SerializableEvlInputAtom) {
 			((SerializableEvlInputAtom) job).execute(getModule());
@@ -93,6 +101,8 @@ public class EvlContextDistributed extends EvlContextParallel {
 	 * @throws IllegalArgumentException If the job type was not recognised.
 	 */
 	public Collection<? extends Serializable> executeJobStateless(Object job) throws EolRuntimeException {
+		isBatchBased = false;
+		
 		final Set<UnsatisfiedConstraint>
 			originalUc = getUnsatisfiedConstraints(),
 			tempUc = ConcurrencyUtils.concurrentSet(16, getParallelism());
@@ -100,11 +110,26 @@ public class EvlContextDistributed extends EvlContextParallel {
 		
 		try {
 			executeJob(job);
-			return serializeToResultAtoms(tempUc);
+			return isBatchBased ? serializeToResultAtoms(tempUc) : serializeToResultPointers(tempUc);
 		}
 		finally {
 			setUnsatisfiedConstraints(originalUc);
 		}
+	}
+
+	/**
+	 * 
+	 * @param unsatisfiedConstraints
+	 * @return
+	 * @throws EolRuntimeException
+	 */
+	protected Collection<SerializableEvlResultPointer> serializeToResultPointers(Collection<? extends UnsatisfiedConstraint> unsatisfiedConstraints) throws EolRuntimeException {
+		ArrayList<SerializableEvlResultPointer> results = new ArrayList<>(unsatisfiedConstraints.size());
+		final EvlModuleDistributed module = getModule();
+		for (UnsatisfiedConstraint uc : unsatisfiedConstraints) {
+			results.add(SerializableEvlResultPointer.serialize(uc, module));
+		}
+		return results;
 	}
 
 	/**
@@ -153,6 +178,30 @@ public class EvlContextDistributed extends EvlContextParallel {
 			jobs.add(() -> sera.deserializeEager(module));
 		}
 		return executeParallelTyped(null, jobs);
+	}
+	
+
+	/**
+	 * Convenience method for serializing the profiling information of a
+	 * slave worker to be sent to the master.
+	 * 
+	 * @return A serializable representation of {@link ExecutionProfiler} if
+	 * profiling is enabled, <code>null</code> otherwise.
+	 */
+	public HashMap<String, java.time.Duration> getSerializableRuleExecutionTimes() {
+		ExecutionController controller = getExecutorFactory().getExecutionController();
+		if (controller instanceof ExecutionProfiler) {
+			return ((ExecutionProfiler) controller)
+				.getExecutionTimes()
+				.entrySet().stream()
+				.collect(Collectors.toMap(
+					e -> e.getKey().toString(),
+					Map.Entry::getValue,
+					(t1, t2) -> t1.plus(t2),
+					HashMap::new
+				));
+		}
+		return null;
 	}
 	
 	@Override

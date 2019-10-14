@@ -67,6 +67,10 @@ public class JobSplitter {
 		return JobBatch.getBatches(numTotalJobs, chunks);
 	}
 
+	public boolean isBatchBased() {
+		return batchSize != UNINTIALIZED_VALUE;
+	}
+	
 	protected void requireSplit() throws IllegalArgumentException {
 		if (masterJobs == null || workerJobs == null) {
 			throw new IllegalStateException("Must call split() first!");
@@ -84,7 +88,7 @@ public class JobSplitter {
 	}
 	
 	public Entry<Collection<?>, Collection<? extends Serializable>> split(final List<?> allJobs) throws EolRuntimeException {
-		final boolean isBatch = batchSize != UNINTIALIZED_VALUE;
+		final boolean isBatch = isBatchBased();
 		final List<?> actualJobs = isBatch ? getBatchJobs(allJobs) : allJobs;
 
 		if (shuffleJobs) Collections.shuffle(actualJobs);

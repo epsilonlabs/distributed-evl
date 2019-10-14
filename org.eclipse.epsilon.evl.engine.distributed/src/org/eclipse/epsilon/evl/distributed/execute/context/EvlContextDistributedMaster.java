@@ -19,7 +19,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 import org.eclipse.epsilon.common.module.IModule;
 import org.eclipse.epsilon.common.util.StringProperties;
@@ -56,11 +55,6 @@ public class EvlContextDistributedMaster extends EvlContextDistributed {
 	
 	public JobSplitter getJobSplitter() {
 		return jobSplitter;
-	}
-	
-	@Override
-	public void setUnsatisfiedConstraints(Set<UnsatisfiedConstraint> unsatisfiedConstraints) {
-		this.unsatisfiedConstraints = unsatisfiedConstraints;
 	}
 
 	public void setModelProperties(Collection<StringProperties> modelProperties) {

@@ -89,7 +89,9 @@ public class EvlContextDistributedSlave extends EvlContextDistributed {
 		);
 		
 		EvlModuleDistributedSlave localModule = new EvlModuleDistributedSlave(
-			new EvlContextDistributedSlave(Integer.parseInt(Objects.toString(config.get(LOCAL_PARALLELISM), "0")))
+			new EvlContextDistributedSlave(
+				Integer.parseInt(Objects.toString(config.get(LOCAL_PARALLELISM), "0"))
+			)
 		);
 		
 		return new DistributedEvlRunConfigurationSlave(

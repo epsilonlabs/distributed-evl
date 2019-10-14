@@ -214,15 +214,16 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 	}
 	
 	void onCompletion(JMSContext session) throws Exception {
+		EvlContextDistributedSlave context = configContainer.getModule().getContext();
 		// This is to ensure execution times are merged into main thread
-		configContainer.getModule().getContext().endParallelTask();
+		context.endParallelTask();
 		
 		ObjectMessage finishedMsg = session.createObjectMessage();
 		finishedMsg.setStringProperty(WORKER_ID_PROPERTY, workerID);
 		finishedMsg.setBooleanProperty(LAST_MESSAGE_PROPERTY, true);
 		finishedMsg.setIntProperty(NUM_JOBS_PROCESSED_PROPERTY, jobsProcessed);
 		finishedMsg.setObject(stopBody instanceof Serializable ? stopBody :
-			configContainer.getSerializableRuleExecutionTimes()
+			context.getSerializableRuleExecutionTimes()
 		);
 		session.createProducer().send(session.createQueue(RESULTS_QUEUE_NAME+sessionID), finishedMsg);
 		
