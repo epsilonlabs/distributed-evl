@@ -41,8 +41,8 @@ public class SerializableEvlInputAtom extends SerializableEvlAtom {
 	}
 	
 	@Override
-	public Object findElement(IEolContext context) throws EolRuntimeException {
-		Object modelElement = super.findElement(context);
+	public Object getModelElement(IEolContext context) throws EolRuntimeException {
+		Object modelElement = super.getModelElement(context);
 		if (modelElement == null) {
 			throw new EolRuntimeException(
 				"Could not find model element with ID "+modelElementID+
@@ -57,7 +57,7 @@ public class SerializableEvlInputAtom extends SerializableEvlAtom {
 	
 	public void execute(IEvlModule module) throws EolRuntimeException {
 		IEvlContext context = module.getContext();
-		Object modelElement = findElement(context);
+		Object modelElement = getModelElement(context);
 		module.getConstraintContext(contextName).execute(modelElement, context);
 	}
 	

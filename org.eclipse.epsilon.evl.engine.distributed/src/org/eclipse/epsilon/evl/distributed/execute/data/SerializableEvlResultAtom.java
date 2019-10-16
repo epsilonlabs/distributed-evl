@@ -12,11 +12,10 @@ package org.eclipse.epsilon.evl.distributed.execute.data;
 import java.util.Objects;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.eol.models.IModel;
-import org.eclipse.epsilon.evl.IEvlModule;
+import org.eclipse.epsilon.evl.distributed.EvlModuleDistributed;
+import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributed;
 import org.eclipse.epsilon.evl.dom.Constraint;
 import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
-import org.eclipse.epsilon.evl.execute.context.IEvlContext;
-import org.eclipse.epsilon.evl.execute.exceptions.EvlConstraintNotFoundException;
 
 /**
  * Serializable representation of an {@linkplain UnsatisfiedConstraint}.
@@ -24,9 +23,9 @@ import org.eclipse.epsilon.evl.execute.exceptions.EvlConstraintNotFoundException
  * @author Sina Madani
  * @since 1.6
  */
-public class SerializableEvlResultAtom extends SerializableEvlAtom {
-
-	private static final long serialVersionUID = 5472635309559759141L;
+public class SerializableEvlResultAtom extends SerializableEvlAtom implements SerializableEvlResult {
+	
+	private static final long serialVersionUID = 8038574676833172172L;
 	
 	
 	public String message;
@@ -59,17 +58,8 @@ public class SerializableEvlResultAtom extends SerializableEvlAtom {
 		return start + ", message=" + message+"}";
 	}
 	
-	/**
-	 * Transform the {@linkplain UnsatisfiedConstraint} into a serializable form.
-	 * 
-	 * @param uc The unsatisfied constraint.
-	 * @param context
-	 * @return The serialized form of the unsatisfied constraint.
-	 */
-	public static SerializableEvlResultAtom serialize(UnsatisfiedConstraint uc, IEvlContext context) {
-		if (uc instanceof LazyUnsatisfiedConstraint) {
-			return ((LazyUnsatisfiedConstraint) uc).proxy;
-		}
+	public static SerializableEvlResult serialize(UnsatisfiedConstraint uc, EvlContextDistributed context) {
+		if (uc == null) return null;
 		SerializableEvlResultAtom outputAtom = new SerializableEvlResultAtom();
 		Object modelElement = uc.getInstance();
 		IModel owningModel = context.getModelRepository().getOwningModel(modelElement);
@@ -80,37 +70,19 @@ public class SerializableEvlResultAtom extends SerializableEvlAtom {
 		outputAtom.message = uc.getMessage();
 		return outputAtom;
 	}
-	
-	// TODO: support fixes and 'extras'
-	/**
-	 * Transforms the serialized UnsatisfiedConstraint into a native UnsatisfiedConstraint.
-	 * 
-	 * @param module The IEvlModule used to resolve this atom.
-	 * @return The derived {@link UnsatisfiedConstraint} with its properties populated.
-	 * @throws EolRuntimeException If the constraint or model element could not be found.
-	 */
-	public UnsatisfiedConstraint deserializeEager(IEvlModule module) throws EolRuntimeException {
-		IEvlContext context =  module.getContext();
-		UnsatisfiedConstraint uc = new UnsatisfiedConstraint();
-		Object modelElement = findElement(context);
-		uc.setInstance(modelElement);
-		uc.setMessage(message);
-		Constraint constraint = module.getConstraint(
-				constraintName, module.getConstraintContext(contextName), modelElement, false
-			)
-			.orElseThrow(() -> new EvlConstraintNotFoundException(constraintName, module));
-		uc.setConstraint(constraint);
-		
-		return uc;
+
+	@Override
+	public Constraint getConstraint(EvlModuleDistributed module) throws EolRuntimeException {
+		return module.getConstraint(constraintName, contextName, null, null);
 	}
-	
-	/**
-	 * Provides a reference to an UnsatisfiedConstraint with this atom's values used for resolution.
-	 * 
-	 * @param module The IEvlModule used to resolve this atom.
-	 * @return An {@linkplain UnsatisfiedConstraint} with the properties not resolved (yet).
-	 */
-	public LazyUnsatisfiedConstraint deserializeLazy(IEvlModule module) {
-		return new LazyUnsatisfiedConstraint(this, module);
+
+	@Override
+	public String getMessage(EvlModuleDistributed module) {
+		return message;
+	}
+
+	@Override
+	public Object getModelElement(EvlModuleDistributed module) throws EolRuntimeException {
+		return getModelElement(module.getContext());
 	}
 }

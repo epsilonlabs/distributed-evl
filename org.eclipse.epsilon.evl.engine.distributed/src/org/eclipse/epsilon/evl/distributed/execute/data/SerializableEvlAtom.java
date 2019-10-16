@@ -67,7 +67,7 @@ public abstract class SerializableEvlAtom implements java.io.Serializable, Clone
 				+ ", constraint=" + constraintName+"}";
 	}
 	
-	public Object findElement(IEolContext context) throws EolRuntimeException {
+	public Object getModelElement(IEolContext context) throws EolRuntimeException {
 		return context.getModelRepository().getModelByName(modelName).getElementById(modelElementID);
 	}
 }

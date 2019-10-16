@@ -9,14 +9,15 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.execute.data;
 
-import java.io.Serializable;
 import java.util.Objects;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.erl.execute.data.JobBatch;
+import org.eclipse.epsilon.evl.concurrent.atomic.EvlModuleParallelAtomic;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributed;
 import org.eclipse.epsilon.evl.dom.Constraint;
 import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
 import org.eclipse.epsilon.evl.execute.atoms.ConstraintContextAtom;
+import org.eclipse.epsilon.evl.execute.atoms.EvlAtom;
 
 /**
  * Batch-based reference to an {@link UnsatisfiedConstraint}, relying on deterministic
@@ -26,13 +27,17 @@ import org.eclipse.epsilon.evl.execute.atoms.ConstraintContextAtom;
  * @author Sina Madani
  * @since 1.6
  */
-public class SerializableEvlResultPointer implements Serializable, Cloneable {
-
-	private static final long serialVersionUID = 9173981210222106508L;
+public class SerializableEvlResultPointer implements SerializableEvlResult, Cloneable {
+	
+	private static final long serialVersionUID = -4182370285307626160L;
 	
 	
 	public int index;
 	public String constraintName;
+	
+	public <A extends EvlAtom<?>> A getAtom(EvlModuleParallelAtomic<? extends A> module) throws EolRuntimeException {
+		return module.getAllJobs().get(index);
+	}
 	
 	@Override
 	public int hashCode() {
@@ -67,34 +72,24 @@ public class SerializableEvlResultPointer implements Serializable, Cloneable {
 		return getClass().getSimpleName()+" {index="+index+
 			", constraintName="+constraintName+"}";
 	}
-	
-	/**
-	 * Resolves the UnsatisfiedConstraint based on the job list from the provided module
-	 * for this object's index and constraint.
-	 * 
-	 * @param module
-	 * @return
-	 * @throws EolRuntimeException
-	 */
-	public UnsatisfiedConstraint deserialize(EvlModuleDistributed module) throws EolRuntimeException {
-		if (constraintName == null) return null;
-		ConstraintContextAtom cca = module.getAllJobs().get(index);
-		UnsatisfiedConstraint uc = new UnsatisfiedConstraint();
-		Constraint constraint = module.getConstraint(constraintName, cca.element, cca.rule);
-		uc.setConstraint(constraint);
-		uc.setInstance(cca.element);
-		uc.setMessage(constraint.getUnsatisfiedMessage(cca.element, module.getContext()));
-		return uc;
+
+	@Override
+	public Constraint getConstraint(EvlModuleDistributed module) throws EolRuntimeException {
+		ConstraintContextAtom atom = getAtom(module);
+		return module.getConstraint(constraintName, atom.rule.getTypeName(), atom.element, null);
 	}
-	
-	/**
-	 * 
-	 * @param uc
-	 * @param module
-	 * @return
-	 * @throws EolRuntimeException
-	 */
-	public static SerializableEvlResultPointer serialize(UnsatisfiedConstraint uc, EvlModuleDistributed module) throws EolRuntimeException {
+
+	@Override
+	public Object getModelElement(EvlModuleDistributed module) throws EolRuntimeException {
+		return getAtom(module).element;
+	}
+
+	@Override
+	public String getMessage(EvlModuleDistributed module) throws EolRuntimeException {
+		return getConstraint(module).getUnsatisfiedMessage(getModelElement(module), module.getContext());
+	}
+
+	public static SerializableEvlResult serialize(UnsatisfiedConstraint uc, EvlModuleDistributed module) throws EolRuntimeException {
 		if (uc == null) return null;
 		SerializableEvlResultPointer serp = new SerializableEvlResultPointer();
 		serp.index = module.indexOfModelElement(uc.getInstance());

@@ -29,7 +29,6 @@ import org.eclipse.epsilon.evl.execute.atoms.EvlAtom;
  */
 public class JobSplitter {
 
-	static final double UNINTIALIZED_VALUE = -Double.MAX_VALUE;
 	protected final boolean shuffleJobs;
 	protected double masterProportion, batchSize;
 	
@@ -50,7 +49,7 @@ public class JobSplitter {
 	public List<JobBatch> getBatchJobs(List<?> jobList) throws EolRuntimeException {
 		final int numTotalJobs = jobList.size(), chunks;
 		
-		if (Math.min(0, batchSize) < 0) {
+		if (batchSize < 0) {
 			batchSize = context.getParallelism();
 		}
 		else if (batchSize == 0) {
@@ -68,7 +67,7 @@ public class JobSplitter {
 	}
 
 	public boolean isBatchBased() {
-		return batchSize != UNINTIALIZED_VALUE;
+		return batchSize > -1;
 	}
 	
 	protected void requireSplit() throws IllegalArgumentException {
@@ -157,9 +156,9 @@ public class JobSplitter {
 		this(true);
 	}
 	public JobSplitter(boolean randomJobOrder) {
-		this(randomJobOrder, UNINTIALIZED_VALUE);
+		this(randomJobOrder, -Double.MAX_VALUE);
 	}
 	public JobSplitter(boolean randomJobOrder, double masterProportion) {
-		this(randomJobOrder, masterProportion, UNINTIALIZED_VALUE);
+		this(randomJobOrder, masterProportion, -Double.MAX_VALUE);
 	}
 }

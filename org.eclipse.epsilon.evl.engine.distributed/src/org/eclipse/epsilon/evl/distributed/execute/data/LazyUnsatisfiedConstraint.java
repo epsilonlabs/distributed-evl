@@ -9,13 +9,10 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.execute.data;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
-import org.eclipse.epsilon.evl.IEvlModule;
+import org.eclipse.epsilon.evl.distributed.EvlModuleDistributed;
 import org.eclipse.epsilon.evl.dom.Constraint;
-import org.eclipse.epsilon.evl.execute.FixInstance;
 import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
 
 /**
@@ -27,16 +24,20 @@ import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
  */
 public class LazyUnsatisfiedConstraint extends UnsatisfiedConstraint {
 
-	protected final SerializableEvlResultAtom proxy;
-	protected transient IEvlModule module;
+	protected final SerializableEvlResult proxy;
+	protected transient EvlModuleDistributed module;
 	
-	public LazyUnsatisfiedConstraint(SerializableEvlResultAtom proxy, IEvlModule module) {
+	public LazyUnsatisfiedConstraint(SerializableEvlResult proxy, EvlModuleDistributed module) {
 		Objects.requireNonNull(this.proxy = proxy);
 		this.module = module;
-		this.message = proxy.message;
+	}
+	
+	public SerializableEvlResult getProxy() {
+		return proxy;
 	}
 
 	public void resolve() {
+		getMessage();
 		getConstraint();
 		getInstance();
 		getFixes();
@@ -44,39 +45,39 @@ public class LazyUnsatisfiedConstraint extends UnsatisfiedConstraint {
 	}
 	
 	@Override
+	public String getMessage() {
+		if (message == null) try {
+			message = proxy.getMessage(module);
+		}
+		catch (EolRuntimeException ex) {
+			// TODO Auto-generated catch block
+			ex.printStackTrace();
+		}
+		return message;
+	}
+	
+	@Override
 	public Constraint getConstraint() {
-		if (constraint != null) return constraint;
-		return constraint = module.getConstraints().stream()
-			.filter(c ->
-				c.getName().equals(proxy.constraintName) &&
-				c.getConstraintContext().getTypeName().equals(proxy.contextName)
-			)
-			.findAny()
-			.orElse(null);
+		if (constraint == null) try {
+			constraint = proxy.getConstraint(module);
+		}
+		catch (EolRuntimeException ex) {
+			// TODO Auto-generated catch block
+			ex.printStackTrace();
+		}
+		return constraint;
 	}
 
 	@Override
 	public Object getInstance() {
-		if (instance != null) return instance;
-		try {
-			instance = proxy.findElement(module.getContext());
+		if (instance == null) try {
+			instance = proxy.getModelElement(module);
 		}
-		catch (EolRuntimeException mnf) {
-			System.err.println(mnf.getMessage());
+		catch (EolRuntimeException ex) {
+			// TODO Auto-generated catch block
+			ex.printStackTrace();
 		}
 		return instance;
-	}
-
-	@Override
-	public List<FixInstance> getFixes() {
-		// TODO Support
-		return super.getFixes();
-	}
-
-	@Override
-	public Map<String, Object> getExtras() {
-		// TODO Support
-		return super.getExtras();
 	}
 
 	@Override

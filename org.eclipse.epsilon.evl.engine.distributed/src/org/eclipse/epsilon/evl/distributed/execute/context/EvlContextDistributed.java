@@ -59,11 +59,11 @@ public abstract class EvlContextDistributed extends EvlContextParallel {
 	
 	@Override
 	public Object executeJob(Object job) throws EolRuntimeException {
-		if (job instanceof SerializableEvlResultAtom) {
-			return ((SerializableEvlResultAtom) job).deserializeLazy(getModule());
+		if (job instanceof LazyUnsatisfiedConstraint) {
+			return ((LazyUnsatisfiedConstraint) job).getProxy();
 		}
-		if (job instanceof SerializableEvlResultPointer) {
-			return ((SerializableEvlResultPointer) job).deserialize(getModule());
+		if (job instanceof SerializableEvlResult) {
+			return ((SerializableEvlResult) job).deserializeLazy(getModule());
 		}
 		if (job instanceof SerializableEvlInputAtom) {
 			((SerializableEvlInputAtom) job).execute(getModule());
