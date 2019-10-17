@@ -109,9 +109,9 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	}
 	
 	@Override
-	protected final void executeWorkerJobs(Collection<? extends Serializable> jobs) throws EolRuntimeException {
+	protected void prepareWorkers() throws EolRuntimeException {
 		EvlContextJmsMaster evlContext = getContext();
-
+		
 		// Only bother connecting if there are worker jobs
 		connectionFactory = ConnectionFactoryProvider.getDefault(evlContext.getBrokerHost());
 		try (JMSContext regContext = connectionFactory.createContext()) {
@@ -158,77 +158,86 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 				}
 			});
 			
-			try (JMSContext resultsContext = regContext.createContext(JMSContext.CLIENT_ACKNOWLEDGE)) {
-				final AtomicInteger workersFinished = new AtomicInteger();
-				
-				resultsContext.createConsumer(createResultsQueue(resultsContext))
-					.setMessageListener(getResultsMessageListener(workersFinished));
-				
-				final AtomicInteger readyWorkers = new AtomicInteger();
-				// Triggered when a worker has completed loading the configuration
-				regContext.createConsumer(tempDest).setMessageListener(response -> {
-					try {
-						int currentWorkers = readyWorkers.get();
-						if (currentWorkers >= expectedSlaves && refuseAdditionalWorkersConfirm(currentWorkers)) {
-							String logMsg = "Ignoring additional worker confirmation ";
-							try {
-								log(logMsg+" "+response.getJMSMessageID());
-							}
-							catch (JMSException jmx) {
-								log(logMsg);
-							}
-							return;
+			// Triggered when a worker has completed loading the configuration
+			regContext.createConsumer(tempDest).setMessageListener(response -> {
+				try {
+					int currentWorkers = slaveWorkers.size();
+					if (currentWorkers >= expectedSlaves && refuseAdditionalWorkersConfirm(currentWorkers)) {
+						String logMsg = "Ignoring additional worker confirmation ";
+						try {
+							log(logMsg+" "+response.getJMSMessageID());
 						}
-						
-						String worker = response.getStringProperty(WORKER_ID_PROPERTY);
-						if (!slaveWorkers.containsKey(worker)) {
-							throw new JMSRuntimeException("Could not find worker with id "+worker);
+						catch (JMSException jmx) {
+							log(logMsg);
 						}
-						
-						final int receivedHash = response.getIntProperty(CONFIG_HASH_PROPERTY);
-						if (receivedHash != configHash) {
-							log(
-								"Received invalid configuration checksum! Expected "+receivedHash+" but got "+configHash
-								+ ". Discarding this worker."
-							);
-							return;
-						}
-						if (confirmWorker(response, currentWorkers)) {
-							log(worker + " ready");
-							if (readyWorkers.incrementAndGet() >= expectedSlaves) synchronized (readyWorkers) {
-								assert slaveWorkers.size() >= expectedSlaves;
-								readyWorkers.notify();
-							}
-						}
-						else return;
+						return;
 					}
-					catch (JMSException jmx) {
-						throw new JMSRuntimeException("Did not receive "+CONFIG_HASH_PROPERTY+": "+jmx.getMessage());
-					}
-				});
-				
-				try (JMSContext jobContext = resultsContext.createContext(JMSContext.CLIENT_ACKNOWLEDGE)) {
-					final JMSProducer jobsProducer = jobContext.createProducer().setAsync(null);
-					final Queue jobsQueue = createJobQueue(jobContext);
-					jobSender = obj -> jobsProducer.send(jobsQueue, obj);
-					final Topic completionTopic = createEndOfJobsTopic(jobContext);
-					completionSender = () -> jobsProducer.send(completionTopic, jobContext.createMessage());
 					
-					beforeSend(readyWorkers);
-					sendAllJobs(jobs);
-					waitForWorkersToFinishJobs(workersFinished);
-					processResponses(responses);
-					responses.clear();
+					String worker = response.getStringProperty(WORKER_ID_PROPERTY);
+					if (!slaveWorkers.containsKey(worker)) {
+						throw new JMSRuntimeException("Could not find worker with id "+worker);
+					}
+					
+					final int receivedHash = response.getIntProperty(CONFIG_HASH_PROPERTY);
+					if (receivedHash != configHash) {
+						log(
+							"Received invalid configuration checksum! Expected "+receivedHash+" but got "+configHash
+							+ ". Discarding this worker."
+						);
+						return;
+					}
+					if (confirmWorker(response, currentWorkers)) {
+						log(worker + " ready");
+						if (slaveWorkers.size() >= expectedSlaves) synchronized (slaveWorkers) {
+							slaveWorkers.notify();
+						}
+					}
+					else return;
 				}
-			}
+				catch (JMSException jmx) {
+					throw new JMSRuntimeException("Did not receive "+CONFIG_HASH_PROPERTY+": "+jmx.getMessage());
+				}
+			});
 		}
 		catch (Exception ex) {
-			stopAllWorkers(ex);
-			if (ex instanceof RuntimeException) throw (RuntimeException) ex;
-			if (ex instanceof EolRuntimeException) throw (EolRuntimeException) ex;
-			if (ex instanceof JMSException) throw new JMSRuntimeException(ex.getMessage());
-			else throw new EolRuntimeException(ex);
+			handleException(ex);
 		}
+	}
+	
+	@Override
+	protected final void executeWorkerJobs(Collection<? extends Serializable> jobs) throws EolRuntimeException {
+		beforeSend();
+		
+		try (JMSContext resultContext = connectionFactory.createContext(JMSContext.CLIENT_ACKNOWLEDGE)) {
+			final AtomicInteger workersFinished = new AtomicInteger();
+			
+			resultContext.createConsumer(createResultsQueue(resultContext))
+				.setMessageListener(getResultsMessageListener(workersFinished));
+			
+			try (JMSContext jobContext = resultContext.createContext(JMSContext.CLIENT_ACKNOWLEDGE)) {		
+				final JMSProducer jobsProducer = jobContext.createProducer().setAsync(null);
+				final Queue jobsQueue = createJobQueue(jobContext);
+				jobSender = obj -> jobsProducer.send(jobsQueue, obj);
+				final Topic completionTopic = createEndOfJobsTopic(jobContext);
+				completionSender = () -> jobsProducer.send(completionTopic, jobContext.createMessage());
+				sendAllJobs(jobs);
+			}
+			
+			waitForWorkersToFinishJobs(workersFinished);
+			processResponses(responses);
+			responses.clear();
+		}
+		catch (Exception ex) {
+			handleException(ex);
+		}
+	}
+	
+	protected void handleException(Exception ex) throws EolRuntimeException {
+		stopAllWorkers(ex);
+		if (ex instanceof RuntimeException) throw (RuntimeException) ex;
+		if (ex instanceof EolRuntimeException) throw (EolRuntimeException) ex;
+		if (ex instanceof JMSException) throw new JMSRuntimeException(ex.getMessage());
+		else throw new EolRuntimeException(ex);
 	}
 	
 	/**
@@ -255,18 +264,15 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	/**
 	 * Called before {@link #sendAllJobs(Iterable)}. Used to wait
 	 * for all workers to connect before proceeding.
-	 * 
-	 * @param workersReady The number of workers that are ready to receive jobs.
-	 * The object's lock can be used to wait for all workers to be ready.
 	 */
-	protected void beforeSend(final AtomicInteger workersReady) {
-		while (workersReady.get() < expectedSlaves) synchronized (workersReady) {
+	protected void beforeSend() {
+		while (slaveWorkers.size() < expectedSlaves) synchronized (slaveWorkers) {
 			try {
-				workersReady.wait();
+				slaveWorkers.wait();
 			}
 			catch (InterruptedException ie) {}
 		}
-		log("All "+workersReady.get()+" workers ready");
+		log("All "+slaveWorkers.size()+" workers ready");
 	}
 	
 	/**
