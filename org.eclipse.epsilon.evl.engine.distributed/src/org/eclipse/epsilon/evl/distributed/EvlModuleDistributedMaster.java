@@ -51,6 +51,20 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 		getContext().executeJob(jobs);
 	}
 	
+	@Override
+	protected void prepareExecution() throws EolRuntimeException {
+		super.prepareExecution();
+		prepareWorkers();
+	}
+	
+	/**
+	 * This method is called before {@link #checkConstraints()} to workers so that they can have the
+	 * configuration pre-loaded and ready to go without having to wait for the master.
+	 * 
+	 * @throws EolRuntimeException
+	 */
+	protected abstract void prepareWorkers() throws EolRuntimeException;
+	
 	/**
 	 * This method is called asynchronously from {@link #checkConstraints()}.
 	 * 
