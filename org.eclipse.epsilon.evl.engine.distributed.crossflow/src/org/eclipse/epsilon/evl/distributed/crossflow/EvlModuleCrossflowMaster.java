@@ -20,18 +20,24 @@ public class EvlModuleCrossflowMaster extends EvlModuleDistributedMaster {
 	
 	public EvlModuleCrossflowMaster(EvlContextCrossflowMaster context) {
 		super(context);
+		crossflow = new DistributedEVL(Mode.MASTER_BARE);
+		crossflow.getConfigConfigSource().module = this;
+		crossflow.setInstanceId(getContext().getInstanceId());
 	}
 	
+	DistributedEVL crossflow;
 	Collection<? extends Serializable> workerJobs;
+	Serializable config;
+	
+	@Override
+	public void prepareWorkers(Serializable configuration) throws Exception {
+		this.config = configuration;
+	}
 	
 	@Override
 	protected void executeWorkerJobs(Collection<? extends Serializable> jobs) throws EolRuntimeException {
-		EvlContextCrossflowMaster context = getContext();
 		this.workerJobs = jobs;
 		try {
-			DistributedEVL crossflow = new DistributedEVL(Mode.MASTER_BARE);
-			crossflow.setInstanceId(context.getInstanceId());
-			crossflow.getConfigConfigSource().masterContext = context;
 			crossflow.run(5000L);
 			crossflow.awaitTermination();
 			crossflow.getResultSink();

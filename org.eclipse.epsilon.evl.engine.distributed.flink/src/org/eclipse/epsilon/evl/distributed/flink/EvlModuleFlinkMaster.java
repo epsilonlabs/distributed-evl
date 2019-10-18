@@ -27,27 +27,20 @@ import org.eclipse.epsilon.evl.distributed.flink.execute.context.EvlContextFlink
  */
 public class EvlModuleFlinkMaster extends EvlModuleDistributedMaster {
 
-	private ExecutionEnvironment executionEnv;
+	private ExecutionEnvironment executionEnv = ExecutionEnvironment.getExecutionEnvironment();
 
 	public EvlModuleFlinkMaster(EvlContextFlinkMaster context) {
 		super(context);
 	}
-	
+		
 	@Override
-	protected final void prepareExecution() throws EolRuntimeException {
-		super.prepareExecution();		
+	public void prepareWorkers(Serializable configuration) throws Exception {
 		EvlContextFlinkMaster context = getContext();
-		executionEnv = ExecutionEnvironment.getExecutionEnvironment();
 		int parallelism = context.getDistributedParallelism();
 		if (parallelism < 1 && parallelism != ExecutionConfig.PARALLELISM_DEFAULT) {
 			context.setDistributedParallelism(parallelism = ExecutionConfig.PARALLELISM_DEFAULT);
 		}
 		executionEnv.setParallelism(parallelism);
-	}
-	
-	
-	@Override
-	public void prepareWorkers(Serializable configuration) throws Exception {
 		executionEnv.getConfig().setGlobalJobParameters((GlobalJobParameters) configuration);
 	}
 	

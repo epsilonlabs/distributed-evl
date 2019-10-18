@@ -9,10 +9,10 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.crossflow;
 
+import java.io.Serializable;
 import java.util.Collection;
-import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributed;
-import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedSlave;
-import org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlResultAtom;
+import java.util.Map;
+import org.eclipse.epsilon.evl.distributed.crossflow.launch.CrossflowEvlRunConfigurationMaster;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfigurationSlave;
 
 /**
@@ -27,13 +27,14 @@ public class Processing extends ProcessingBase {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void consumeConfigTopic(Config config) throws Exception {
+	public void consumeConfigConfigTopic(Config config) throws Exception {
 		if (isMaster = workflow.isMaster()) return;
 		
 		assert workflow.isWorker();
 		while (configuration == null) synchronized (this) {
-			configuration = EvlContextDistributedSlave.parseJobParameters(config.data,
-				System.getProperty(EvlContextDistributed.BASE_PATH_SYSTEM_PROPERTY)
+			configuration = DistributedEvlRunConfigurationSlave.parseJobParameters(
+				(Map<String, ? extends Serializable>) config.data,
+				System.getProperty(CrossflowEvlRunConfigurationMaster.BASE_PATH_SYSTEM_PROPERTY)
 			);
 			notify();
 		}
@@ -48,11 +49,11 @@ public class Processing extends ProcessingBase {
 		final java.io.Serializable job = validationData.data;
 		
 		if (isMaster) {
-			workflow.configConfigSource.masterContext.executeJob(job);
+			workflow.configConfigSource.module.getContext().executeJob(job);
 		}
 		else {
 			assert workflow.isWorker() && configuration != null;
-			Collection<SerializableEvlResultAtom> results = configuration.getModule().getContext().executeJobStateless(job);
+			Collection<Serializable> results = configuration.getModule().getContext().executeJobStateless(job);
 			if (results != null) {
 				sendToValidationOutput(new ValidationResult(results));
 			}

@@ -1,31 +1,32 @@
 package org.eclipse.epsilon.evl.distributed.crossflow;
 
-import org.eclipse.scava.crossflow.runtime.Job;
+import javax.annotation.Generated;
 import java.io.Serializable;
-import java.util.UUID;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.ArrayList;
+import org.eclipse.scava.crossflow.runtime.Job;
 
+@Generated(value = "org.eclipse.scava.crossflow.java.Type2Class", date = "2019-10-18T14:16:53.865523500+01:00[Europe/London]")
 public class Config extends Job {
 	
 	public Config() {}
 	
-	public Config(java.util.HashMap data) {
+	public Config(java.io.Serializable data) {
 		this.data = data;
 	}
 	
-	public Config(java.util.HashMap data, Job correlation) {
+	public Config(java.io.Serializable data, Job correlation) {
 		this.data = data;
 		this.correlationId = correlation.getId();
 	}
 		
-	protected java.util.HashMap data;
+	protected java.io.Serializable data;
 	
-	public void setData(java.util.HashMap data) {
+	public void setData(java.io.Serializable data) {
 		this.data = data;
 	}
 	
-	public java.util.HashMap getData() {
+	public java.io.Serializable getData() {
 		return data;
 	}
 	

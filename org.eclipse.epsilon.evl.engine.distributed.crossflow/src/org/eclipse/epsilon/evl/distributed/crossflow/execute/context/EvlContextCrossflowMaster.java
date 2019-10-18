@@ -19,11 +19,6 @@ public class EvlContextCrossflowMaster extends EvlContextDistributedMaster {
 	
 	protected String instanceID;
 
-	public EvlContextCrossflowMaster(EvlContextCrossflowMaster other) {
-		super(other);
-		this.instanceID = other.instanceID;
-	}
-
 	public EvlContextCrossflowMaster(int localParallelism, int distributedParallelism, JobSplitter splitter, String instanceId) {
 		super(localParallelism, distributedParallelism, splitter);
 		this.instanceID = instanceId;

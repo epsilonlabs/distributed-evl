@@ -10,17 +10,22 @@ import org.eclipse.scava.crossflow.runtime.JobStream;
 import org.apache.activemq.command.ActiveMQBytesMessage;
 
 @Generated(value = "org.eclipse.scava.crossflow.java.Steam2Class", date = "2019-10-18T14:16:53.865523500+01:00[Europe/London]")
-public class ValidationOutput extends JobStream<ValidationResult> {
+public class ConfigConfigTopic extends JobStream<Config> {
 		
-	public ValidationOutput(Workflow<DistributedEVLTasks> workflow, boolean enablePrefetch) throws Exception {
+	public ConfigConfigTopic(Workflow<DistributedEVLTasks> workflow, boolean enablePrefetch) throws Exception {
 		super(workflow);
 		
 		ActiveMQDestination postQ;
-			pre.put("ResultSink", (ActiveMQDestination) session.createQueue("ValidationOutputPre.ResultSink." + workflow.getInstanceId()));
-			destination.put("ResultSink", (ActiveMQDestination) session.createQueue("ValidationOutputDestination.ResultSink." + workflow.getInstanceId()));
-			postQ = (ActiveMQDestination) session.createQueue("ValidationOutputPost.ResultSink." + workflow.getInstanceId()
+			pre.put("JobDistributor", (ActiveMQDestination) session.createQueue("ConfigConfigTopicPre.JobDistributor." + workflow.getInstanceId()));
+			destination.put("JobDistributor", (ActiveMQDestination) session.createQueue("ConfigConfigTopicDestination.JobDistributor." + workflow.getInstanceId()));
+			postQ = (ActiveMQDestination) session.createTopic("ConfigConfigTopicPost.JobDistributor." + workflow.getInstanceId()
 					+ (enablePrefetch?"":"?consumer.prefetchSize=1"));		
-			post.put("ResultSink", postQ);			
+			post.put("JobDistributor", postQ);			
+			pre.put("Processing", (ActiveMQDestination) session.createQueue("ConfigConfigTopicPre.Processing." + workflow.getInstanceId()));
+			destination.put("Processing", (ActiveMQDestination) session.createQueue("ConfigConfigTopicDestination.Processing." + workflow.getInstanceId()));
+			postQ = (ActiveMQDestination) session.createTopic("ConfigConfigTopicPost.Processing." + workflow.getInstanceId()
+					+ (enablePrefetch?"":"?consumer.prefetchSize=1"));		
+			post.put("Processing", postQ);			
 		
 		for (String consumerId : pre.keySet()) {
 			ActiveMQDestination preQueue = pre.get(consumerId);
@@ -33,10 +38,31 @@ public class ValidationOutput extends JobStream<ValidationResult> {
 				preConsumer.setMessageListener(message -> {
 					try {
 						workflow.cancelTermination();
+						Job job = (Job) workflow.getSerializer().toObject(getMessageText(message));
+						
+						if (workflow.getCache() != null && workflow.getCache().hasCachedOutputs(job)) {
+							
+							workflow.setTaskInProgess(cacheManagerTask);
+							Iterable<Job> cachedOutputs = workflow.getCache().getCachedOutputs(job);
+							workflow.setTaskWaiting(cacheManagerTask);
+							
+							for (Job output : cachedOutputs) {
+								if (output.getDestination().equals("ValidationDataQueue")) {
+									workflow.cancelTermination();
+									((DistributedEVL) workflow).getValidationDataQueue().send((ValidationData) output, consumerId);
+								}
+								if (output.getDestination().equals("ValidationOutput")) {
+									workflow.cancelTermination();
+									((DistributedEVL) workflow).getValidationOutput().send((ValidationResult) output, consumerId);
+								}
+								
+							}
+						} else {
 							MessageProducer producer = session.createProducer(destQueue);
 							producer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
 							producer.send(message);
 							producer.close();
+						}
 						
 					} catch (Exception ex) {
 						workflow.reportInternalException(ex);
@@ -82,7 +108,7 @@ public class ValidationOutput extends JobStream<ValidationResult> {
 		}
 	}
 	
-	public void addConsumer(ValidationOutputConsumer consumer, String consumerId) throws Exception {
+	public void addConsumer(ConfigConfigTopicConsumer consumer, String consumerId) throws Exception {
 	
 		ActiveMQDestination postQueue = post.get(consumerId);
 		
@@ -93,8 +119,8 @@ public class ValidationOutput extends JobStream<ValidationResult> {
 			messageConsumer.setMessageListener(message -> {
 				try {
 					String messageText = getMessageText(message);
-					ValidationResult validationResult = (ValidationResult) workflow.getSerializer().toObject(messageText);
-					consumer.consumeValidationOutputWithNotifications(validationResult);
+					Config config = (Config) workflow.getSerializer().toObject(messageText);
+					consumer.consumeConfigConfigTopicWithNotifications(config);
 				} catch (Exception ex) {
 					workflow.reportInternalException(ex);
 				} finally { 

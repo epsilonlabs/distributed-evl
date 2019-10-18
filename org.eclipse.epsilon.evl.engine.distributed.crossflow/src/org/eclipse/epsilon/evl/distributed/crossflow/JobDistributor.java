@@ -18,8 +18,8 @@ package org.eclipse.epsilon.evl.distributed.crossflow;
 public class JobDistributor extends JobDistributorBase {
 	
 	@Override
-	public void consumeConfigTopic(Config config) throws Exception {
-		for (java.io.Serializable job : workflow.getConfigConfigSource().masterContext.getModule().workerJobs) {
+	public void consumeConfigConfigTopic(Config config) throws Exception {
+		for (java.io.Serializable job : workflow.configConfigSource.module.workerJobs) {
 			sendToValidationDataQueue(new ValidationData(job));
 		}
 	}

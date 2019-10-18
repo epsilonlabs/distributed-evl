@@ -9,6 +9,7 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.flink.launch;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 import org.apache.flink.configuration.Configuration;
@@ -49,37 +50,32 @@ public class FlinkEvlRunConfigurationMaster extends DistributedEvlRunConfigurati
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	protected Configuration getJobParameters(boolean stripBasePath) {
-		return getJobConfiguration((Map<String, ?>) super.getJobParameters(stripBasePath));
-	}
-	
-	public Configuration getJobConfiguration(final Map<String, ?> configParams) {
-		Configuration configuration = new Configuration();
-		
-		for (Map.Entry<String, ?> entry : configParams.entrySet()) {
+	protected Serializable getJobParameters(boolean stripBasePath) {
+		final Map<String, ?> confParams = (Map<String, ?>) super.getJobParameters(stripBasePath);
+		Configuration flinkConf = new Configuration();	
+		for (Map.Entry<String, ?> entry : confParams.entrySet()) {
 			String key = entry.getKey();
 			Object value = entry.getValue();
 			
 			if (value instanceof Boolean) {
-				configuration.setBoolean(key, (boolean) value);
+				flinkConf.setBoolean(key, (boolean) value);
 			}
 			else if (value instanceof Integer) {
-				configuration.setInteger(key, (int) value);
+				flinkConf.setInteger(key, (int) value);
 			}
 			else if (value instanceof Long) {
-				configuration.setLong(key, (long) value);
+				flinkConf.setLong(key, (long) value);
 			}
 			else if (value instanceof Float) {
-				configuration.setFloat(key, (float) value);
+				flinkConf.setFloat(key, (float) value);
 			}
 			else if (value instanceof Double) {
-				configuration.setDouble(key, (double) value);
+				flinkConf.setDouble(key, (double) value);
 			}
 			else {
-				configuration.setString(key, Objects.toString(value));
+				flinkConf.setString(key, Objects.toString(value));
 			}
 		}
-		
-		return configuration;
+		return flinkConf;
 	}
 }

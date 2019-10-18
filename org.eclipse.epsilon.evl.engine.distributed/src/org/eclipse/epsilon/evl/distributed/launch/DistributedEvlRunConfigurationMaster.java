@@ -90,17 +90,14 @@ public abstract class DistributedEvlRunConfigurationMaster extends DistributedEv
 		}
 	}
 	
-	protected final JobSplitter jobSplitter;
 	protected String normalBasePath;
 	
 	public DistributedEvlRunConfigurationMaster(DistributedEvlRunConfigurationMaster other) {
 		super(other);
-		this.jobSplitter = other.jobSplitter;
 	}
 	
 	public DistributedEvlRunConfigurationMaster(Builder<? extends DistributedEvlRunConfiguration, ?> builder) {
 		super(builder.skipModelLoading());
-		this.jobSplitter = builder.jobSplitter;
 	}
 	
 	protected void setNormalBasePath(String path) {

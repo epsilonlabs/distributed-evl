@@ -1,31 +1,32 @@
 package org.eclipse.epsilon.evl.distributed.crossflow;
 
-import org.eclipse.scava.crossflow.runtime.Job;
+import javax.annotation.Generated;
 import java.io.Serializable;
-import java.util.UUID;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.ArrayList;
+import org.eclipse.scava.crossflow.runtime.Job;
 
+@Generated(value = "org.eclipse.scava.crossflow.java.Type2Class", date = "2019-10-18T14:16:53.865523500+01:00[Europe/London]")
 public class ValidationResult extends Job {
 	
 	public ValidationResult() {}
 	
-	public ValidationResult(Collection<org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlResultAtom> atoms) {
+	public ValidationResult(Collection<java.io.Serializable> atoms) {
 		this.atoms = atoms;
 	}
 	
-	public ValidationResult(Collection<org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlResultAtom> atoms, Job correlation) {
+	public ValidationResult(Collection<java.io.Serializable> atoms, Job correlation) {
 		this.atoms = atoms;
 		this.correlationId = correlation.getId();
 	}
 		
-	protected Collection<org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlResultAtom> atoms = Collections.emptyList();
+	protected Collection<java.io.Serializable> atoms = new ArrayList<>();
 	
-	public void setAtoms(Collection<org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlResultAtom> atoms) {
+	public void setAtoms(Collection<java.io.Serializable> atoms) {
 		this.atoms = atoms;
 	}
 	
-	public Collection<org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlResultAtom> getAtoms() {
+	public Collection<java.io.Serializable> getAtoms() {
 		return atoms;
 	}
 	

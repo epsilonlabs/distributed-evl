@@ -83,7 +83,7 @@ public class EvlContextDistributedSlave extends EvlContextDistributed {
 	 * @throws IllegalArgumentException If the job type was not recognised.
 	 */
 	@SuppressWarnings("unchecked")
-	public Collection<? extends Serializable> executeJobStateless(Object job) throws EolRuntimeException {
+	public Collection<Serializable> executeJobStateless(Object job) throws EolRuntimeException {
 		final Set<UnsatisfiedConstraint>
 			originalUc = getUnsatisfiedConstraints(),
 			tempUc = ConcurrencyUtils.concurrentSet(16, getParallelism());
@@ -91,7 +91,7 @@ public class EvlContextDistributedSlave extends EvlContextDistributed {
 		
 		try {
 			executeJob(job);
-			return (Collection<? extends Serializable>) executeJob(tempUc);
+			return (Collection<Serializable>) executeJob(tempUc);
 		}
 		finally {
 			setUnsatisfiedConstraints(originalUc);

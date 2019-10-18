@@ -1,10 +1,13 @@
+/** This class was automatically generated and should not be modified */
 package org.eclipse.epsilon.evl.distributed.crossflow;
+
+import javax.annotation.Generated;
 
 import org.eclipse.scava.crossflow.runtime.FailedJob;
 import org.eclipse.scava.crossflow.runtime.Task;
-import org.eclipse.scava.crossflow.runtime.Workflow;
 
-public abstract class ProcessingBase extends Task  implements ValidationDataQueueConsumer,ConfigTopicConsumer{
+@Generated(value = "org.eclipse.scava.crossflow.java.Task2BaseClass", date = "2019-10-18T14:16:53.865523500+01:00[Europe/London]")
+public abstract class ProcessingBase extends Task  implements ValidationDataQueueConsumer,ConfigConfigTopicConsumer{
 		
 	protected DistributedEVL workflow;
 	
@@ -12,13 +15,13 @@ public abstract class ProcessingBase extends Task  implements ValidationDataQueu
 		this.workflow = workflow;
 	}
 	
-	public Workflow getWorkflow() {
+	public DistributedEVL getWorkflow() {
 		return workflow;
 	}
 	
 	
 	public String getId(){
-		return "Processing:"+workflow.getName();
+		return "Processing:" + workflow.getName();
 	}
 	
 	protected ValidationOutput validationOutput;
@@ -45,7 +48,7 @@ public abstract class ProcessingBase extends Task  implements ValidationDataQueu
 	@Override
 	public final void consumeValidationDataQueueWithNotifications(ValidationData validationData) {
 		
-		while(!hasProcessedConfigTopic)
+		while(!hasProcessedConfigConfigTopic)
 		try {
 			Thread.sleep(100);
 		} catch (InterruptedException e) {
@@ -65,20 +68,23 @@ public abstract class ProcessingBase extends Task  implements ValidationDataQueu
 
 				consumeValidationDataQueue(validationData);
 
-				ValidationResult conf = new ValidationResult();
-				conf.setCorrelationId(validationData.getId());
-				conf.setIsTransactionSuccessMessage(true);
-				conf.setTotalOutputs((hasSentToValidationOutput ? 1 : 0));
+		
+		
+				ValidationResult confirmationValidationOutput = new ValidationResult();
+				confirmationValidationOutput.setCorrelationId(validationData.getId());
+				confirmationValidationOutput.setIsTransactionSuccessMessage(true);
+				confirmationValidationOutput.setTotalOutputs((hasSentToValidationOutput ? 1 : 0));
 				if (hasSentToValidationOutput) {
-					sendToValidationOutput(conf);
+					sendToValidationOutput(confirmationValidationOutput);
 				}
+			
 		
 
 
 			} catch (Exception ex) {
 				try {
 					validationData.setFailures(validationData.getFailures()+1);
-					workflow.getFailedJobsQueue().send(new FailedJob(validationData, ex, workflow.getName(), "Processing"));
+					workflow.getFailedJobsTopic().send(new FailedJob(validationData, ex, workflow.getName(), "Processing"));
 				} catch (Exception e) {
 					workflow.reportInternalException(e);
 				}
@@ -100,27 +106,27 @@ public abstract class ProcessingBase extends Task  implements ValidationDataQueu
 	
 
 	
-	boolean hasProcessedConfigTopic = false;
+	boolean hasProcessedConfigConfigTopic = false;
 	
 	
 	@Override
-	public final void consumeConfigTopicWithNotifications(Config config) {
+	public final void consumeConfigConfigTopicWithNotifications(Config config) {
 		
 			try {
 				workflow.setTaskInProgess(this);
 
-				consumeConfigTopic(config);
+				consumeConfigConfigTopic(config);
 
 			} catch (Exception ex) {
 				try {
 					config.setFailures(config.getFailures()+1);
-					workflow.getFailedJobsQueue().send(new FailedJob(config, ex, workflow.getName(), "Processing"));
+					workflow.getFailedJobsTopic().send(new FailedJob(config, ex, workflow.getName(), "Processing"));
 				} catch (Exception e) {
 					workflow.reportInternalException(e);
 				}
 			} finally {
 				try {
-					hasProcessedConfigTopic = true;
+					hasProcessedConfigConfigTopic = true;
 					workflow.setTaskWaiting(this);
 				} catch (Exception e) {
 					workflow.reportInternalException(e);
@@ -128,7 +134,7 @@ public abstract class ProcessingBase extends Task  implements ValidationDataQueu
 			}
 	}
 	
-	public abstract void consumeConfigTopic(Config config) throws Exception;
+	public abstract void consumeConfigConfigTopic(Config config) throws Exception;
 	
 
 	

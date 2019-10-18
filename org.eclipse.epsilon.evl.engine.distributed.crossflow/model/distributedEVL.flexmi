@@ -13,7 +13,7 @@
 		<sink name="ResultSink" in="ValidationOutput"/>
 		
 		<type name="Config">
-			<field name="data" type="java.util.HashMap"/>
+			<field name="data" type="java.io.Serializable"/>
 		</type>
 
 		<type name="ValidationData">
@@ -21,7 +21,7 @@
 		</type>
 		
 		<type name="ValidationResult">
-			<field isMany="true" name="atoms" type="org.eclipse.epsilon.evl.distributed.execute.data.SerializableEvlResultAtom"/>
+			<field isMany="true" name="atoms" type="java.io.Serializable"/>
 		</type>
 
 	<language name="Java" package="org.eclipse.epsilon.evl.distributed.crossflow"/>

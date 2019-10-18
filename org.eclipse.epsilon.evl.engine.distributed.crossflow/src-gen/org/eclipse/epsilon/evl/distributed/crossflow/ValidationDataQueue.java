@@ -1,24 +1,18 @@
+/** This class was automatically generated and should not be modified */
 package org.eclipse.epsilon.evl.distributed.crossflow;
 
-import java.util.List;
-
-import javax.jms.DeliveryMode;
-import javax.jms.Message;
-import javax.jms.MessageConsumer;
-import javax.jms.MessageListener;
-import javax.jms.MessageProducer;
-import javax.jms.TextMessage;
-
+import javax.annotation.Generated;
+import javax.jms.*;
 import org.apache.activemq.command.ActiveMQDestination;
 import org.eclipse.scava.crossflow.runtime.Workflow;
 import org.eclipse.scava.crossflow.runtime.Job;
 import org.eclipse.scava.crossflow.runtime.JobStream;
-import org.apache.activemq.command.ActiveMQTextMessage;
 import org.apache.activemq.command.ActiveMQBytesMessage;
 
+@Generated(value = "org.eclipse.scava.crossflow.java.Steam2Class", date = "2019-10-18T14:16:53.865523500+01:00[Europe/London]")
 public class ValidationDataQueue extends JobStream<ValidationData> {
 		
-	public ValidationDataQueue(Workflow workflow, boolean enablePrefetch) throws Exception {
+	public ValidationDataQueue(Workflow<DistributedEVLTasks> workflow, boolean enablePrefetch) throws Exception {
 		super(workflow);
 		
 		ActiveMQDestination postQ;
@@ -36,98 +30,70 @@ public class ValidationDataQueue extends JobStream<ValidationData> {
 			if (workflow.isMaster()) {
 				MessageConsumer preConsumer = session.createConsumer(preQueue);
 				consumers.add(preConsumer);
-				preConsumer.setMessageListener(new MessageListener() {
-	
-					@Override
-					public void onMessage(Message message) {
-						try {
-							workflow.cancelTermination();
-							String messageText = "";
-							if (message instanceof ActiveMQTextMessage) {
-    							ActiveMQTextMessage amqMessage = (ActiveMQTextMessage) message;
-    							messageText = amqMessage.getText();
-							} else {
-    							ActiveMQBytesMessage bm = (ActiveMQBytesMessage) message;
-    							byte data[] = new byte[(int) bm.getBodyLength()];
-    							bm.readBytes(data);
-    							messageText = new String(data);
-							}
-							Job job = (Job) workflow.getSerializer().toObject(messageText);
+				preConsumer.setMessageListener(message -> {
+					try {
+						workflow.cancelTermination();
+						Job job = (Job) workflow.getSerializer().toObject(getMessageText(message));
+						
+						if (workflow.getCache() != null && workflow.getCache().hasCachedOutputs(job)) {
 							
-							if (workflow.getCache() != null && workflow.getCache().hasCachedOutputs(job)) {
-								
-								workflow.setTaskInProgess(cacheManagerTask);
-								List<Job> cachedOutputs = workflow.getCache().getCachedOutputs(job);
-								workflow.setTaskWaiting(cacheManagerTask);
-								
-								for (Job output : cachedOutputs) {
-									if (output.getDestination().equals("ValidationOutput")) {
-										workflow.cancelTermination();
-										((DistributedEVL) workflow).getValidationOutput().send((ValidationResult) output, consumerId);
-									}
-									
+							workflow.setTaskInProgess(cacheManagerTask);
+							Iterable<Job> cachedOutputs = workflow.getCache().getCachedOutputs(job);
+							workflow.setTaskWaiting(cacheManagerTask);
+							
+							for (Job output : cachedOutputs) {
+								if (output.getDestination().equals("ValidationOutput")) {
+									workflow.cancelTermination();
+									((DistributedEVL) workflow).getValidationOutput().send((ValidationResult) output, consumerId);
 								}
-							} else {
-								MessageProducer producer = session.createProducer(destQueue);
-								producer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
-								producer.send(message);
-								producer.close();
+								
 							}
-							
-						} catch (Exception ex) {
-							workflow.reportInternalException(ex);
-						} finally { 
-							try {
-								message.acknowledge();
-							} catch (Exception ex) {
-								workflow.reportInternalException(ex);
-							} 
-						}
-					}					
-				});
-				
-				MessageConsumer destinationConsumer = session.createConsumer(destQueue);
-				consumers.add(destinationConsumer);
-				destinationConsumer.setMessageListener(new MessageListener() {
-	
-					@Override
-					public void onMessage(Message message) {
-						try {
-							workflow.cancelTermination();
-							String messageText = "";
-							if (message instanceof ActiveMQTextMessage) {
-    							ActiveMQTextMessage amqMessage = (ActiveMQTextMessage) message;
-    							messageText = amqMessage.getText();
-							} else {
-    							ActiveMQBytesMessage bm = (ActiveMQBytesMessage) message;
-    							byte data[] = new byte[(int) bm.getBodyLength()];
-    							bm.readBytes(data);
-    							messageText = new String(data);
-							}
-							
-							Job job = (Job) workflow.getSerializer().toObject(messageText);
-							if (workflow.getCache() != null && !job.isCached())
-								if(job.isTransactional())
-									workflow.getCache().cacheTransactionally(job);
-								else
-									workflow.getCache().cache(job);
-							if(job.isTransactionSuccessMessage())
-								return;
-							MessageProducer producer = session.createProducer(postQueue);
+						} else {
+							MessageProducer producer = session.createProducer(destQueue);
 							producer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
 							producer.send(message);
 							producer.close();
 						}
-						catch (Exception ex) {
+						
+					} catch (Exception ex) {
+						workflow.reportInternalException(ex);
+					} finally { 
+						try {
+							message.acknowledge();
+						} catch (Exception ex) {
 							workflow.reportInternalException(ex);
-						} finally { 
-							try {
-								message.acknowledge();
-							} catch (Exception ex) {
-								workflow.reportInternalException(ex);
-							} 
-						}
-					}					
+						} 
+					}				
+				});
+				
+				MessageConsumer destinationConsumer = session.createConsumer(destQueue);
+				consumers.add(destinationConsumer);
+				destinationConsumer.setMessageListener(message -> {
+					try {
+						workflow.cancelTermination();
+						Job job = (Job) workflow.getSerializer().toObject(getMessageText(message));
+						
+						if (workflow.getCache() != null && !job.isCached())
+							if(job.isTransactional())
+								workflow.getCache().cacheTransactionally(job);
+							else
+								workflow.getCache().cache(job);
+						if(job.isTransactionSuccessMessage())
+							return;
+						MessageProducer producer = session.createProducer(postQueue);
+						producer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
+						producer.send(message);
+						producer.close();
+					}
+					catch (Exception ex) {
+						workflow.reportInternalException(ex);
+					} finally { 
+						try {
+							message.acknowledge();
+						} catch (Exception ex) {
+							workflow.reportInternalException(ex);
+						} 
+					}				
 				});
 			}
 		}
@@ -138,41 +104,38 @@ public class ValidationDataQueue extends JobStream<ValidationData> {
 		ActiveMQDestination postQueue = post.get(consumerId);
 		
 		//only connect if the consumer exists (for example it will not in a master_bare situation)
-		if(consumer!=null) {
-		
+		if (consumer != null) {		
 			MessageConsumer messageConsumer = session.createConsumer(postQueue);
 			consumers.add(messageConsumer);
-			messageConsumer.setMessageListener(new MessageListener() {
-		
-				@Override
-				public void onMessage(Message message) {
-					String messageText = "";
+			messageConsumer.setMessageListener(message -> {
+				try {
+					String messageText = getMessageText(message);
+					ValidationData validationData = (ValidationData) workflow.getSerializer().toObject(messageText);
+					consumer.consumeValidationDataQueueWithNotifications(validationData);
+				} catch (Exception ex) {
+					workflow.reportInternalException(ex);
+				} finally { 
 					try {
-						if (message instanceof ActiveMQTextMessage) {
-							ActiveMQTextMessage amqMessage = (ActiveMQTextMessage) message;
-							messageText = amqMessage.getText();
-						} else {
-							ActiveMQBytesMessage bm = (ActiveMQBytesMessage) message;
-							byte data[] = new byte[(int) bm.getBodyLength()];
-							bm.readBytes(data);
-							messageText = new String(data);
-						}
-						ValidationData validationData = (ValidationData) workflow.getSerializer().toObject(messageText);
-						consumer.consumeValidationDataQueueWithNotifications(validationData);
+						message.acknowledge();
 					} catch (Exception ex) {
 						workflow.reportInternalException(ex);
-					} finally { 
-						try {
-							message.acknowledge();
-						} catch (Exception ex) {
-							workflow.reportInternalException(ex);
-						} 
-					}
-				}	
+					} 
+				}
 			});
 		}
-	
 	}
-
+	
+	private String getMessageText(Message message) throws Exception {
+		if (message instanceof TextMessage) {
+			return ((TextMessage) message).getText();
+		}
+		else if (message instanceof ActiveMQBytesMessage) {
+			ActiveMQBytesMessage bm = (ActiveMQBytesMessage) message;
+			byte data[] = new byte[(int) bm.getBodyLength()];
+			bm.readBytes(data);
+			return new String(data);
+		}
+		else return "";
+	}
 }
 

@@ -1,14 +1,20 @@
+/** This class was automatically generated and should not be modified */
 package org.eclipse.epsilon.evl.distributed.crossflow;
 
-import java.util.List;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
+
+import javax.annotation.Generated;
+
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import org.apache.activemq.broker.BrokerFactory;
 import org.apache.activemq.broker.BrokerService;
-import org.eclipse.scava.crossflow.runtime.utils.ParallelTaskList;
+import org.eclipse.scava.crossflow.runtime.ParallelTaskList;
 import org.eclipse.scava.crossflow.runtime.utils.ControlSignal;
 import org.eclipse.scava.crossflow.runtime.utils.ControlSignal.ControlSignals;
 import org.eclipse.scava.crossflow.runtime.utils.CrossflowLogger.SEVERITY;
@@ -16,43 +22,21 @@ import org.eclipse.scava.crossflow.runtime.Workflow;
 import org.eclipse.scava.crossflow.runtime.Mode;
 import org.eclipse.scava.crossflow.runtime.BuiltinStream;
 
-public class DistributedEVL extends Workflow {
-
-	public static DistributedEVL run(String[] args) throws Exception {
-		DistributedEVL throwAway = new DistributedEVL();
-		new JCommander(throwAway, args);
-		DistributedEVL app = new DistributedEVL(throwAway.getMode(),throwAway.getParallelization());
-		new JCommander(app, args);
-		app.run();
-		return app;
-	}
+@Generated(value = "org.eclipse.scava.crossflow.java.Workflow2Class", date = "2019-10-18T14:16:53.865523500+01:00[Europe/London]")
+public class DistributedEVL extends Workflow<DistributedEVLTasks> {
 	
-	public static void main(String[] args) throws Exception {
-		run(args);
-	}
-	
-	
-	public DistributedEVL createWorker() {
-		DistributedEVL worker = new DistributedEVL(Mode.WORKER,parallelization);
-		worker.setInstanceId(instanceId);
-		return worker;
-	}
-	
-	
-	// streams
+	// Streams
 	protected ValidationDataQueue validationDataQueue;
 	protected ValidationOutput validationOutput;
-	protected ConfigTopic configTopic;
+	protected ConfigConfigTopic configConfigTopic;
 	
-	// tasks
-
+	// Tasks
 	protected ResultSink resultSink;
 	protected ConfigConfigSource configConfigSource;
-
 	protected ParallelTaskList<JobDistributor> jobDistributors = new ParallelTaskList<>();
 	protected ParallelTaskList<Processing> processings = new ParallelTaskList<>();
 
-	//
+	protected Set<DistributedEVLTasks> tasksToExclude = EnumSet.noneOf(DistributedEVLTasks.class);
 
 	public DistributedEVL() {
 		this(Mode.MASTER, 1);
@@ -86,7 +70,7 @@ public class DistributedEVL extends Workflow {
 		}
 		
 		if (isWorker()) {
-			if (!tasksToExclude.contains("Processing")) {
+			if (!tasksToExclude.contains(DistributedEVLTasks.PROCESSING)) {
 				for(int i=1;i<=parallelization;i++){
 					Processing task = new Processing();
 					task.setWorkflow(this);
@@ -96,10 +80,10 @@ public class DistributedEVL extends Workflow {
 			}
 		}
 		
+		// Register custom types and Job subclasses
 		this.serializer.register(Config.class);
 		this.serializer.register(ValidationData.class);
 		this.serializer.register(ValidationResult.class);
-
 	}
 	
 	/**
@@ -110,81 +94,66 @@ public class DistributedEVL extends Workflow {
 	 */
 	@Override
 	public void run(long delay) throws Exception {
+		jobDistributors.init(this);
+		processings.init(this);
 	
-	jobDistributors.init(this);
-	processings.init(this);
+		this.delay=delay;
 	
-	this.delay=delay;
-
-	try {
-					
-		if (isMaster()) {
-			if (createBroker) {
-				if (activeMqConfig != null && activeMqConfig != "") {
-					brokerService = BrokerFactory.createBroker(new URI("xbean:" + activeMqConfig));
-				} else {
-					brokerService = new BrokerService();
+		try {
+						
+			if (isMaster()) {
+				if (createBroker) {
+					if (activeMqConfig != null && activeMqConfig != "") {
+						brokerService = BrokerFactory.createBroker(new URI("xbean:" + activeMqConfig));
+					} else {
+						brokerService = new BrokerService();
+					}
+				
+					//activeMqConfig
+					brokerService.setUseJmx(true);
+					brokerService.addConnector(getBroker());
+					if(enableStomp)
+						brokerService.addConnector(getStompBroker());
+					if(enableWS)	
+						brokerService.addConnector(getWSBroker());
+					brokerService.start();
 				}
-			
-				//activeMqConfig
-				brokerService.setUseJmx(true);
-				brokerService.addConnector(getBroker());
-				if(enableStomp)
-					brokerService.addConnector(getStompBroker());
-				if(enableWS)	
-					brokerService.addConnector(getWSBroker());
-				brokerService.start();
 			}
-		}
-
-		connect();
-
-		Thread.sleep(delay);
+	
+			connect();
+	
+			Thread.sleep(delay);
 		
-		validationDataQueue = new ValidationDataQueue(DistributedEVL.this, enablePrefetch);
-		activeStreams.add(validationDataQueue);
-		validationOutput = new ValidationOutput(DistributedEVL.this, enablePrefetch);
-		activeStreams.add(validationOutput);
-		configTopic = new ConfigTopic(DistributedEVL.this, enablePrefetch);
-		activeStreams.add(configTopic);
+			validationDataQueue = new ValidationDataQueue(DistributedEVL.this, enablePrefetch);
+			activeStreams.add(validationDataQueue);
+			validationOutput = new ValidationOutput(DistributedEVL.this, enablePrefetch);
+			activeStreams.add(validationOutput);
+			configConfigTopic = new ConfigConfigTopic(DistributedEVL.this, enablePrefetch);
+			activeStreams.add(configConfigTopic);
 		
 			if (isMaster()) {
-					for(int i = 1; i <=jobDistributors.size(); i++){
-						JobDistributor task = jobDistributors.get(i-1);
-						task.setResultsTopic(resultsTopic);
-						configTopic.addConsumer(task, "JobDistributor");			
+					for(int i = 0; i <jobDistributors.size(); i++){
+						JobDistributor task = jobDistributors.get(i);
+						configConfigTopic.addConsumer(task, "JobDistributor");			
 						task.setValidationDataQueue(validationDataQueue);
 					}
-					resultSink.setResultsTopic(resultsTopic);
 					validationOutput.addConsumer(resultSink, "ResultSink");			
-					configConfigSource.setResultsTopic(resultsTopic);
-					configConfigSource.setConfigTopic(configTopic);
+					configConfigSource.setConfigConfigTopic(configConfigTopic);
 			}
 			
 			if (isWorker()) {
-				if (!tasksToExclude.contains("Processing")) {
-						for(int i = 1; i <=processings.size(); i++){
-							Processing task = processings.get(i-1);
-							task.setResultsTopic(resultsTopic);
+				if (!tasksToExclude.contains(DistributedEVLTasks.PROCESSING)) {
+						for(int i = 0; i <processings.size(); i++){
+							Processing task = processings.get(i);
 							validationDataQueue.addConsumer(task, "Processing");			
-							configTopic.addConsumer(task, "Processing");			
+							configConfigTopic.addConsumer(task, "Processing");			
 							task.setValidationOutput(validationOutput);
 						}
 				}
 			}
 			
 			if (isMaster()){
-				// run all sources in parallel threads
-				new Thread(() -> {
-					try {
-						setTaskInProgess(configConfigSource);
-						configConfigSource.produce();
-						setTaskWaiting(configConfigSource);
-					} catch (Exception ex) {
-						reportInternalException(ex);
-						terminate();
-					}
-				}).start();	
+				sendConfigurations();
 			}
 				
 			// delay non-master connections to allow master to create the relevant listeners
@@ -200,14 +169,28 @@ public class DistributedEVL extends Workflow {
 		}
 	}				
 	
+	public void sendConfigurations(){
+	
+		new Thread(() -> {
+					try {
+						setTaskInProgess(configConfigSource);
+						configConfigSource.produce();
+						setTaskWaiting(configConfigSource);
+					} catch (Exception ex) {
+						reportInternalException(ex);
+						terminate();
+					}
+		}).start();
+	}
+	
 	public ValidationDataQueue getValidationDataQueue() {
 		return validationDataQueue;
 	}
 	public ValidationOutput getValidationOutput() {
 		return validationOutput;
 	}
-	public ConfigTopic getConfigTopic() {
-		return configTopic;
+	public ConfigConfigTopic getConfigConfigTopic() {
+		return configConfigTopic;
 	}
 	
 	public JobDistributor getJobDistributor() {
@@ -233,6 +216,59 @@ public class DistributedEVL extends Workflow {
 	}
 	public ConfigConfigSource getConfigConfigSource() {
 		return configConfigSource;
+	}
+	
+	public DistributedEVL createWorker() {
+		DistributedEVL worker = new DistributedEVL(Mode.WORKER,parallelization);
+		worker.setInstanceId(instanceId);
+		return worker;
+	}
+	
+	@Override
+	public DistributedEVL excludeTask(DistributedEVLTasks task) {
+		if (task == null) throw new IllegalArgumentException("task cannot be null");
+		this.tasksToExclude.add(task);
+		return this;
+	}
+	
+	@Override
+	public DistributedEVL excludeTasks(EnumSet<DistributedEVLTasks> tasks) {
+		for (DistributedEVLTasks t : tasks) {
+			excludeTask(t);
+		}
+		return this;
+	}
+	
+	public static DistributedEVL run(String[] args) throws Exception {
+		// Parse all values into an temporary object
+		DistributedEVL argsHolder = new DistributedEVL();
+		JCommander.newBuilder().addObject(argsHolder).build().parse(args);
+		
+		// Extract values to construct new object
+		DistributedEVL app = new DistributedEVL(argsHolder.getMode(), argsHolder.getParallelization());
+		JCommander.newBuilder().addObject(app).build().parse(args);
+		app.run();
+		return app;
+	}
+	
+	public static void main(String[] args) throws Exception {
+	      // Parse all values into an temporary object
+        DistributedEVL argsHolder = new DistributedEVL();
+        JCommander jct = JCommander.newBuilder().addObject(argsHolder).build();
+        
+        try {
+            jct.parse(args);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+	    if(argsHolder.isHelp()) {
+            jct.setProgramName("DistributedEVL");
+            jct.usage();
+            System.exit(0);
+        }
+	
+		run(args);
 	}
 	
 }	

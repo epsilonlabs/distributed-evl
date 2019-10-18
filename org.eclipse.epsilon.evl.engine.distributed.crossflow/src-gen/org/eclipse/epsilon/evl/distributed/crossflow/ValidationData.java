@@ -1,11 +1,12 @@
 package org.eclipse.epsilon.evl.distributed.crossflow;
 
-import org.eclipse.scava.crossflow.runtime.Job;
+import javax.annotation.Generated;
 import java.io.Serializable;
-import java.util.UUID;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.ArrayList;
+import org.eclipse.scava.crossflow.runtime.Job;
 
+@Generated(value = "org.eclipse.scava.crossflow.java.Type2Class", date = "2019-10-18T14:16:53.865523500+01:00[Europe/London]")
 public class ValidationData extends Job {
 	
 	public ValidationData() {}

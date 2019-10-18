@@ -1,9 +1,12 @@
+/** This class was automatically generated and should not be modified */
 package org.eclipse.epsilon.evl.distributed.crossflow;
+
+import javax.annotation.Generated;
 
 import org.eclipse.scava.crossflow.runtime.FailedJob;
 import org.eclipse.scava.crossflow.runtime.Task;
-import org.eclipse.scava.crossflow.runtime.Workflow;
 
+@Generated(value = "org.eclipse.scava.crossflow.java.Task2BaseClass", date = "2019-10-18T14:16:53.865523500+01:00[Europe/London]")
 public abstract class ConfigConfigSourceBase extends Task {
 		
 	protected DistributedEVL workflow;
@@ -12,29 +15,29 @@ public abstract class ConfigConfigSourceBase extends Task {
 		this.workflow = workflow;
 	}
 	
-	public Workflow getWorkflow() {
+	public DistributedEVL getWorkflow() {
 		return workflow;
 	}
 	
 	
 	public String getId(){
-		return "ConfigConfigSource:"+workflow.getName();
+		return "ConfigConfigSource:" + workflow.getName();
 	}
 	
-	protected ConfigTopic configTopic;
+	protected ConfigConfigTopic configConfigTopic;
 	
-	protected void setConfigTopic(ConfigTopic configTopic) {
-		this.configTopic = configTopic;
+	protected void setConfigConfigTopic(ConfigConfigTopic configConfigTopic) {
+		this.configConfigTopic = configConfigTopic;
 	}
 	
-	protected ConfigTopic getConfigTopic() {
-		return configTopic;
+	protected ConfigConfigTopic getConfigConfigTopic() {
+		return configConfigTopic;
 	}
 	
-	public void sendToConfigTopic(Config config) {
+	public void sendToConfigConfigTopic(Config config) {
 		config.setCacheable(this.cacheable);
 		config.setTransactional(false);
-		getConfigTopic().send(config, this.getClass().getName());
+		getConfigConfigTopic().send(config, this.getClass().getName());
 	}
 	
 	

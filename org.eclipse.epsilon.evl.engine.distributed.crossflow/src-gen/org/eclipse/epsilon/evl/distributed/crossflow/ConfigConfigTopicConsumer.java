@@ -4,8 +4,8 @@ package org.eclipse.epsilon.evl.distributed.crossflow;
 import javax.annotation.Generated;
 
 @Generated(value = "org.eclipse.scava.crossflow.java.Steam2Consumer", date = "2019-10-18T14:16:53.865523500+01:00[Europe/London]")
-public interface ValidationOutputConsumer {
+public interface ConfigConfigTopicConsumer {
 	
-	void consumeValidationOutputWithNotifications(ValidationResult validationResult) throws Exception;
+	void consumeConfigConfigTopicWithNotifications(Config config) throws Exception;
 	
 }

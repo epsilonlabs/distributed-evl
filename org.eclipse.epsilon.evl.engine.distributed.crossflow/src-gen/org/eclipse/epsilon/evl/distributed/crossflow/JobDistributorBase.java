@@ -1,10 +1,13 @@
+/** This class was automatically generated and should not be modified */
 package org.eclipse.epsilon.evl.distributed.crossflow;
+
+import javax.annotation.Generated;
 
 import org.eclipse.scava.crossflow.runtime.FailedJob;
 import org.eclipse.scava.crossflow.runtime.Task;
-import org.eclipse.scava.crossflow.runtime.Workflow;
 
-public abstract class JobDistributorBase extends Task  implements ConfigTopicConsumer{
+@Generated(value = "org.eclipse.scava.crossflow.java.Task2BaseClass", date = "2019-10-18T14:16:53.865523500+01:00[Europe/London]")
+public abstract class JobDistributorBase extends Task  implements ConfigConfigTopicConsumer{
 		
 	protected DistributedEVL workflow;
 	
@@ -12,13 +15,13 @@ public abstract class JobDistributorBase extends Task  implements ConfigTopicCon
 		this.workflow = workflow;
 	}
 	
-	public Workflow getWorkflow() {
+	public DistributedEVL getWorkflow() {
 		return workflow;
 	}
 	
 	
 	public String getId(){
-		return "JobDistributor:"+workflow.getName();
+		return "JobDistributor:" + workflow.getName();
 	}
 	
 	protected ValidationDataQueue validationDataQueue;
@@ -38,27 +41,27 @@ public abstract class JobDistributorBase extends Task  implements ConfigTopicCon
 	
 	
 	
-	boolean hasProcessedConfigTopic = false;
+	boolean hasProcessedConfigConfigTopic = false;
 	
 	
 	@Override
-	public final void consumeConfigTopicWithNotifications(Config config) {
+	public final void consumeConfigConfigTopicWithNotifications(Config config) {
 		
 			try {
 				workflow.setTaskInProgess(this);
 
-				consumeConfigTopic(config);
+				consumeConfigConfigTopic(config);
 
 			} catch (Exception ex) {
 				try {
 					config.setFailures(config.getFailures()+1);
-					workflow.getFailedJobsQueue().send(new FailedJob(config, ex, workflow.getName(), "JobDistributor"));
+					workflow.getFailedJobsTopic().send(new FailedJob(config, ex, workflow.getName(), "JobDistributor"));
 				} catch (Exception e) {
 					workflow.reportInternalException(e);
 				}
 			} finally {
 				try {
-					hasProcessedConfigTopic = true;
+					hasProcessedConfigConfigTopic = true;
 					workflow.setTaskWaiting(this);
 				} catch (Exception e) {
 					workflow.reportInternalException(e);
@@ -66,7 +69,7 @@ public abstract class JobDistributorBase extends Task  implements ConfigTopicCon
 			}
 	}
 	
-	public abstract void consumeConfigTopic(Config config) throws Exception;
+	public abstract void consumeConfigConfigTopic(Config config) throws Exception;
 	
 
 	
