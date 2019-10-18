@@ -9,11 +9,6 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.flink.execute.context;
 
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import org.apache.flink.configuration.Configuration;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
 
@@ -25,41 +20,14 @@ import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
  */
 public class EvlContextFlinkMaster extends EvlContextDistributedMaster {
 
-	public EvlContextFlinkMaster(int localParallelism, int distributedParallelism, JobSplitter strategy) {
+	protected String outputPath;
+	
+	public EvlContextFlinkMaster(int localParallelism, int distributedParallelism, JobSplitter strategy, java.nio.file.Path outputPath) {
 		super(localParallelism, distributedParallelism, strategy);
+		this.outputPath = java.util.Objects.toString(outputPath, null);
 	}
 	
-	public HashMap<String, Serializable> getJobParameters() {
-		return getJobParameters(false);
-	}
-	
-	public Configuration getJobConfiguration() {
-		Configuration configuration = new Configuration();
-		
-		for (Map.Entry<String, ?> entry : getJobParameters().entrySet()) {
-			String key = entry.getKey();
-			Object value = entry.getValue();
-			
-			if (value instanceof Boolean) {
-				configuration.setBoolean(key, (boolean) value);
-			}
-			else if (value instanceof Integer) {
-				configuration.setInteger(key, (int) value);
-			}
-			else if (value instanceof Long) {
-				configuration.setLong(key, (long) value);
-			}
-			else if (value instanceof Float) {
-				configuration.setFloat(key, (float) value);
-			}
-			else if (value instanceof Double) {
-				configuration.setDouble(key, (double) value);
-			}
-			else {
-				configuration.setString(key, Objects.toString(value));
-			}
-		}
-		
-		return configuration;
+	public String getOutputPath() {
+		return outputPath;
 	}
 }

@@ -9,6 +9,9 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.flink.launch;
 
+import java.util.Map;
+import java.util.Objects;
+import org.apache.flink.configuration.Configuration;
 import org.eclipse.epsilon.evl.distributed.flink.EvlModuleFlinkMaster;
 import org.eclipse.epsilon.evl.distributed.flink.execute.context.EvlContextFlinkMaster;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfiguration;
@@ -24,7 +27,7 @@ public class FlinkEvlRunConfigurationMaster extends DistributedEvlRunConfigurati
 	public static class Builder<R extends FlinkEvlRunConfigurationMaster, B extends Builder<R, B>> extends DistributedEvlRunConfigurationMaster.Builder<R, B> {
 		@Override
 		protected EvlModuleFlinkMaster createModule() {
-			EvlContextFlinkMaster context = new EvlContextFlinkMaster(parallelism, distributedParallelism, getJobSplitter());
+			EvlContextFlinkMaster context = new EvlContextFlinkMaster(parallelism, distributedParallelism, getJobSplitter(), outputFile);
 			return new EvlModuleFlinkMaster(context);
 		}
 		
@@ -42,5 +45,41 @@ public class FlinkEvlRunConfigurationMaster extends DistributedEvlRunConfigurati
 	
 	public FlinkEvlRunConfigurationMaster(Builder<? extends DistributedEvlRunConfiguration, ?> builder) {
 		super(builder);
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	protected Configuration getJobParameters(boolean stripBasePath) {
+		return getJobConfiguration((Map<String, ?>) super.getJobParameters(stripBasePath));
+	}
+	
+	public Configuration getJobConfiguration(final Map<String, ?> configParams) {
+		Configuration configuration = new Configuration();
+		
+		for (Map.Entry<String, ?> entry : configParams.entrySet()) {
+			String key = entry.getKey();
+			Object value = entry.getValue();
+			
+			if (value instanceof Boolean) {
+				configuration.setBoolean(key, (boolean) value);
+			}
+			else if (value instanceof Integer) {
+				configuration.setInteger(key, (int) value);
+			}
+			else if (value instanceof Long) {
+				configuration.setLong(key, (long) value);
+			}
+			else if (value instanceof Float) {
+				configuration.setFloat(key, (float) value);
+			}
+			else if (value instanceof Double) {
+				configuration.setDouble(key, (double) value);
+			}
+			else {
+				configuration.setString(key, Objects.toString(value));
+			}
+		}
+		
+		return configuration;
 	}
 }

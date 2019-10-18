@@ -139,9 +139,8 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 			
 			@SuppressWarnings("unchecked")
 			Map<String, ? extends Serializable> configMap = configMsg.getBody(Map.class);
-			configContainer = EvlContextDistributedSlave.parseJobParameters(configMap, basePath);
+			configContainer = DistributedEvlRunConfigurationSlave.parseJobParameters(configMap, basePath);
 			configContainer.preExecute();
-			configContainer.getModule().prepareExecution();
 
 			// This is to acknowledge when we have completed loading the script(s) and model(s) successfully
 			configuredAckMsg.setIntProperty(CONFIG_HASH_PROPERTY, configMap.hashCode());

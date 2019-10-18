@@ -12,9 +12,9 @@ package org.eclipse.epsilon.evl.distributed.flink;
 import java.io.Serializable;
 import java.util.Collection;
 import org.apache.flink.api.common.ExecutionConfig;
+import org.apache.flink.api.common.ExecutionConfig.GlobalJobParameters;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
-import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.fs.FileSystem.WriteMode;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedMaster;
@@ -47,11 +47,15 @@ public class EvlModuleFlinkMaster extends EvlModuleDistributedMaster {
 	
 	
 	@Override
+	public void prepareWorkers(Serializable configuration) throws Exception {
+		executionEnv.getConfig().setGlobalJobParameters((GlobalJobParameters) configuration);
+	}
+	
+	@Override
 	protected final void executeWorkerJobs(Collection<? extends Serializable> jobs) throws EolRuntimeException {
 		try {
-			Configuration config = getContext().getJobConfiguration();
 			String outputPath = getContext().getOutputPath();
-			executionEnv.getConfig().setGlobalJobParameters(config);
+			
 			DataSet<? extends Serializable> pipeline =
 				executionEnv.fromCollection(jobs)
 				.flatMap(new EvlFlinkFlatMapFunction<>());

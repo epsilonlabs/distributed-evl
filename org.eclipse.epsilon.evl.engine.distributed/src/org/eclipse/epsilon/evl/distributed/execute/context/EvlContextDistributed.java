@@ -28,22 +28,6 @@ import org.eclipse.epsilon.evl.execute.context.concurrent.EvlContextParallel;
  * @since 1.6
  */
 public abstract class EvlContextDistributed extends EvlContextParallel {
-	
-	protected static final String
-		ENCODING = java.nio.charset.StandardCharsets.UTF_8.toString(),
-		BASE_PATH = "basePath",
-		LOCAL_PARALLELISM = "localParallelism",
-		DISTRIBUTED_PARALLELISM = "distributedParallelism",
-		EVL_SCRIPT = "evlScript",
-		OUTPUT_DIR = "output",
-		NUM_MODELS = "numberOfModels",
-		MODEL_PREFIX = "model",
-		SCRIPT_PARAMS = "scriptParameters",
-		IGNORE_MODELS = "noModelLoading";
-	
-	public static final String
-		BASE_PATH_SUBSTITUTE = "$BASEPATH$",
-		BASE_PATH_SYSTEM_PROPERTY = "org.eclipse.epsilon.evl.distributed."+BASE_PATH;
 
 	public EvlContextDistributed() {
 		super();

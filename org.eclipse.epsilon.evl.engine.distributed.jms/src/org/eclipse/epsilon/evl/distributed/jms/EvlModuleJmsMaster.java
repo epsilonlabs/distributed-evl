@@ -109,7 +109,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	}
 	
 	@Override
-	protected void prepareWorkers() throws EolRuntimeException {
+	public void prepareWorkers(Serializable configuration) throws EolRuntimeException {
 		EvlContextJmsMaster evlContext = getContext();
 		
 		// Only bother connecting if there are worker jobs
@@ -121,8 +121,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 			final Destination tempDest = regContext.createTemporaryQueue();
 			final JMSProducer regProducer = regContext.createProducer();
 			regProducer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
-			final Serializable config = getContext().getJobParameters(true);
-			final int configHash = config.hashCode();
+			final int configHash = configuration.hashCode();
 			final AtomicInteger registeredWorkers = new AtomicInteger();
 			
 			log("Awaiting workers");
@@ -146,7 +145,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 					String workerID = createWorker(currentWorkers, msg);
 					slaveWorkers.put(workerID, Collections.emptyMap());
 					// Tell the worker what their ID is along with the configuration parameters
-					Message configMsg = regContext.createObjectMessage(config);
+					Message configMsg = regContext.createObjectMessage(configuration);
 					configMsg.setJMSReplyTo(tempDest);
 					configMsg.setStringProperty(WORKER_ID_PROPERTY, workerID);
 					configMsg.setIntProperty(CONFIG_HASH_PROPERTY, configHash);

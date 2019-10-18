@@ -11,9 +11,9 @@ package org.eclipse.epsilon.evl.distributed;
 
 import java.io.Serializable;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
+import org.eclipse.epsilon.common.concurrent.ConcurrencyUtils;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.eol.function.CheckedEolRunnable;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
@@ -51,19 +51,13 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 		getContext().executeJob(jobs);
 	}
 	
-	@Override
-	protected void prepareExecution() throws EolRuntimeException {
-		super.prepareExecution();
-		prepareWorkers();
-	}
-	
 	/**
-	 * This method is called before {@link #checkConstraints()} to workers so that they can have the
+	 * This method is called before {@link #execute()} so that workers can have the
 	 * configuration pre-loaded and ready to go without having to wait for the master.
 	 * 
-	 * @throws EolRuntimeException
+	 * @throws Exception
 	 */
-	protected abstract void prepareWorkers() throws EolRuntimeException;
+	public abstract void prepareWorkers(Serializable configuration) throws Exception;
 	
 	/**
 	 * This method is called asynchronously from {@link #checkConstraints()}.
@@ -93,24 +87,13 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 			CheckedEolRunnable masterAsync = () -> executeMasterJobs(masterJobs);
 			CheckedEolRunnable workerAsync = () -> executeWorkerJobs(workerJobs);
 			try {
-				CompletableFuture.runAsync(masterAsync)
-					.thenCombine(
-						CompletableFuture.runAsync(workerAsync),
-						(v1, v2) -> null
-					)
-				.get();
+				ConcurrencyUtils.executeAsync(masterAsync, workerAsync);
 			}
 			catch (InterruptedException | ExecutionException ex) {
 				ex.printStackTrace();
 				EolRuntimeException.propagateDetailed(ex);
 			}
 		}
-	}
-	
-	@Override
-	protected void prepareContext() throws EolRuntimeException {
-		getContext().storeInitialVariables();
-		super.prepareContext();
 	}
 	
 	@Override

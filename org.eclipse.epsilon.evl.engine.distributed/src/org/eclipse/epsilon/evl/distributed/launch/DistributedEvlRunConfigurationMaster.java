@@ -9,6 +9,21 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.launch;
 
+import static java.net.URLDecoder.decode;
+import static java.net.URLEncoder.encode;
+import static org.eclipse.epsilon.common.util.profiling.BenchmarkUtils.profileExecutionStage;
+import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import org.eclipse.epsilon.common.concurrent.ConcurrencyUtils;
+import org.eclipse.epsilon.common.function.CheckedRunnable;
+import org.eclipse.epsilon.common.util.StringProperties;
+import org.eclipse.epsilon.eol.models.IModel;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
@@ -75,24 +90,96 @@ public abstract class DistributedEvlRunConfigurationMaster extends DistributedEv
 		}
 	}
 	
-	protected final int distributedParallelism;
 	protected final JobSplitter jobSplitter;
+	protected String normalBasePath;
 	
 	public DistributedEvlRunConfigurationMaster(DistributedEvlRunConfigurationMaster other) {
 		super(other);
-		this.distributedParallelism = other.distributedParallelism;
 		this.jobSplitter = other.jobSplitter;
 	}
 	
 	public DistributedEvlRunConfigurationMaster(Builder<? extends DistributedEvlRunConfiguration, ?> builder) {
-		super(builder);
-		this.distributedParallelism = builder.distributedParallelism;
+		super(builder.skipModelLoading());
 		this.jobSplitter = builder.jobSplitter;
+	}
+	
+	protected void setNormalBasePath(String path) {
+		if (path != null) {
+			try {
+				normalBasePath = decode(
+					java.net.URI.create(encode(path, ENCODING)).normalize().toString(),
+					ENCODING
+				);
+			}
+			catch (IllegalArgumentException | UnsupportedEncodingException iax) {
+				normalBasePath = Paths.get(path).normalize().toString();
+			}
+		}
+	}
+	
+	/**
+	 * Converts the program's configuration into serializable key-value pairs which
+	 * can then be used by slave modules to re-build an equivalent state. Such information
+	 * includes the parallelism, path to the script, models and variables in the frame stack.
+	 * 
+	 * @param stripBasePath Whether to anonymise / normalise paths containing the basePath.
+	 * @return The configuration properties.
+	 */
+	protected Serializable getJobParameters(boolean stripBasePath) {
 		EvlContextDistributedMaster context = getModule().getContext();
-		context.setModelProperties(modelsAndProperties.values());
-		context.setBasePath(basePath);
+		HashMap<String, Serializable> config = new HashMap<>();
+		
+		if (stripBasePath) config.put(BASE_PATH, BASE_PATH_SUBSTITUTE);
+		config.put(LOCAL_PARALLELISM, context.getParallelism());
+		config.put(DISTRIBUTED_PARALLELISM, context.getDistributedParallelism());
+		String scriptPath = getModule().getFile().toPath().toString();
+		config.put(EVL_SCRIPT, stripBasePath ? removeBasePath(scriptPath) : scriptPath);
 		if (outputFile != null) {
-			context.setOutputPath(outputFile.toString());
+			String outDir = outputFile.toString();
+			config.put(OUTPUT_DIR, stripBasePath ? removeBasePath(outDir) : outDir);
+		}
+		config.put(NUM_MODELS, modelsAndProperties.size());
+			
+		Iterator<Entry<IModel, StringProperties>> modelPropertiesIter = modelsAndProperties.entrySet().iterator();
+		
+		for (int i = 0; modelPropertiesIter.hasNext(); i++) {
+			Entry<IModel, StringProperties> modelProp = modelPropertiesIter.next();
+			config.put(MODEL_PREFIX+i,
+				modelProp.getKey().getClass().getName().replace("org.eclipse.epsilon.emc.", "")+"#"+
+				modelProp.getValue().entrySet().stream()
+					.map(entry -> entry.getKey() + "=" + (stripBasePath ? removeBasePath(entry.getValue()) : entry.getValue()))
+					.collect(Collectors.joining(","))
+			);
+		}
+		
+		if (parameters != null) {
+			String variablesFlattened = parameters.entrySet()
+				.stream()
+				.map(e -> e.getKey() + "=" + Objects.toString(e.getValue()))
+				.collect(Collectors.joining(","));
+			
+			config.put(SCRIPT_PARAMS, variablesFlattened);
+		}
+		
+		return config;
+	}
+	
+	@Override
+	public void preExecute() throws Exception {
+		super.preExecute();
+		CheckedRunnable<?> loadModels = this::loadModels, pw = this::prepareWorkers;
+		ConcurrencyUtils.executeAsync(loadModels, pw);
+	}
+	
+	protected void prepareWorkers() throws Exception {
+		if (getModule().getContext().getDistributedParallelism() == 0) return;
+		if (profileExecution) {
+			profileExecutionStage(profiledStages, "Sending configuration to workers",
+				() -> getModule().prepareWorkers(getJobParameters(true))
+			);
+		}
+		else {
+			getModule().prepareWorkers(getJobParameters(true));
 		}
 	}
 	

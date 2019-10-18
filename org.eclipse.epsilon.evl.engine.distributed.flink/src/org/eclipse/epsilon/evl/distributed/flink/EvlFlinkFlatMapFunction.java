@@ -16,7 +16,6 @@ import org.apache.flink.api.common.functions.RuntimeContext;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.util.Collector;
-import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedSlave;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedSlave;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfigurationSlave;
 
@@ -32,23 +31,21 @@ public class EvlFlinkFlatMapFunction<IN extends Serializable> extends RichFlatMa
 	
 	private static final long serialVersionUID = 4605327252632042575L;
 	
-	protected transient EvlModuleDistributedSlave localModule;
+	protected transient EvlContextDistributedSlave localContext;
 	protected transient DistributedEvlRunConfigurationSlave configContainer;
 	
 	@Override
 	public void flatMap(IN value, Collector<Serializable> out) throws Exception {
-		localModule.getContext().executeJobStateless(value).forEach(out::collect);
+		localContext.executeJobStateless(value).forEach(out::collect);
 	}
 	
 	@Override
 	public void open(Configuration additionalParameters) throws Exception {
-		configContainer = EvlContextDistributedSlave.parseJobParameters(
+		configContainer = DistributedEvlRunConfigurationSlave.parseJobParameters(
 			getParameters(getRuntimeContext(), additionalParameters).toMap(), null
 		);
-		localModule = configContainer.getModule();
-		
+		localContext = configContainer.getModule().getContext();
 		configContainer.preExecute();
-		localModule.prepareExecution();
 	}
 	
 	public static Configuration getParameters(RuntimeContext context, Configuration additionalParameters) {
