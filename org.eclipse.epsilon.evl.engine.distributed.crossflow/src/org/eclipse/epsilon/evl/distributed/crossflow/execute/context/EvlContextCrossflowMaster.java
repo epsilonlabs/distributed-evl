@@ -9,7 +9,6 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.crossflow.execute.context;
 
-import org.eclipse.epsilon.common.module.IModule;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.evl.distributed.crossflow.*;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
@@ -42,12 +41,5 @@ public class EvlContextCrossflowMaster extends EvlContextDistributedMaster {
 	@Override
 	public EvlModuleCrossflowMaster getModule() {
 		return (EvlModuleCrossflowMaster) super.getModule();
-	}
-	
-	@Override
-	public void setModule(IModule module) {
-		if (module instanceof EvlModuleCrossflowMaster) {
-			super.setModule(module);
-		}
 	}
 }

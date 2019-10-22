@@ -10,6 +10,7 @@
 package org.eclipse.epsilon.evl.distributed.flink.execute.context;
 
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
+import org.eclipse.epsilon.evl.distributed.flink.EvlModuleFlinkMaster;
 import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
 
 /**
@@ -29,5 +30,10 @@ public class EvlContextFlinkMaster extends EvlContextDistributedMaster {
 	
 	public String getOutputPath() {
 		return outputPath;
+	}
+	
+	@Override
+	public EvlModuleFlinkMaster getModule() {
+		return (EvlModuleFlinkMaster) super.getModule();
 	}
 }

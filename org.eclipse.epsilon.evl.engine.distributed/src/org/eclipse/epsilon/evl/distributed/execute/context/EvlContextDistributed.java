@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.eclipse.epsilon.common.module.IModule;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.eol.execute.control.ExecutionController;
 import org.eclipse.epsilon.eol.execute.control.ExecutionProfiler;
@@ -82,12 +81,5 @@ public abstract class EvlContextDistributed extends EvlContextParallel {
 	@Override
 	public EvlModuleDistributed getModule() {
 		return (EvlModuleDistributed) super.getModule();
-	}
-	
-	@Override
-	public void setModule(IModule module) {
-		if (module instanceof EvlModuleDistributed) {
-			super.setModule(module);
-		}
 	}
 }

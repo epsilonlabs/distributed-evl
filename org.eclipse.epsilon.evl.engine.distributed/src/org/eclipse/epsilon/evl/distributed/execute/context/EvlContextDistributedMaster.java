@@ -9,7 +9,6 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.execute.context;
 
-import org.eclipse.epsilon.common.module.IModule;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
@@ -60,12 +59,5 @@ public class EvlContextDistributedMaster extends EvlContextDistributed {
 	@Override
 	public EvlModuleDistributedMaster getModule() {
 		return (EvlModuleDistributedMaster) super.getModule();
-	}
-	
-	@Override
-	public void setModule(IModule module) {
-		if (module instanceof EvlModuleDistributedMaster) {
-			super.setModule(module);
-		}
 	}
 }

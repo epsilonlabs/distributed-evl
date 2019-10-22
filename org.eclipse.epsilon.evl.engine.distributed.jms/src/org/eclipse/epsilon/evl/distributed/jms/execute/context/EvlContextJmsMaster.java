@@ -11,6 +11,7 @@ package org.eclipse.epsilon.evl.distributed.jms.execute.context;
 
 import java.net.URI;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
+import org.eclipse.epsilon.evl.distributed.jms.EvlModuleJmsMaster;
 import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
 
 /**
@@ -35,5 +36,10 @@ public class EvlContextJmsMaster extends EvlContextDistributedMaster {
 	
 	public int getSessionId() {
 		return this.sessionID;
+	}
+	
+	@Override
+	public EvlModuleJmsMaster getModule() {
+		return (EvlModuleJmsMaster) super.getModule();
 	}
 }

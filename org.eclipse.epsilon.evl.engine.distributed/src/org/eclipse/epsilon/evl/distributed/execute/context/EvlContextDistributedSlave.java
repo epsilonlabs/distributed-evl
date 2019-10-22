@@ -12,7 +12,6 @@ package org.eclipse.epsilon.evl.distributed.execute.context;
 import java.io.Serializable;
 import java.util.*;
 import org.eclipse.epsilon.common.concurrent.ConcurrencyUtils;
-import org.eclipse.epsilon.common.module.IModule;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.erl.execute.data.JobBatch;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedSlave;
@@ -101,12 +100,5 @@ public class EvlContextDistributedSlave extends EvlContextDistributed {
 	@Override
 	public EvlModuleDistributedSlave getModule() {
 		return (EvlModuleDistributedSlave) super.getModule();
-	}
-	
-	@Override
-	public void setModule(IModule module) {
-		if (module instanceof EvlModuleDistributedSlave) {
-			super.setModule(module);
-		}
 	}
 }

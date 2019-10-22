@@ -15,7 +15,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Objects;
-import java.util.Optional;
 import org.eclipse.epsilon.eol.dom.ExpressionStatement;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.eol.execute.context.FrameStack;
@@ -26,7 +25,6 @@ import org.eclipse.epsilon.eol.types.EolModelElementType;
 import org.eclipse.epsilon.evl.IEvlModule;
 import org.eclipse.epsilon.evl.dom.Constraint;
 import org.eclipse.epsilon.evl.dom.ConstraintContext;
-import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
 import org.eclipse.epsilon.evl.execute.context.IEvlContext;
 import org.eclipse.epsilon.evl.execute.exceptions.EvlConstraintNotFoundException;
 
@@ -130,7 +128,7 @@ public class SerializableEvlInputParametersAtom extends SerializableEvlInputAtom
 		for (Constraint constraint : constraintsToCheck) {
 			frameStack.enterLocal(FrameType.UNPROTECTED, entryPoint, variablesArr);
 			
-			((Optional<UnsatisfiedConstraint>) constraint.execute(context, self))
+			constraint.execute(context, self)
 				.map(this::serializeUnsatisfiedConstraint)
 				.ifPresent(unsatisfied::add);
 			
