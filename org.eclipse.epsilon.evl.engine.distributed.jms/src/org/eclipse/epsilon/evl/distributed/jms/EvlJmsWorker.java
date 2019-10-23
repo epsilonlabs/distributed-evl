@@ -169,6 +169,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 		Message msg;
 		while ((msg = finished ? jobConsumer.receiveNoWait() : jobConsumer.receive(JOB_RECV_TIMEOUT)) != null) {
 			try {
+				msg.acknowledge();
 				if (msg instanceof ObjectMessage)  {
 					Serializable currentJob = ((ObjectMessage) msg).getObject();
 					ObjectMessage resultsMsg = null;

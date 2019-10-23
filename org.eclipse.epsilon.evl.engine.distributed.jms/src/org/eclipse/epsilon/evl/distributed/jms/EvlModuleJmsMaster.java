@@ -109,10 +109,9 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	}
 	
 	@Override
-	public void prepareWorkers(Serializable configuration) throws EolRuntimeException {
+	public final void prepareWorkers(Serializable configuration) throws EolRuntimeException {
 		EvlContextJmsMaster evlContext = getContext();
 		
-		// Only bother connecting if there are worker jobs
 		connectionFactory = ConnectionFactoryProvider.getDefault(evlContext.getBrokerHost());
 		try (JMSContext regContext = connectionFactory.createContext()) {
 			log("Connected to "+evlContext.getBrokerHost()+" session "+evlContext.getSessionId());
@@ -120,7 +119,6 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 			// Initial registration of workers
 			final Destination tempDest = regContext.createTemporaryQueue();
 			final JMSProducer regProducer = regContext.createProducer();
-			regProducer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
 			final int configHash = configuration.hashCode();
 			final AtomicInteger registeredWorkers = new AtomicInteger();
 			
@@ -207,13 +205,13 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	protected final void executeWorkerJobs(Collection<? extends Serializable> jobs) throws EolRuntimeException {
 		beforeSend();
 		
-		try (JMSContext resultContext = connectionFactory.createContext(JMSContext.CLIENT_ACKNOWLEDGE)) {
+		try (JMSContext resultContext = connectionFactory.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {
 			final AtomicInteger workersFinished = new AtomicInteger();
 			
 			resultContext.createConsumer(createResultsQueue(resultContext))
 				.setMessageListener(getResultsMessageListener(workersFinished));
 			
-			try (JMSContext jobContext = resultContext.createContext(JMSContext.CLIENT_ACKNOWLEDGE)) {		
+			try (JMSContext jobContext = resultContext.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {		
 				final JMSProducer jobsProducer = jobContext.createProducer().setAsync(null);
 				final Queue jobsQueue = createJobQueue(jobContext);
 				jobSender = obj -> jobsProducer.send(jobsQueue, obj);
@@ -384,16 +382,13 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	/**
 	 * Main results processing listener. Implementations are expected to handle both results processing and
 	 * signalling of terminal waiting condition once all workers have indicated all results have been
-	 * processed. Due to the complexity of the implementation, it is not recommended that subclasses override
-	 * this method. It is non-final for completeness / extensibility only. Incomplete / incorrect implementations
-	 * will break the entire class, so overriding methods should be extremely careful and fully understand
-	 * the inner workings / implementation of the base class if overriding this method.
+	 * processed. Due to the complexity of the implementation, this method is non-overridable.
 	 * 
 	 * @param workersFinished Mutable number of workers which have signalled completion status.
 	 * @return A callback which can handle the semantics of results processing (i.e. deserialization and
 	 * assignment) as well as co-ordination (signalling of completion etc.)
 	 */
-	protected MessageListener getResultsMessageListener(final AtomicInteger workersFinished) {
+	final MessageListener getResultsMessageListener(final AtomicInteger workersFinished) {
 		final AtomicInteger resultsInProgress = new AtomicInteger();
 		return msg -> {
 			try {
