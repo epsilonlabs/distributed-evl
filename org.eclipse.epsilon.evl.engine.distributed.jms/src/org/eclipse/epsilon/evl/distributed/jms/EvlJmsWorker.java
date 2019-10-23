@@ -60,8 +60,6 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 		}
 	}
 	
-	static final long JOB_RECV_TIMEOUT = Short.MAX_VALUE;
-	
 	final ConnectionFactory connectionFactory;
 	final String basePath;
 	final int sessionID;
@@ -167,7 +165,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 		EvlContextDistributedSlave context = configContainer.getModule().getContext();
 		
 		Message msg;
-		while ((msg = finished ? jobConsumer.receiveNoWait() : jobConsumer.receive(JOB_RECV_TIMEOUT)) != null) {
+		while ((msg = finished ? jobConsumer.receiveNoWait() : jobConsumer.receive()) != null) {
 			try {
 				msg.acknowledge();
 				if (msg instanceof ObjectMessage)  {
@@ -205,12 +203,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 			}
 		}
 		
-		if (!finished && stopBody == null) {
-			log("Timeout threshold reached: no job received within "+JOB_RECV_TIMEOUT);
-		}
-		else {
-			log("Finished processing jobs");
-		}
+		log("Finished processing jobs");
 	}
 	
 	void onCompletion(JMSContext session) throws Exception {
