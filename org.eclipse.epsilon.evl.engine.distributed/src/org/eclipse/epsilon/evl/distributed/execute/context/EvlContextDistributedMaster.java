@@ -23,9 +23,11 @@ public class EvlContextDistributedMaster extends EvlContextDistributed {
 
 	protected int distributedParallelism;
 	protected JobSplitter jobSplitter;
+	protected boolean localParallelismExplicitlySpecified;
 	
 	public EvlContextDistributedMaster(int localParallelism, int distributedParallelism, JobSplitter splitter) {
 		super(localParallelism);
+		this.localParallelismExplicitlySpecified = localParallelism > 0;
 		this.distributedParallelism = distributedParallelism;
 		setJobSplitter(splitter);
 	}
@@ -45,6 +47,15 @@ public class EvlContextDistributedMaster extends EvlContextDistributed {
 	
 	public void setDistributedParallelism(int parallelism) {
 		this.distributedParallelism = parallelism;
+	}
+	
+	/**
+	 * Whether this context's local parallelism was set or if it was derived automatically.
+	 * 
+	 * @return <code>true</code> If the number of threads was excplicitly set on construction.
+	 */
+	public boolean isLocalParallelismExplicitlySpecified() {
+		return localParallelismExplicitlySpecified;
 	}
 	
 	@Override

@@ -127,7 +127,7 @@ public abstract class DistributedEvlRunConfigurationMaster extends DistributedEv
 		HashMap<String, Serializable> config = new HashMap<>();
 		
 		if (stripBasePath) config.put(BASE_PATH, BASE_PATH_SUBSTITUTE);
-		config.put(LOCAL_PARALLELISM, context.getParallelism());
+		if (context.isLocalParallelismExplicitlySpecified()) config.put(LOCAL_PARALLELISM, context.getParallelism());
 		config.put(DISTRIBUTED_PARALLELISM, context.getDistributedParallelism());
 		String scriptPath = getModule().getFile().toPath().toString();
 		config.put(EVL_SCRIPT, stripBasePath ? removeBasePath(scriptPath) : scriptPath);
