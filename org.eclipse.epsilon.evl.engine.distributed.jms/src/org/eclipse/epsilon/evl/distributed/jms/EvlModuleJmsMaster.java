@@ -144,6 +144,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 					currentWorkers = registeredWorkers.incrementAndGet();
 					String workerID = createWorker(currentWorkers, msg);
 					slaveWorkers.put(workerID, Collections.emptyMap());
+					log("Worker "+workerID+" connected");
 					// Tell the worker what their ID is along with the configuration parameters
 					Message configMsg = regContext.createObjectMessage(configuration);
 					configMsg.setJMSReplyTo(tempDest);
@@ -162,7 +163,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 				try {
 					int currentWorkers = slaveWorkers.size();
 					if (currentWorkers >= expectedSlaves && refuseAdditionalWorkersConfirm(currentWorkers)) {
-						String logMsg = "Ignoring additional worker confirmation ";
+						String logMsg = "Ignoring additional worker confirmation";
 						try {
 							log(logMsg+" "+response.getJMSMessageID());
 						}
@@ -584,6 +585,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	protected void teardown() throws Exception {
 		if (regContext != null) {
 			regContext.close();
+			regContext = null;
 		}
 		if (connectionFactory instanceof AutoCloseable) {
 			((AutoCloseable) connectionFactory).close();
