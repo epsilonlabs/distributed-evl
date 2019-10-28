@@ -77,7 +77,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 	}
 	
 	@Override
-	public void runThrows() throws Exception {
+	public void prepareDistribution() throws Exception {
 		try (JMSContext regContext = connectionFactory.createContext()) {
 			Runnable ackSender = setup(regContext);
 			

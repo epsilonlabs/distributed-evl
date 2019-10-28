@@ -89,6 +89,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	protected final Map<String, Map<String, Duration>> slaveWorkers;
 	protected final Collection<Serializable> responses = new java.util.HashSet<>();
 	ConnectionFactory connectionFactory;
+	JMSContext regContext;
 	private CheckedConsumer<Serializable, JMSException> jobSender;
 	private CheckedRunnable<JMSException> completionSender;
 	int jobsSentToWorkers;
@@ -110,12 +111,13 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	
 	@Override
 	public final void prepareWorkers(Serializable configuration) throws EolRuntimeException {
-		EvlContextJmsMaster evlContext = getContext();
+		final EvlContextJmsMaster evlContext = getContext();
 		
 		connectionFactory = ConnectionFactoryProvider.getDefault(evlContext.getBrokerHost());
-		try (JMSContext regContext = connectionFactory.createContext()) {
-			log("Connected to "+evlContext.getBrokerHost()+" session "+evlContext.getSessionId());
-			
+		regContext = connectionFactory.createContext();
+		log("Connected to "+evlContext.getBrokerHost()+" session "+evlContext.getSessionId());
+		
+		try {
 			// Initial registration of workers
 			final Destination tempDest = regContext.createTemporaryQueue();
 			final JMSProducer regProducer = regContext.createProducer();
@@ -205,7 +207,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	protected final void executeWorkerJobs(Collection<? extends Serializable> jobs) throws EolRuntimeException {
 		beforeSend();
 		
-		try (JMSContext resultContext = connectionFactory.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {
+		try (JMSContext resultContext = regContext.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {
 			final AtomicInteger workersFinished = new AtomicInteger();
 			
 			resultContext.createConsumer(createResultsQueue(resultContext))
@@ -356,7 +358,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	 * @throws JMSException
 	 */
 	protected final void signalCompletion() throws JMSException {
-		completionSender.runThrows();
+		completionSender.prepareDistribution();
 	}
 
 	/**
@@ -580,6 +582,9 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	 * @throws Exception
 	 */
 	protected void teardown() throws Exception {
+		if (regContext != null) {
+			regContext.close();
+		}
 		if (connectionFactory instanceof AutoCloseable) {
 			((AutoCloseable) connectionFactory).close();
 		}

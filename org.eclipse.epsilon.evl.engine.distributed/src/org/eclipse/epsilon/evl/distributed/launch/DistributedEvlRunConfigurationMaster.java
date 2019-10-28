@@ -164,11 +164,12 @@ public abstract class DistributedEvlRunConfigurationMaster extends DistributedEv
 	@Override
 	public void preExecute() throws Exception {
 		super.preExecute();
-		CheckedRunnable<?> loadModels = this::loadModels, pw = this::prepareWorkers;
+		CheckedRunnable<?> loadModels = this::loadModels, pw = this::prepareDistribution;
 		ConcurrencyUtils.executeAsync(loadModels, pw);
 	}
 	
-	protected void prepareWorkers() throws Exception {
+	protected void prepareDistribution() throws Exception {
+		getModule().prepareExecution();
 		if (getModule().getContext().getDistributedParallelism() == 0) return;
 		if (profileExecution) {
 			profileExecutionStage(profiledStages, "Sending configuration to workers",

@@ -19,6 +19,7 @@ import org.eclipse.epsilon.eol.function.CheckedEolRunnable;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.execute.data.*;
 import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
+import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
 
 /**
  * Base implementation of EVL with distributed execution semantics.
@@ -52,6 +53,14 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 	}
 	
 	/**
+	 * Executes the pre block
+	 */
+	@Override
+	public void prepareExecution() throws EolRuntimeException {
+		super.prepareExecution();
+	}
+	
+	/**
 	 * This method is called before {@link #execute()} so that workers can have the
 	 * configuration pre-loaded and ready to go without having to wait for the master.
 	 * 
@@ -66,6 +75,16 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 	 * @throws EolRuntimeException
 	 */
 	protected abstract void executeWorkerJobs(Collection<? extends Serializable> jobs) throws EolRuntimeException;
+	
+	/**
+	 * Does not execute pre block.
+	 */
+	@Override
+	public Collection<UnsatisfiedConstraint> executeImpl() throws EolRuntimeException {
+		Collection<UnsatisfiedConstraint> results = processRules();
+		postExecution();
+		return results;
+	}
 	
 	@Override
 	protected final void checkConstraints() throws EolRuntimeException {
