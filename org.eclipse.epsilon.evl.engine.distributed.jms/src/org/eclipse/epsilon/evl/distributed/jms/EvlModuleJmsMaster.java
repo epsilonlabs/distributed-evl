@@ -162,7 +162,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 			regContext.createConsumer(tempDest).setMessageListener(response -> {
 				try {
 					int currentWorkers = slaveWorkers.size();
-					if (currentWorkers >= expectedSlaves && refuseAdditionalWorkersConfirm(currentWorkers)) {
+					if (currentWorkers > expectedSlaves && refuseAdditionalWorkersConfirm(currentWorkers)) {
 						String logMsg = "Ignoring additional worker confirmation";
 						try {
 							log(logMsg+" "+response.getJMSMessageID());
