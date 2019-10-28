@@ -359,7 +359,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	 * @throws JMSException
 	 */
 	protected final void signalCompletion() throws JMSException {
-		completionSender.prepareDistribution();
+		completionSender.runThrows();
 	}
 
 	/**
