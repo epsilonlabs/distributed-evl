@@ -125,45 +125,13 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 			final AtomicInteger registeredWorkers = new AtomicInteger();
 			
 			log("Awaiting workers");
-			// Triggered when a worker announces itself to the registration queue
-			regContext.createConsumer(createRegistrationQueue(regContext)).setMessageListener(msg -> {
-				// For security / load purposes, stop additional workers from being picked up.
-				int currentWorkers = registeredWorkers.get();
-				if (refuseAdditionalWorkersRegistration(currentWorkers) && currentWorkers >= expectedSlaves) {
-					String logMsg = "Ignoring additional worker registration";
-					try {
-						log(logMsg+" "+msg.getJMSMessageID());
-					}
-					catch (JMSException jmx) {
-						log(logMsg);
-					}
-					return;
-				}
-				try {
-					// Assign worker ID
-					currentWorkers = registeredWorkers.incrementAndGet();
-					String workerID = createWorker(currentWorkers, msg);
-					slaveWorkers.put(workerID, Collections.emptyMap());
-					log("Worker "+workerID+" connected");
-					// Tell the worker what their ID is along with the configuration parameters
-					Message configMsg = regContext.createObjectMessage(configuration);
-					configMsg.setJMSReplyTo(tempDest);
-					configMsg.setStringProperty(WORKER_ID_PROPERTY, workerID);
-					configMsg.setIntProperty(CONFIG_HASH_PROPERTY, configHash);
-					regProducer.send(msg.getJMSReplyTo(), configMsg);
-				}
-				catch (NumberFormatException | JMSException ex) {
-					log("Worker registration failed - discarding this worker. Reason: "+ex.getMessage());
-					ex.printStackTrace();
-				}
-			});
 			
 			// Triggered when a worker has completed loading the configuration
 			regContext.createConsumer(tempDest).setMessageListener(response -> {
 				try {
 					int currentWorkers = slaveWorkers.size();
-					if (currentWorkers > expectedSlaves && refuseAdditionalWorkersConfirm(currentWorkers)) {
-						String logMsg = "Ignoring additional worker confirmation";
+					if (refuseWorkerConfirmation(currentWorkers)) {
+						String logMsg = "Ignoring worker confirmation";
 						try {
 							log(logMsg+" "+response.getJMSMessageID());
 						}
@@ -196,6 +164,39 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 				}
 				catch (JMSException jmx) {
 					throw new JMSRuntimeException("Did not receive "+CONFIG_HASH_PROPERTY+": "+jmx.getMessage());
+				}
+			});
+			
+			// Triggered when a worker announces itself to the registration queue
+			regContext.createConsumer(createRegistrationQueue(regContext)).setMessageListener(msg -> {
+				// For security / load purposes, stop additional workers from being picked up.
+				int currentWorkers = registeredWorkers.get();
+				if (refuseWorkerRegistration(currentWorkers)) {
+					String logMsg = "Ignoring worker registration";
+					try {
+						log(logMsg+" "+msg.getJMSMessageID());
+					}
+					catch (JMSException jmx) {
+						log(logMsg);
+					}
+					return;
+				}
+				try {
+					// Assign worker ID
+					currentWorkers = registeredWorkers.incrementAndGet();
+					String workerID = createWorker(currentWorkers, msg);
+					slaveWorkers.put(workerID, Collections.emptyMap());
+					log("Worker "+workerID+" connected");
+					// Tell the worker what their ID is along with the configuration parameters
+					Message configMsg = regContext.createObjectMessage(configuration);
+					configMsg.setJMSReplyTo(tempDest);
+					configMsg.setStringProperty(WORKER_ID_PROPERTY, workerID);
+					configMsg.setIntProperty(CONFIG_HASH_PROPERTY, configHash);
+					regProducer.send(msg.getJMSReplyTo(), configMsg);
+				}
+				catch (NumberFormatException | JMSException ex) {
+					log("Worker registration failed - discarding this worker. Reason: "+ex.getMessage());
+					ex.printStackTrace();
 				}
 			});
 		}
@@ -246,19 +247,18 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	 * @param workersRegistered The current number of registered workers.
 	 * @return <code>true</code> to prevent additional worker registrations.
 	 */
-	protected boolean refuseAdditionalWorkersRegistration(int workersRegistered) {
-		return true;
+	protected boolean refuseWorkerRegistration(int workersRegistered) {
+		return workersRegistered >= expectedSlaves;
 	}
 	
 	/**
-	 * Whether to ignore responses from additional workers after they have signalled
-	 * that they are ready to begin processing.
+	 * Whether to ignore responses from a worker after it has signalled that it's ready to begin processing.
 	 * 
 	 * @param workersReady The current number of workers which are ready to receive and process jobs.
-	 * @return <code>true</code> to ignore additional workers for job processing.
+	 * @return <code>true</code> to ignore the worker for job processing.
 	 */
-	protected boolean refuseAdditionalWorkersConfirm(int workersReady) {
-		return true;
+	protected boolean refuseWorkerConfirmation(int workersReady) {
+		return workersReady > expectedSlaves;
 	}
 
 	/**
