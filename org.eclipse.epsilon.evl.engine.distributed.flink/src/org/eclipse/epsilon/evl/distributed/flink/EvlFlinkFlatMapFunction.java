@@ -21,8 +21,7 @@ import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfiguration
 
 /**
  * Performs one-time setup on slave nodes. This mainly involves parsing the script,
- * loading models and putting variables into the FrameStack. Also takes care of
- * calling {@link EvlModuleDistributed#executeJob(Object)} and sending the results.
+ * loading models and putting variables into the FrameStack.
  * 
  * @author Sina Madani
  * @since 1.6
