@@ -10,8 +10,10 @@
 package org.eclipse.epsilon.evl.distributed.jms.execute.context;
 
 import java.net.URI;
+import javax.jms.ConnectionFactory;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.jms.EvlModuleJmsMaster;
+import org.eclipse.epsilon.evl.distributed.jms.internal.ConnectionFactoryProvider;
 import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
 
 /**
@@ -23,6 +25,7 @@ public class EvlContextJmsMaster extends EvlContextDistributedMaster {
 
 	protected final int sessionID;
 	protected final String brokerHost;
+	protected ConnectionFactory connectionFactory;
 
 	public EvlContextJmsMaster(int localParallelism, int expectedWorkers, JobSplitter splitter, String brokerHost, int sessionID) {
 		super(localParallelism, expectedWorkers, splitter);
@@ -36,6 +39,26 @@ public class EvlContextJmsMaster extends EvlContextDistributedMaster {
 	
 	public int getSessionId() {
 		return this.sessionID;
+	}
+	
+	public synchronized ConnectionFactory getConnectionFactory() {
+		if (connectionFactory == null) {
+			connectionFactory = ConnectionFactoryProvider.getDefault(getBrokerHost());
+		}
+		return connectionFactory;
+	}
+	
+	@Override
+	public synchronized void dispose() {
+		super.dispose();
+		if (connectionFactory instanceof AutoCloseable) {
+			try {
+				((AutoCloseable) connectionFactory).close();
+			}
+			catch (Exception ex) {
+				throw new RuntimeException(ex);
+			}
+		}
 	}
 	
 	@Override

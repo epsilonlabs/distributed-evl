@@ -36,12 +36,14 @@ public class JmsEvlRunConfigurationMaster extends DistributedEvlRunConfiguration
 			super(runConfigClass);
 		}
 	}
-	
-	public JmsEvlRunConfigurationMaster(DistributedEvlRunConfigurationMaster other) {
-		super(other);
-	}
 
 	public JmsEvlRunConfigurationMaster(Builder<? extends DistributedEvlRunConfiguration, ?> builder) {
 		super(builder);
+		getModule().setLogger(this::writeOut);
+	}
+	
+	@Override
+	public EvlModuleJmsMaster getModule() {
+		return (EvlModuleJmsMaster) super.getModule();
 	}
 }

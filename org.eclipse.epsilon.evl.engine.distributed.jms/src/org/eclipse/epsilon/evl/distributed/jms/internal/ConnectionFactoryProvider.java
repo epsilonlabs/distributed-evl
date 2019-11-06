@@ -7,7 +7,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0
 **********************************************************************/
-package org.eclipse.epsilon.evl.distributed.jms;
+package org.eclipse.epsilon.evl.distributed.jms.internal;
 
 /**
  * For managing dependency on the JMS implementation.
@@ -16,7 +16,7 @@ package org.eclipse.epsilon.evl.distributed.jms;
  * @author Sina Madani
  * @since 1.6
  */
-interface ConnectionFactoryProvider {
+public interface ConnectionFactoryProvider {
 	static javax.jms.ConnectionFactory getDefault(String host) {
 		return new org.apache.activemq.artemis.jms.client.ActiveMQJMSConnectionFactory(host);
 	}

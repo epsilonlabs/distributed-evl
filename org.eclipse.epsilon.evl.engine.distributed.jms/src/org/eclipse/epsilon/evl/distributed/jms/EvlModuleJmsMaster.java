@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.jms.*;
 import org.eclipse.epsilon.common.function.CheckedConsumer;
@@ -88,18 +89,22 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	protected final int expectedSlaves;
 	protected final Map<String, Map<String, Duration>> slaveWorkers;
 	protected final Collection<Serializable> responses = new java.util.HashSet<>();
-	ConnectionFactory connectionFactory;
-	JMSContext regContext;
+	JMSContext connectionContext;
 	private CheckedConsumer<Serializable, JMSException> jobSender;
 	private CheckedRunnable<JMSException> completionSender;
 	int jobsSentToWorkers;
 	volatile int jobsProcessedByWorkers;
+	Consumer<String> logger = System.out::println;
 	
 	public EvlModuleJmsMaster(EvlContextJmsMaster context) {
 		super(context);
 		slaveWorkers = new java.util./*Hashtable*/concurrent.ConcurrentHashMap<>(
 			this.expectedSlaves = getContext().getDistributedParallelism()
 		);
+	}
+	
+	public void setLogger(Consumer<String> logger) {
+		if (logger != null) this.logger = logger;
 	}
 	
 	@Override
@@ -113,11 +118,10 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	public final void prepareWorkers(Serializable configuration) throws EolRuntimeException {
 		final EvlContextJmsMaster evlContext = getContext();
 		
-		connectionFactory = ConnectionFactoryProvider.getDefault(evlContext.getBrokerHost());
-		regContext = connectionFactory.createContext();
+		connectionContext = evlContext.getConnectionFactory().createContext(JMSContext.AUTO_ACKNOWLEDGE);
 		log("Connected to "+evlContext.getBrokerHost()+" session "+evlContext.getSessionId());
 		
-		try {
+		try (JMSContext regContext = connectionContext.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {
 			// Initial registration of workers
 			final Destination tempDest = regContext.createTemporaryQueue();
 			final JMSProducer regProducer = regContext.createProducer();
@@ -146,6 +150,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 						throw new JMSRuntimeException("Could not find worker with id "+worker);
 					}
 					
+					response.acknowledge();
 					final int receivedHash = response.getIntProperty(CONFIG_HASH_PROPERTY);
 					if (receivedHash != configHash) {
 						log(
@@ -199,6 +204,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 					ex.printStackTrace();
 				}
 			});
+			beforeSend();
 		}
 		catch (Exception ex) {
 			handleException(ex);
@@ -207,9 +213,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	
 	@Override
 	protected final void executeWorkerJobs(Collection<? extends Serializable> jobs) throws EolRuntimeException {
-		beforeSend();
-		
-		try (JMSContext resultContext = regContext.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {
+		try (JMSContext resultContext = connectionContext.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {
 			final AtomicInteger workersFinished = new AtomicInteger();
 			
 			resultContext.createConsumer(createResultsQueue(resultContext))
@@ -369,7 +373,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	 * @throws JMSException
 	 */
 	protected void stopAllWorkers(Exception exception) throws JMSRuntimeException {
-		try (JMSContext session = connectionFactory.createContext()) {
+		try (JMSContext session = connectionContext.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {
 			session.createProducer().send(
 				createShortCircuitTopic(session),
 				exception.getMessage()
@@ -569,26 +573,13 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 		}
 		
 		super.postExecution();
-		try {	
-			teardown();
+		try {
+			if (connectionContext != null) {
+				connectionContext.close();
+			}
 		}
 		catch (Exception ex) {
 			throw ex instanceof EolRuntimeException ? (EolRuntimeException) ex : new EolRuntimeException(ex);
-		}
-	}
-	
-	/**
-	 * Cleanup method used to free resources once execution has completed.
-	 * 
-	 * @throws Exception
-	 */
-	protected void teardown() throws Exception {
-		if (regContext != null) {
-			regContext.close();
-			regContext = null;
-		}
-		if (connectionFactory instanceof AutoCloseable) {
-			((AutoCloseable) connectionFactory).close();
 		}
 	}
 	
@@ -598,7 +589,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	 * @param message The message to output.
 	 */
 	protected void log(Object message) {
-		System.out.println("[MASTER] "+LocalTime.now()+" "+message);
+		logger.accept("[MASTER] "+LocalTime.now()+" "+message);
 	}
 	
 	@Override

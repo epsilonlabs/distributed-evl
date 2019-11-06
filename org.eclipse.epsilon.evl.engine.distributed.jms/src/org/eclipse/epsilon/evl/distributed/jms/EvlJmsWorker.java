@@ -16,11 +16,13 @@ import java.net.URISyntaxException;
 import java.time.LocalTime;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.jms.*;
 import org.eclipse.epsilon.common.function.CheckedRunnable;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedSlave;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedSlave;
+import org.eclipse.epsilon.evl.distributed.jms.internal.ConnectionFactoryProvider;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfigurationSlave;
 
 /**
@@ -68,6 +70,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 	Serializable stopBody;
 	volatile boolean finished;
 	int jobsProcessed = 0;
+	Consumer<String> logger = System.out::println;
 	
 	
 	public EvlJmsWorker(String host, String basePath, int sessionID) {
@@ -96,6 +99,12 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 						});
 					
 						endContext.createConsumer(endContext.createTopic(END_JOBS_TOPIC+sessionID)).setMessageListener(msg -> {
+							try {
+								msg.acknowledge();
+							}
+							catch (JMSException ex) {
+								ex.printStackTrace();
+							}
 							log("Acknowledged end of jobs");
 							finished = true;
 						});
@@ -138,6 +147,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 			@SuppressWarnings("unchecked")
 			Map<String, ? extends Serializable> configMap = configMsg.getBody(Map.class);
 			configContainer = DistributedEvlRunConfigurationSlave.parseJobParameters(configMap, basePath);
+			logger = configContainer::writeOut;
 			configContainer.preExecute();
 
 			// This is to acknowledge when we have completed loading the script(s) and model(s) successfully
@@ -215,9 +225,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 		finishedMsg.setStringProperty(WORKER_ID_PROPERTY, workerID);
 		finishedMsg.setBooleanProperty(LAST_MESSAGE_PROPERTY, true);
 		finishedMsg.setIntProperty(NUM_JOBS_PROCESSED_PROPERTY, jobsProcessed);
-		finishedMsg.setObject(stopBody instanceof Serializable ? stopBody :
-			context.getSerializableRuleExecutionTimes()
-		);
+		finishedMsg.setObject(stopBody != null ? stopBody : context.getSerializableRuleExecutionTimes());
 		session.createProducer().send(session.createQueue(RESULTS_QUEUE_NAME+sessionID), finishedMsg);
 		
 		log("Signalled completion (processed "+jobsProcessed+" jobs)");
@@ -228,7 +236,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 	}
 
 	void log(Object message) {
-		System.out.println("["+workerID+"] "+LocalTime.now()+" "+message);
+		logger.accept("["+workerID+"] "+LocalTime.now()+" "+message);
 	}
 	
 	@Override
