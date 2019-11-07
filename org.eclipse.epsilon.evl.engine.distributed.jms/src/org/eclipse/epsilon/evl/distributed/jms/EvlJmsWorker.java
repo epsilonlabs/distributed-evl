@@ -15,10 +15,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalTime;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Consumer;
 import javax.jms.*;
 import org.eclipse.epsilon.common.function.CheckedRunnable;
+import org.eclipse.epsilon.common.util.StringUtil;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedSlave;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedSlave;
@@ -65,12 +65,12 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 	final ConnectionFactory connectionFactory;
 	final String basePath;
 	final int sessionID;
-	String workerID;
 	DistributedEvlRunConfigurationSlave configContainer;
 	Serializable stopBody;
 	volatile boolean finished;
 	int jobsProcessed = 0;
 	Consumer<String> logger = System.out::println;
+	String toStringCached;
 	
 	
 	public EvlJmsWorker(String host, String basePath, int sessionID) {
@@ -140,9 +140,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 		Runnable ackSender = () -> regProducer.send(configAckDest, configuredAckMsg);
 		
 		try {
-			this.workerID = configMsg.getStringProperty(WORKER_ID_PROPERTY);
-			log("Configuration and ID received");
-			configuredAckMsg.setStringProperty(WORKER_ID_PROPERTY, workerID);
+			log("Configuration received");
 			
 			@SuppressWarnings("unchecked")
 			Map<String, ? extends Serializable> configMap = configMsg.getBody(Map.class);
@@ -192,7 +190,6 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 					}
 					
 					if (resultsMsg != null) {
-						resultsMsg.setStringProperty(WORKER_ID_PROPERTY, workerID);
 						resultSender.send(resultDest, resultsMsg);
 					}
 				}
@@ -222,7 +219,6 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 		context.endParallelTask();
 		
 		ObjectMessage finishedMsg = session.createObjectMessage();
-		finishedMsg.setStringProperty(WORKER_ID_PROPERTY, workerID);
 		finishedMsg.setBooleanProperty(LAST_MESSAGE_PROPERTY, true);
 		finishedMsg.setIntProperty(NUM_JOBS_PROCESSED_PROPERTY, jobsProcessed);
 		finishedMsg.setObject(stopBody != null ? stopBody : context.getSerializableRuleExecutionTimes());
@@ -236,7 +232,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 	}
 
 	void log(Object message) {
-		logger.accept("["+workerID+"] "+LocalTime.now()+" "+message);
+		logger.accept("["+this.toString()+"] "+LocalTime.now()+" "+message);
 	}
 	
 	@Override
@@ -247,22 +243,10 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 	}
 	
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) return true;
-		if (!(obj instanceof EvlJmsWorker)) return false;
-		EvlJmsWorker other = (EvlJmsWorker) obj;
-		return
-			Objects.equals(this.workerID, other.workerID) &&
-			Objects.equals(this.sessionID, other.sessionID);
-	}
-	
-	@Override
-	public int hashCode() {
-		return Objects.hash(workerID, sessionID);
-	}
-	
-	@Override
 	public String toString() {
-		return getClass().getName()+"-"+workerID+" (session "+sessionID+")";
+		if (StringUtil.isEmpty(toStringCached)) {
+			toStringCached = getClass().getSimpleName()+"-"+hashCode()+" (session "+sessionID+")";
+		}
+		return toStringCached;
 	}
 }

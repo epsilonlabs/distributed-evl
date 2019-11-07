@@ -13,14 +13,11 @@ import java.io.Serializable;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.jms.*;
-import org.eclipse.epsilon.common.function.CheckedConsumer;
-import org.eclipse.epsilon.common.function.CheckedRunnable;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.eol.execute.control.ExecutionController;
 import org.eclipse.epsilon.eol.execute.control.ExecutionProfiler;
@@ -80,27 +77,18 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 		STOP_TOPIC = "shortcircuit",
 		REGISTRATION_QUEUE = "registration",
 		RESULTS_QUEUE_NAME = "results",
-		WORKER_ID_PREFIX = "EVL_jms",
 		LAST_MESSAGE_PROPERTY = "lastMsg",
 		NUM_JOBS_PROCESSED_PROPERTY = "jobsProcessed",
-		WORKER_ID_PROPERTY = "workerID",
 		CONFIG_HASH_PROPERTY = "configChecksum";
 	
-	protected final int expectedSlaves;
-	protected final Map<String, Map<String, Duration>> slaveWorkers;
 	protected final Collection<Serializable> responses = new java.util.HashSet<>();
 	JMSContext connectionContext;
-	private CheckedConsumer<Serializable, JMSException> jobSender;
-	private CheckedRunnable<JMSException> completionSender;
-	int jobsSentToWorkers;
-	volatile int jobsProcessedByWorkers;
+	volatile int jobsProcessedByWorkers, jobsSentToWorkers;
 	Consumer<String> logger = System.out::println;
+	private final Object criticalConditionObj = this;
 	
 	public EvlModuleJmsMaster(EvlContextJmsMaster context) {
 		super(context);
-		slaveWorkers = new java.util./*Hashtable*/concurrent.ConcurrentHashMap<>(
-			this.expectedSlaves = getContext().getDistributedParallelism()
-		);
 	}
 	
 	public void setLogger(Consumer<String> logger) {
@@ -117,55 +105,35 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	@Override
 	public final void prepareWorkers(Serializable configuration) throws EolRuntimeException {
 		final EvlContextJmsMaster evlContext = getContext();
+		final int sessionId = evlContext.getSessionId();
 		
 		connectionContext = evlContext.getConnectionFactory().createContext(JMSContext.AUTO_ACKNOWLEDGE);
-		log("Connected to "+evlContext.getBrokerHost()+" session "+evlContext.getSessionId());
+		log("Connected to "+evlContext.getBrokerHost()+" session "+sessionId);
 		
 		try (JMSContext regContext = connectionContext.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {
 			// Initial registration of workers
 			final Destination tempDest = regContext.createTemporaryQueue();
 			final JMSProducer regProducer = regContext.createProducer();
 			final int configHash = configuration.hashCode();
-			final AtomicInteger registeredWorkers = new AtomicInteger();
-			
-			log("Awaiting workers");
+			final AtomicInteger workersReady = new AtomicInteger();
 			
 			// Triggered when a worker has completed loading the configuration
 			regContext.createConsumer(tempDest).setMessageListener(response -> {
 				try {
-					int currentWorkers = slaveWorkers.size();
-					if (currentWorkers > expectedSlaves) {
-						String logMsg = "Ignoring worker confirmation";
-						try {
-							log(logMsg+" "+response.getJMSMessageID());
-						}
-						catch (JMSException jmx) {
-							log(logMsg);
-						}
-						return;
-					}
-					
-					String worker = response.getStringProperty(WORKER_ID_PROPERTY);
-					if (!slaveWorkers.containsKey(worker)) {
-						throw new JMSRuntimeException("Could not find worker with id "+worker);
-					}
-					
 					response.acknowledge();
 					final int receivedHash = response.getIntProperty(CONFIG_HASH_PROPERTY);
 					if (receivedHash != configHash) {
 						log(
-							"Received invalid configuration checksum! Expected "+receivedHash+" but got "+configHash
-							+ ". Discarding this worker."
+							"Received invalid configuration checksum! Expected "+receivedHash+" but got "
+							+ configHash + ". Discarding this worker."
 						);
-						return;
 					}
-					if (confirmWorker(response, currentWorkers)) {
-						log(worker + " ready");
-						if (slaveWorkers.size() >= expectedSlaves) synchronized (slaveWorkers) {
-							slaveWorkers.notify();
+					else {
+						workersReady.incrementAndGet();
+						synchronized (workersReady) {
+							workersReady.notify();
 						}
 					}
-					else return;
 				}
 				catch (JMSException jmx) {
 					throw new JMSRuntimeException("Did not receive "+CONFIG_HASH_PROPERTY+": "+jmx.getMessage());
@@ -173,29 +141,10 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 			});
 			
 			// Triggered when a worker announces itself to the registration queue
-			regContext.createConsumer(createRegistrationQueue(regContext)).setMessageListener(msg -> {
-				// For security / load purposes, stop additional workers from being picked up.
-				int currentWorkers = registeredWorkers.get();
-				if (currentWorkers >= expectedSlaves) {
-					String logMsg = "Ignoring worker registration";
-					try {
-						log(logMsg+" "+msg.getJMSMessageID());
-					}
-					catch (JMSException jmx) {
-						log(logMsg);
-					}
-					return;
-				}
+			regContext.createConsumer(regContext.createQueue(REGISTRATION_QUEUE + sessionId)).setMessageListener(msg -> {
 				try {
-					// Assign worker ID
-					currentWorkers = registeredWorkers.incrementAndGet();
-					String workerID = createWorker(currentWorkers, msg);
-					slaveWorkers.put(workerID, Collections.emptyMap());
-					log("Worker "+workerID+" connected");
-					// Tell the worker what their ID is along with the configuration parameters
 					Message configMsg = regContext.createObjectMessage(configuration);
 					configMsg.setJMSReplyTo(tempDest);
-					configMsg.setStringProperty(WORKER_ID_PROPERTY, workerID);
 					configMsg.setIntProperty(CONFIG_HASH_PROPERTY, configHash);
 					regProducer.send(msg.getJMSReplyTo(), configMsg);
 				}
@@ -205,15 +154,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 				}
 			});
 			
-			while (slaveWorkers.size() < expectedSlaves) synchronized (slaveWorkers) {
-				try {
-					slaveWorkers.wait();
-				}
-				catch (InterruptedException ie) {}
-			}
-			log("All "+slaveWorkers.size()+" workers ready");
-			
-			beforeSend(regContext);
+			beforeSend(regContext, workersReady);
 		}
 		catch (Exception ex) {
 			handleException(ex);
@@ -223,35 +164,52 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	@Override
 	protected final void executeWorkerJobs(Collection<? extends Serializable> jobs) throws EolRuntimeException {
 		try (JMSContext resultContext = connectionContext.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {
-			final AtomicInteger workersFinished = new AtomicInteger();
 			
-			resultContext.createConsumer(createResultsQueue(resultContext))
-				.setMessageListener(getResultsMessageListener(workersFinished));
+			resultContext.createConsumer(resultContext.createQueue(RESULTS_QUEUE_NAME + getContext().getSessionId()))
+				.setMessageListener(getResultsMessageListener());
 			
 			try (JMSContext jobContext = resultContext.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {		
 				final JMSProducer jobsProducer = jobContext.createProducer().setAsync(null);
-				final Queue jobsQueue = createJobQueue(jobContext);
-				jobSender = obj -> jobsProducer.send(jobsQueue, obj);
-				final Topic completionTopic = createEndOfJobsTopic(jobContext);
-				completionSender = () -> jobsProducer.send(completionTopic, jobContext.createMessage());
-				sendAllJobs(jobs);
-			}
-			
-			log("Awaiting workers to signal completion...");
-			while (workersFinished.get() < expectedSlaves) synchronized (workersFinished) {
-				try {
-					workersFinished.wait();
+				final Queue jobsQueue = jobContext.createQueue(JOBS_QUEUE + getContext().getSessionId());
+				final Topic completionTopic = jobContext.createTopic(END_JOBS_TOPIC + getContext().getSessionId());
+				
+				for (Serializable job : jobs) {
+					jobsProducer.send(jobsQueue, job);
 				}
-				catch (InterruptedException ie) {}
+				jobsSentToWorkers += jobs.size();
+				// Signal completion
+				jobsProducer.send(completionTopic, jobContext.createMessage());
+				
+				log("Sent "+jobsSentToWorkers+" jobs to workers");
 			}
-			log("All workers finished ("+jobsProcessedByWorkers+" processed jobs)");
 			
+			waitForWorkersToFinishJobs();
 			processResponses(responses);
 			responses.clear();
 		}
 		catch (Exception ex) {
 			handleException(ex);
 		}
+	}
+	
+	private final void waitForWorkersToFinishJobs() {
+		log("Awaiting workers to signal completion...");
+		while (!getCriticalCondition()) synchronized (criticalConditionObj) {
+			try {
+				criticalConditionObj.wait();
+			}
+			catch (InterruptedException ie) {}
+		}
+		log("All workers finished ("+jobsProcessedByWorkers+" processed jobs)");
+	}
+	
+	/**
+	 * The criteria used to determine when workers have finished.
+	 * 
+	 * @return <code>true</code> if distributed processing is complete.
+	 */
+	private final boolean getCriticalCondition() {
+		return jobsProcessedByWorkers >= jobsSentToWorkers;
 	}
 	
 	protected void handleException(Exception ex) throws EolRuntimeException {
@@ -267,9 +225,16 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	 * for all workers to connect before proceeding.
 	 * 
 	 * @param regContext The JMS Session used during registration.
+	 * @param workersReady Integer object indicating the number of workers that have
+	 * successfully loaded the configuration and are ready to process jobs. The object's
+	 * lock can be used to wait on some critical value to be reached.
 	 */
-	protected void beforeSend(JMSContext regContext) {
-		
+	protected void beforeSend(JMSContext regContext, AtomicInteger workersReady) throws Exception {
+		log("Waiting for workers to load configuration...");
+		// Need to make sure someone is listening otherwise messages might be lost
+		while (workersReady.get() < getContext().getDistributedParallelism()) synchronized (workersReady) {
+			workersReady.wait();
+		}
 	}
 	
 	/**
@@ -287,77 +252,6 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 			getContext().executeJob(responseJobs);
 		}
 	}
-	
-	/**
-	 * 
-	 * @param regContext The context to use for creating the Destination.
-	 * @return The Destination used to listen for participating workers.
-	 * @throws JMSException
-	 */
-	protected Queue createRegistrationQueue(JMSContext regContext) throws JMSException {
-		return regContext.createQueue(REGISTRATION_QUEUE + getContext().getSessionId());
-	}
-	
-	/**
-	 * 
-	 * @param session The context to use for creating the Destination.
-	 * @return The Destination used to listen for results in {@link #getResultsMessageListener(AtomicInteger)}.
-	 * @throws JMSException
-	 */
-	protected Queue createResultsQueue(JMSContext session) throws JMSException {
-		return session.createQueue(RESULTS_QUEUE_NAME + getContext().getSessionId());
-	}
-	
-	/**
-	 * 
-	 * @param session The inner-most JMSContext  from {@linkplain #checkConstraints()}.
-	 * @return The Destination used to signal completion to workers when
-	 * {@linkplain #signalCompletion()} is called.
-	 * @throws JMSException
-	 */
-	protected Topic createEndOfJobsTopic(JMSContext session) throws JMSException {
-		return session.createTopic(END_JOBS_TOPIC + getContext().getSessionId());
-	}
-	
-	/**
-	 * 
-	 * @param session The inner-most JMSContext  from {@linkplain #checkConstraints()}.
-	 * @return The Destination for sending jobs to when {@link #sendJob(Serializable)} is called.
-	 * @throws JMSException
-	 */
-	protected Queue createJobQueue(JMSContext session) throws JMSException {
-		return session.createQueue(JOBS_QUEUE + getContext().getSessionId());
-	}
-	
-	/**
-	 * 
-	 * @param session
-	 * @return The Destination for broadcasting that all workers should stop.
-	 * @throws JMSException
-	 */
-	protected Topic createShortCircuitTopic(JMSContext session) throws JMSException {
-		return session.createTopic(STOP_TOPIC + getContext().getSessionId());
-	}
-	
-	/**
-	 * Sends the job to the job queue. This is a blocking call.
-	 * 
-	 * @param msgBody The workload (job)
-	 * @throws JMSException
-	 */
-	protected final void sendJob(Serializable msgBody) throws JMSException {
-		jobSender.acceptThrows(msgBody);
-		++jobsSentToWorkers;
-	}
-	
-	/**
-	 * Broadcasts end of jobs to all workers.
-	 * 
-	 * @throws JMSException
-	 */
-	protected final void signalCompletion() throws JMSException {
-		completionSender.runThrows();
-	}
 
 	/**
 	 * Broadcasts to all workers to stop executing.
@@ -368,13 +262,8 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	protected void stopAllWorkers(Exception exception) throws JMSRuntimeException {
 		try (JMSContext session = connectionContext.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {
 			session.createProducer().send(
-				createShortCircuitTopic(session),
+				session.createTopic(STOP_TOPIC + getContext().getSessionId()),
 				exception.getMessage()
-			);
-		}
-		catch (JMSException jmx) {
-			throw new JMSRuntimeException(
-				"Couldn't stop workers! "+jmx.getMessage()
 			);
 		}
 	}
@@ -384,11 +273,10 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	 * signalling of terminal waiting condition once all workers have indicated all results have been
 	 * processed. Due to the complexity of the implementation, this method is non-overridable.
 	 * 
-	 * @param workersFinished Mutable number of workers which have signalled completion status.
 	 * @return A callback which can handle the semantics of results processing (i.e. deserialization and
 	 * assignment) as well as co-ordination (signalling of completion etc.)
 	 */
-	final MessageListener getResultsMessageListener(final AtomicInteger workersFinished) {
+	final MessageListener getResultsMessageListener() {
 		final AtomicInteger resultsInProgress = new AtomicInteger();
 		return msg -> {
 			try {
@@ -396,14 +284,9 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 				msg.acknowledge();
 				
 				if (msg.getBooleanProperty(LAST_MESSAGE_PROPERTY)) {
-					String workerID = msg.getStringProperty(WORKER_ID_PROPERTY);
-					if (!slaveWorkers.containsKey(workerID)) {
-						throw new java.lang.IllegalStateException("Could not find worker with ID "+workerID);
-					}
 					
-					workerCompleted(workerID, msg);
-					
-					if (workersFinished.incrementAndGet() >= expectedSlaves) {
+					workerCompleted(msg);
+					if (getCriticalCondition()) {
 						// Before signalling, we need to wait for all received results to be processed
 						while (resultsInProgress.get() > 1) synchronized (resultsInProgress) {
 							try {
@@ -411,15 +294,15 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 							}
 							catch (InterruptedException ie) {}
 						}
-						synchronized (workersFinished) {
-							workersFinished.notify();
+						synchronized (criticalConditionObj) {
+							criticalConditionObj.notify();
 						}
 					}
 				}
 				else if (msg instanceof ObjectMessage) {
 					Serializable contents = ((ObjectMessage)msg).getObject();
 					if (contents instanceof Exception) {
-						handleExceptionFromWorker((Exception) contents, msg.getStringProperty(WORKER_ID_PROPERTY));
+						handleExceptionFromWorker((Exception) contents);
 					}
 					if (!processResponse(contents)) synchronized (responses) {
 						responses.add(contents);
@@ -427,7 +310,6 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 				}
 			}
 			catch (JMSException jmx) {
-				
 				throw new JMSRuntimeException(jmx.getMessage());
 			}
 			catch (EolRuntimeException ex) {
@@ -435,12 +317,8 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 				throw new RuntimeException(ex);
 			}
 			finally {
-				if (resultsInProgress.decrementAndGet() <= 1 &&
-					workersFinished.get() >= expectedSlaves
-				) {
-					synchronized (resultsInProgress) {
-						resultsInProgress.notify();
-					}
+				if (resultsInProgress.decrementAndGet() <= 1 && getCriticalCondition()) synchronized (resultsInProgress) {
+					resultsInProgress.notify();
 				}
 			}
 		};
@@ -461,60 +339,36 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	}
 	
 	/**
-	 * Convenience method for bulk sending of jobs followed by a call to {@link #signalCompletion()}.
-	 * 
-	 * @param jobs The Serializable jobs to send.
-	 * @throws JMSException
-	 */
-	protected void sendAllJobs(Iterable<? extends Serializable> jobs) throws JMSException {
-		for (Serializable job : jobs) {
-			sendJob(job);
-		}
-		signalCompletion();
-		log("Sent "+jobsSentToWorkers+" jobs to workers");
-	}
-	
-	/**
-	 * Called when a worker has registered.
-	 * @param currentWorkers The number of currently registered workers.
-	 * @param outbox The channel used to contact this work.
-	 * @return The created worker.
-	 */
-	protected String createWorker(int currentWorkers, Message regMsg) {
-		return WORKER_ID_PREFIX + currentWorkers;
-	}
-
-	/**
 	 * Called when a worker has signalled its completion status. This method
 	 * can be used to perform additional tasks.
 	 * 
-	 * @param worker The worker that has finished.
 	 * @param msg The message received from the worker to signal this.
 	 */
 	@SuppressWarnings("unchecked")
-	protected void workerCompleted(String worker, Message msg) throws JMSException {
+	protected void workerCompleted(Message msg) throws JMSException {
 		int processed = msg.getIntProperty(NUM_JOBS_PROCESSED_PROPERTY);
 		jobsProcessedByWorkers += processed;
 		
 		if (msg instanceof ObjectMessage) {
 			Serializable body = ((ObjectMessage) msg).getObject();
 			if (body instanceof Map) {
-				slaveWorkers.put(worker, (Map<String, Duration>) body);
+				// Merge the workers' execution times with this one
+				ExecutionController controller = getContext().getExecutorFactory().getExecutionController();
+				if (controller instanceof ExecutionProfiler) {
+					((ExecutionProfiler) controller).mergeExecutionTimes(
+						((Map<String, Duration>) body).entrySet().stream()
+						.collect(Collectors.toMap(
+							e -> this.constraints.stream()
+								.filter(c -> c.getName().equals(e.getKey()))
+								.findAny().get(),
+							Map.Entry::getValue,
+							(t1, t2) -> t1.plus(t2)
+						))
+					);
+				}
 			}
 		}
-		log(worker + " finished (processed "+processed+" jobs)");
-	}
-	
-	/**
-	 * Additional code to be run when a worker has connected and is ready to start processing jobs.
-	 * 
-	 * @param response The message received from the worker.
-	 * @param workersReady The number of workers ready, excluding this one.
-	 * @return Whether registration was successful.
-	 * @throws JMSException
-	 */
-	protected boolean confirmWorker(final Message response, final int workersReady) throws JMSException {
-		return true;
+		log("Worker finished (processed "+processed+" jobs)");
 	}
 	
 	/**
@@ -523,29 +377,14 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	 * @param ex The received exception.
 	 * @param workerID The received {@link #WORKER_ID_PROPERTY}.
 	 */
-	protected void handleExceptionFromWorker(Exception ex, String workerID) {
+	protected void handleExceptionFromWorker(Exception ex) {
 		log("Received exception "+ex.getMessage());
 	}
 	
 	@Override
 	protected void postExecution() throws EolRuntimeException {
-		assert jobsProcessedByWorkers == jobsSentToWorkers : "All worker jobs processed";
-		// Merge the workers' execution times with this one
-		ExecutionController controller = getContext().getExecutorFactory().getExecutionController();
-		if (controller instanceof ExecutionProfiler) {
-			((ExecutionProfiler) controller).mergeExecutionTimes(
-				slaveWorkers.values().stream()
-					.flatMap(execTimes -> execTimes.entrySet().stream())
-					.collect(Collectors.toMap(
-						e -> this.constraints.stream()
-							.filter(c -> c.getName().equals(e.getKey()))
-							.findAny().get(),
-						Map.Entry::getValue,
-						(t1, t2) -> t1.plus(t2)
-					))
-			);
-		}
-		
+		assert getCriticalCondition() && jobsProcessedByWorkers == jobsSentToWorkers : "All worker jobs processed";
+
 		super.postExecution();
 		try {
 			if (connectionContext != null) {
