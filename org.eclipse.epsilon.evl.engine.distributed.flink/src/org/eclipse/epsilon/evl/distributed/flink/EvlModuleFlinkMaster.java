@@ -27,12 +27,12 @@ import org.eclipse.epsilon.evl.distributed.flink.execute.context.EvlContextFlink
  */
 public class EvlModuleFlinkMaster extends EvlModuleDistributedMaster {
 
-	private ExecutionEnvironment executionEnv = ExecutionEnvironment.getExecutionEnvironment();
+	private final ExecutionEnvironment executionEnv = ExecutionEnvironment.getExecutionEnvironment();
 
 	public EvlModuleFlinkMaster(EvlContextFlinkMaster context) {
 		super(context);
 	}
-		
+	
 	@Override
 	public void prepareWorkers(Serializable configuration) throws Exception {
 		EvlContextFlinkMaster context = getContext();

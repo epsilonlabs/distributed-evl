@@ -134,7 +134,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 			regContext.createConsumer(tempDest).setMessageListener(response -> {
 				try {
 					int currentWorkers = slaveWorkers.size();
-					if (refuseWorkerConfirmation(currentWorkers)) {
+					if (currentWorkers > expectedSlaves) {
 						String logMsg = "Ignoring worker confirmation";
 						try {
 							log(logMsg+" "+response.getJMSMessageID());
@@ -176,7 +176,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 			regContext.createConsumer(createRegistrationQueue(regContext)).setMessageListener(msg -> {
 				// For security / load purposes, stop additional workers from being picked up.
 				int currentWorkers = registeredWorkers.get();
-				if (refuseWorkerRegistration(currentWorkers)) {
+				if (currentWorkers >= expectedSlaves) {
 					String logMsg = "Ignoring worker registration";
 					try {
 						log(logMsg+" "+msg.getJMSMessageID());
@@ -204,7 +204,16 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 					ex.printStackTrace();
 				}
 			});
-			beforeSend();
+			
+			while (slaveWorkers.size() < expectedSlaves) synchronized (slaveWorkers) {
+				try {
+					slaveWorkers.wait();
+				}
+				catch (InterruptedException ie) {}
+			}
+			log("All "+slaveWorkers.size()+" workers ready");
+			
+			beforeSend(regContext);
 		}
 		catch (Exception ex) {
 			handleException(ex);
@@ -228,7 +237,15 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 				sendAllJobs(jobs);
 			}
 			
-			waitForWorkersToFinishJobs(workersFinished);
+			log("Awaiting workers to signal completion...");
+			while (workersFinished.get() < expectedSlaves) synchronized (workersFinished) {
+				try {
+					workersFinished.wait();
+				}
+				catch (InterruptedException ie) {}
+			}
+			log("All workers finished ("+jobsProcessedByWorkers+" processed jobs)");
+			
 			processResponses(responses);
 			responses.clear();
 		}
@@ -244,39 +261,15 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 		if (ex instanceof JMSException) throw new JMSRuntimeException(ex.getMessage());
 		else throw new EolRuntimeException(ex);
 	}
-	
-	/**
-	 * Whether to prevent additional workers from connecting.
-	 * 
-	 * @param workersRegistered The current number of registered workers.
-	 * @return <code>true</code> to prevent additional worker registrations.
-	 */
-	protected boolean refuseWorkerRegistration(int workersRegistered) {
-		return workersRegistered >= expectedSlaves;
-	}
-	
-	/**
-	 * Whether to ignore responses from a worker after it has signalled that it's ready to begin processing.
-	 * 
-	 * @param workersReady The current number of workers which are ready to receive and process jobs.
-	 * @return <code>true</code> to ignore the worker for job processing.
-	 */
-	protected boolean refuseWorkerConfirmation(int workersReady) {
-		return workersReady > expectedSlaves;
-	}
 
 	/**
 	 * Called before {@link #sendAllJobs(Iterable)}. Used to wait
 	 * for all workers to connect before proceeding.
+	 * 
+	 * @param regContext The JMS Session used during registration.
 	 */
-	protected void beforeSend() {
-		while (slaveWorkers.size() < expectedSlaves) synchronized (slaveWorkers) {
-			try {
-				slaveWorkers.wait();
-			}
-			catch (InterruptedException ie) {}
-		}
-		log("All "+slaveWorkers.size()+" workers ready");
+	protected void beforeSend(JMSContext regContext) {
+		
 	}
 	
 	/**
@@ -511,25 +504,6 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 		}
 		log(worker + " finished (processed "+processed+" jobs)");
 	}
-
-	/**
-	 * Waits for the critical condition <code>workersFinished.get() >= expectedSlaves</code>
-	 * to be signalled from the results processor as returned from {@linkplain #getResultsMessageListener()}.
-	 * 
-	 * @param workersFinished The number of workers that have signalled completion status. The value
-	 * should not be mutated by this method, and only used for synchronising on the condition.
-	 */
-	protected void waitForWorkersToFinishJobs(AtomicInteger workersFinished) {
-		log("Awaiting workers to signal completion...");
-		while (workersFinished.get() < expectedSlaves) synchronized (workersFinished) {
-			try {
-				workersFinished.wait();
-			}
-			catch (InterruptedException ie) {}
-		}
-		log("All workers finished ("+jobsProcessedByWorkers+" processed jobs)");
-	}
-
 	
 	/**
 	 * Additional code to be run when a worker has connected and is ready to start processing jobs.
