@@ -136,7 +136,8 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 					}
 				}
 				catch (JMSException jmx) {
-					throw new JMSRuntimeException("Did not receive "+CONFIG_HASH_PROPERTY+": "+jmx.getMessage());
+					log("Did not receive "+CONFIG_HASH_PROPERTY+": "+jmx.getMessage());
+					jmx.printStackTrace();
 				}
 			});
 			
@@ -145,7 +146,6 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 				try {
 					Message configMsg = regContext.createObjectMessage(configuration);
 					configMsg.setJMSReplyTo(tempDest);
-					configMsg.setIntProperty(CONFIG_HASH_PROPERTY, configHash);
 					regProducer.send(msg.getJMSReplyTo(), configMsg);
 				}
 				catch (NumberFormatException | JMSException ex) {

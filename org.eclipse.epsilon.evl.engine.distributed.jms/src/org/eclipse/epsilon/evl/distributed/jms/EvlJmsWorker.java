@@ -56,13 +56,19 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 			System.err.println("Using default "+host);
 		}
 		
-		try (EvlJmsWorker worker = new EvlJmsWorker(host, basePath, sessionID)) {
+		ConnectionFactory connectionFactory = ConnectionFactoryProvider.getDefault(host);
+		try (EvlJmsWorker worker = new EvlJmsWorker(connectionFactory.createContext(), basePath, sessionID)) {
 			System.out.println("Worker started for session "+sessionID);
 			worker.run();
 		}
+		finally {
+			if (connectionFactory instanceof AutoCloseable) {
+				((AutoCloseable) connectionFactory).close();
+			}
+		}
 	}
 	
-	final ConnectionFactory connectionFactory;
+	final JMSContext jmsConnection;
 	final String basePath;
 	final int sessionID;
 	DistributedEvlRunConfigurationSlave configContainer;
@@ -73,20 +79,20 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 	String toStringCached;
 	
 	
-	public EvlJmsWorker(String host, String basePath, int sessionID) {
-		connectionFactory = ConnectionFactoryProvider.getDefault(host);
+	public EvlJmsWorker(JMSContext connection, String basePath, int sessionID) {
+		this.jmsConnection = connection;
 		this.basePath = basePath;
 		this.sessionID = sessionID;
 	}
 	
 	@Override
 	public void runThrows() throws Exception {
-		try (JMSContext regContext = connectionFactory.createContext()) {
+		try (JMSContext regContext = jmsConnection.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {
 			Runnable ackSender = setup(regContext);
 			
-			try (JMSContext resultContext = regContext.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {
-				try (JMSContext jobContext = regContext.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {
-					try (JMSContext endContext = regContext.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {
+			try (JMSContext resultContext = jmsConnection.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {
+				try (JMSContext jobContext = jmsConnection.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {
+					try (JMSContext endContext = jmsConnection.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {
 						resultContext.createConsumer(resultContext.createTopic(STOP_TOPIC+sessionID)).setMessageListener(msg -> {
 							log("Stopping execution!");
 							try {
@@ -228,7 +234,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 	}
 	
 	void onFail(Exception ex, Message msg) {
-		System.err.println("Failed job '"+msg+"': "+ex);
+		log("Failed job '"+msg+"': "+ex);
 	}
 
 	void log(Object message) {
@@ -237,8 +243,8 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 	
 	@Override
 	public void close() throws Exception {
-		if (connectionFactory instanceof AutoCloseable) {
-			((AutoCloseable) connectionFactory).close();
+		if (jmsConnection instanceof AutoCloseable) {
+			((AutoCloseable) jmsConnection).close();
 		}
 	}
 	
