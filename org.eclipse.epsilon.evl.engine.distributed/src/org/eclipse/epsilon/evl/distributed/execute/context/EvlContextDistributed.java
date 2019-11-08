@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.eol.execute.control.ExecutionController;
 import org.eclipse.epsilon.eol.execute.control.ExecutionProfiler;
+import org.eclipse.epsilon.erl.dom.*;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributed;
 import org.eclipse.epsilon.evl.distributed.execute.data.*;
 import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
@@ -68,6 +69,7 @@ public abstract class EvlContextDistributed extends EvlContextParallel {
 			return ((ExecutionProfiler) controller)
 				.getExecutionTimes()
 				.entrySet().stream()
+				.filter(entry -> !(entry.getKey() instanceof Pre || entry.getKey() instanceof Post))
 				.collect(Collectors.toMap(
 					e -> e.getKey().toString(),
 					Map.Entry::getValue,
