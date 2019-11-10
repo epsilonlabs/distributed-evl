@@ -232,7 +232,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	protected void beforeSend(JMSContext regContext, AtomicInteger workersReady) throws Exception {
 		log("Waiting for workers to load configuration...");
 		// Need to make sure someone is listening otherwise messages might be lost
-		while (workersReady.get() < getContext().getDistributedParallelism()) synchronized (workersReady) {
+		while (workersReady.get() < 1) synchronized (workersReady) {
 			workersReady.wait();
 		}
 	}
