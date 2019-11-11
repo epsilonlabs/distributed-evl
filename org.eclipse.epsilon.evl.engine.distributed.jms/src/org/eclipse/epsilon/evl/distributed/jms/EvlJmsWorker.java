@@ -22,7 +22,7 @@ import org.eclipse.epsilon.common.util.StringUtil;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedSlave;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedSlave;
-import org.eclipse.epsilon.evl.distributed.jms.internal.ConnectionFactoryProvider;
+import org.eclipse.epsilon.evl.distributed.jms.internal.ConnectionFactoryObtainer;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfigurationSlave;
 
 /**
@@ -56,7 +56,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 			System.err.println("Using default "+host);
 		}
 		
-		ConnectionFactory connectionFactory = ConnectionFactoryProvider.getDefault(host);
+		ConnectionFactory connectionFactory = ConnectionFactoryObtainer.get(host);
 		try (EvlJmsWorker worker = new EvlJmsWorker(connectionFactory.createContext(), basePath, sessionID)) {
 			System.out.println("Worker started for session "+sessionID);
 			worker.run();

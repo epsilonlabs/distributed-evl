@@ -107,10 +107,11 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 		final EvlContextJmsMaster evlContext = getContext();
 		final int sessionId = evlContext.getSessionId();
 		
-		connectionContext = evlContext.getConnectionFactory().createContext(JMSContext.AUTO_ACKNOWLEDGE);
-		log("Connected to "+evlContext.getBrokerHost()+" session "+sessionId);
-		
-		try (JMSContext regContext = connectionContext.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {
+		try (JMSContext regContext = 
+				(connectionContext = evlContext.getConnectionFactory().createContext(JMSContext.AUTO_ACKNOWLEDGE))
+					.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {
+			
+			log("Connected to "+evlContext.getBrokerHost()+" session "+sessionId);
 			// Initial registration of workers
 			final Destination tempDest = regContext.createTemporaryQueue();
 			final JMSProducer regProducer = regContext.createProducer();

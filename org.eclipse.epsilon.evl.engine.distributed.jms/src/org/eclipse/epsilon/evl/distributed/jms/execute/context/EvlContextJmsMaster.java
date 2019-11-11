@@ -11,9 +11,10 @@ package org.eclipse.epsilon.evl.distributed.jms.execute.context;
 
 import java.net.URI;
 import javax.jms.ConnectionFactory;
+import javax.naming.NamingException;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.jms.EvlModuleJmsMaster;
-import org.eclipse.epsilon.evl.distributed.jms.internal.ConnectionFactoryProvider;
+import org.eclipse.epsilon.evl.distributed.jms.internal.ConnectionFactoryObtainer;
 import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
 
 /**
@@ -41,9 +42,9 @@ public class EvlContextJmsMaster extends EvlContextDistributedMaster {
 		return this.sessionID;
 	}
 	
-	public synchronized ConnectionFactory getConnectionFactory() {
+	public synchronized ConnectionFactory getConnectionFactory() throws NamingException {
 		if (connectionFactory == null) {
-			connectionFactory = ConnectionFactoryProvider.getDefault(getBrokerHost());
+			connectionFactory = ConnectionFactoryObtainer.get(brokerHost);
 		}
 		return connectionFactory;
 	}
