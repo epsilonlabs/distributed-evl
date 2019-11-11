@@ -9,5 +9,6 @@ Main-Class: org.eclipse.epsilon.evl.distributed.jms.launch.JmsEvlMasterConfigPar
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: org.eclipse.epsilon.evl.distributed.jms,
  org.eclipse.epsilon.evl.distributed.jms.execute.context,
+ org.eclipse.epsilon.evl.distributed.jms.internal;x-internal:=true,
  org.eclipse.epsilon.evl.distributed.jms.launch
 Require-Bundle: org.eclipse.epsilon.evl.engine.distributed;visibility:=reexport
