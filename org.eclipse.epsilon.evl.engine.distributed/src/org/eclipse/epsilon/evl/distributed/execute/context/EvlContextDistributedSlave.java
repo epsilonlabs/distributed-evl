@@ -36,12 +36,6 @@ public class EvlContextDistributedSlave extends EvlContextDistributed {
 	}
 	
 	@Override
-	protected void initMainThreadStructures() {
-		super.initMainThreadStructures();
-		unsatisfiedConstraints = Collections.emptySet();
-	}
-	
-	@Override
 	public Set<UnsatisfiedConstraint> getUnsatisfiedConstraints() {
 		return unsatisfiedConstraints;
 	}
