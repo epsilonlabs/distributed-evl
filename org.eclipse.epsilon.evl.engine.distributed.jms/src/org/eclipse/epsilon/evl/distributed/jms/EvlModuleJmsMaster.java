@@ -106,20 +106,18 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	public final void prepareWorkers(Serializable configuration) throws EolRuntimeException {
 		final EvlContextJmsMaster evlContext = getContext();
 		final int sessionId = evlContext.getSessionId();
-		
-		try (JMSContext regContext = 
-				(connectionContext = evlContext.getConnectionFactory().createContext(JMSContext.AUTO_ACKNOWLEDGE))
-					.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {
-			
+		try {
+			connectionContext = evlContext.getConnectionFactory().createContext(JMSContext.AUTO_ACKNOWLEDGE);
+				
 			log("Connected to "+evlContext.getBrokerHost()+" session "+sessionId);
 			// Initial registration of workers
-			final Destination tempDest = regContext.createTemporaryQueue();
-			final JMSProducer regProducer = regContext.createProducer();
+			final Destination tempDest = connectionContext.createTemporaryQueue();
+			final JMSProducer regProducer = connectionContext.createProducer();
 			final int configHash = configuration.hashCode();
 			final AtomicInteger workersReady = new AtomicInteger();
-			
+				
 			// Triggered when a worker has completed loading the configuration
-			regContext.createConsumer(tempDest).setMessageListener(response -> {
+			connectionContext.createConsumer(tempDest).setMessageListener(response -> {
 				try {
 					response.acknowledge();
 					final int receivedHash = response.getIntProperty(CONFIG_HASH_PROPERTY);
@@ -141,11 +139,11 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 					jmx.printStackTrace();
 				}
 			});
-			
+				
 			// Triggered when a worker announces itself to the registration queue
-			regContext.createConsumer(regContext.createQueue(REGISTRATION_QUEUE + sessionId)).setMessageListener(msg -> {
+			connectionContext.createConsumer(connectionContext.createQueue(REGISTRATION_QUEUE + sessionId)).setMessageListener(msg -> {
 				try {
-					Message configMsg = regContext.createObjectMessage(configuration);
+					Message configMsg = connectionContext.createObjectMessage(configuration);
 					configMsg.setJMSReplyTo(tempDest);
 					regProducer.send(msg.getJMSReplyTo(), configMsg);
 				}
@@ -154,8 +152,8 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 					ex.printStackTrace();
 				}
 			});
-			
-			beforeSend(regContext, workersReady);
+				
+			beforeSend(workersReady);
 		}
 		catch (Exception ex) {
 			handleException(ex);
@@ -225,12 +223,11 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	 * Called before {@link #sendAllJobs(Iterable)}. Used to wait
 	 * for all workers to connect before proceeding.
 	 * 
-	 * @param regContext The JMS Session used during registration.
 	 * @param workersReady Integer object indicating the number of workers that have
 	 * successfully loaded the configuration and are ready to process jobs. The object's
 	 * lock can be used to wait on some critical value to be reached.
 	 */
-	protected void beforeSend(JMSContext regContext, AtomicInteger workersReady) throws Exception {
+	protected void beforeSend(AtomicInteger workersReady) throws Exception {
 		log("Waiting for workers to load configuration...");
 		int expected = Math.max(getContext().getDistributedParallelism(), 1);
 		// Need to make sure someone is listening otherwise messages might be lost
