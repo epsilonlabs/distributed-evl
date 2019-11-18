@@ -11,7 +11,6 @@ package org.eclipse.epsilon.evl.distributed.execute.context;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.eol.execute.control.ExecutionController;
@@ -19,7 +18,6 @@ import org.eclipse.epsilon.eol.execute.control.ExecutionProfiler;
 import org.eclipse.epsilon.erl.dom.*;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributed;
 import org.eclipse.epsilon.evl.distributed.execute.data.*;
-import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
 import org.eclipse.epsilon.evl.execute.context.concurrent.EvlContextParallel;
 
 /**
@@ -35,10 +33,6 @@ public abstract class EvlContextDistributed extends EvlContextParallel {
 	
 	public EvlContextDistributed(int localParallelism) {
 		super(localParallelism);
-	}
-	
-	protected void setUnsatisfiedConstraints(Set<UnsatisfiedConstraint> unsatisfiedConstraints) {
-		this.unsatisfiedConstraints = unsatisfiedConstraints;
 	}
 	
 	@Override

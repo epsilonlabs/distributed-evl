@@ -40,6 +40,10 @@ public class EvlContextDistributedSlave extends EvlContextDistributed {
 		return unsatisfiedConstraints;
 	}
 	
+	protected void setUnsatisfiedConstraints(Set<UnsatisfiedConstraint> unsatisfiedConstraints) {
+		this.unsatisfiedConstraints = unsatisfiedConstraints;
+	}
+	
 	boolean isBatchBased;
 	
 	@Override
