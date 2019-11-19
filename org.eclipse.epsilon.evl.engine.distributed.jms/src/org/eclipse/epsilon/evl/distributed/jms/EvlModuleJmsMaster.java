@@ -142,6 +142,8 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 				
 			// Triggered when a worker announces itself to the registration queue
 			connectionContext.createConsumer(connectionContext.createQueue(REGISTRATION_QUEUE + sessionId)).setMessageListener(msg -> {
+				if (refuseWorker(workersReady.get())) return;
+				
 				try {
 					Message configMsg = connectionContext.createObjectMessage(configuration);
 					configMsg.setJMSReplyTo(tempDest);
@@ -209,6 +211,16 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	 */
 	private final boolean getCriticalCondition() {
 		return jobsProcessedByWorkers >= jobsSentToWorkers;
+	}
+	
+	/**
+	 * Method used to limit additional worker registration.
+	 * 
+	 * @param workersReady The number of currently registered workers.
+	 * @return <code>true</code> to ignore the worker registration.
+	 */
+	protected boolean refuseWorker(int workersReady) {
+		return workersReady >= getContext().getDistributedParallelism();
 	}
 	
 	protected void handleException(Exception ex) throws EolRuntimeException {
