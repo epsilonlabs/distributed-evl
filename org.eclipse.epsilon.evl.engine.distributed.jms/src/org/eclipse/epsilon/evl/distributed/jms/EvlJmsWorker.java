@@ -243,8 +243,8 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 	
 	@Override
 	public void close() throws Exception {
-		if (jmsConnection instanceof AutoCloseable) {
-			((AutoCloseable) jmsConnection).close();
+		if (jmsConnection != null) {
+			jmsConnection.close();
 		}
 	}
 	

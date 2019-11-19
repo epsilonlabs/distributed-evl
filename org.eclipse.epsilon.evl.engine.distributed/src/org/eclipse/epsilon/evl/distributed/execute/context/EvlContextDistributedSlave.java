@@ -36,14 +36,10 @@ public class EvlContextDistributedSlave extends EvlContextDistributed {
 	}
 	
 	@Override
-	public Set<UnsatisfiedConstraint> getUnsatisfiedConstraints() {
+	public Collection<UnsatisfiedConstraint> getUnsatisfiedConstraints() {
 		return unsatisfiedConstraints;
 	}
-	
-	protected void setUnsatisfiedConstraints(Set<UnsatisfiedConstraint> unsatisfiedConstraints) {
-		this.unsatisfiedConstraints = unsatisfiedConstraints;
-	}
-	
+
 	boolean isBatchBased;
 	
 	@Override
@@ -81,17 +77,18 @@ public class EvlContextDistributedSlave extends EvlContextDistributed {
 	 */
 	@SuppressWarnings("unchecked")
 	public Collection<Serializable> executeJobStateless(Object job) throws EolRuntimeException {
-		final Set<UnsatisfiedConstraint>
+		final Collection<UnsatisfiedConstraint>
 			originalUc = getUnsatisfiedConstraints(),
 			tempUc = ConcurrencyUtils.concurrentSet(16, getParallelism());
-		setUnsatisfiedConstraints(tempUc);
+		
+		this.unsatisfiedConstraints = tempUc;
 		
 		try {
 			executeJob(job);
 			return (Collection<Serializable>) executeJob(tempUc);
 		}
 		finally {
-			setUnsatisfiedConstraints(originalUc);
+			this.unsatisfiedConstraints = originalUc;
 		}
 	}
 	
