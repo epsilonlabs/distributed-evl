@@ -81,11 +81,12 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 		NUM_JOBS_PROCESSED_PROPERTY = "jobsProcessed",
 		CONFIG_HASH_PROPERTY = "configChecksum";
 	
-	protected final Collection<Serializable> responses = new java.util.HashSet<>();
-	JMSContext connectionContext;
-	volatile int jobsProcessedByWorkers, jobsSentToWorkers;
-	Consumer<String> logger = System.out::println;
+	private final Collection<Serializable> responses = new java.util.HashSet<>();
 	private final Object criticalConditionObj = this;
+	private JMSContext connectionContext;
+	protected volatile int jobsProcessedByWorkers;
+	protected int jobsSentToWorkers;
+	private Consumer<String> logger = System.out::println;
 	
 	public EvlModuleJmsMaster(EvlContextJmsMaster context) {
 		super(context);
@@ -120,18 +121,23 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 			connectionContext.createConsumer(tempDest).setMessageListener(response -> {
 				try {
 					response.acknowledge();
-					final int receivedHash = response.getIntProperty(CONFIG_HASH_PROPERTY);
-					if (receivedHash != configHash) {
-						log(
-							"Received invalid configuration checksum! Expected "+receivedHash+" but got "
-							+ configHash + ". Discarding this worker."
-						);
+					if (response.propertyExists(CONFIG_HASH_PROPERTY)) {
+						final int receivedHash = response.getIntProperty(CONFIG_HASH_PROPERTY);
+						if (receivedHash == configHash) {
+							workersReady.incrementAndGet();
+							synchronized (workersReady) {
+								workersReady.notify();
+							}
+						}
+						else {
+							log(
+								"Received invalid configuration checksum! Expected "+configHash+" but got "
+								+ receivedHash + ". Discarding this worker."
+							);
+						}
 					}
 					else {
-						workersReady.incrementAndGet();
-						synchronized (workersReady) {
-							workersReady.notify();
-						}
+						log("No configuration checksum recieved. Discarding this worker.");
 					}
 				}
 				catch (JMSException jmx) {
@@ -145,6 +151,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 				if (refuseWorker(workersReady.get())) return;
 				
 				try {
+					msg.acknowledge();
 					Message configMsg = connectionContext.createObjectMessage(configuration);
 					configMsg.setJMSReplyTo(tempDest);
 					regProducer.send(msg.getJMSReplyTo(), configMsg);
@@ -294,8 +301,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 				resultsInProgress.incrementAndGet();
 				msg.acknowledge();
 				
-				if (msg.getBooleanProperty(LAST_MESSAGE_PROPERTY)) {
-					
+				if (msg.propertyExists(LAST_MESSAGE_PROPERTY) && msg.getBooleanProperty(LAST_MESSAGE_PROPERTY)) {		
 					workerCompleted(msg);
 					if (getCriticalCondition()) {
 						// Before signalling, we need to wait for all received results to be processed
@@ -319,6 +325,15 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 						responses.add(contents);
 					}
 				}
+				/*try {
+					if (msg.propertyExists(NUM_JOBS_PROCESSED_PROPERTY)) {
+						jobsProcessedByWorkers += msg.getIntProperty(NUM_JOBS_PROCESSED_PROPERTY);
+					}
+				}
+				catch (Exception ex) {
+					// Ignore
+					ex.printStackTrace();
+				}*/
 			}
 			catch (JMSException jmx) {
 				throw new JMSRuntimeException(jmx.getMessage());
@@ -357,9 +372,6 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	 */
 	@SuppressWarnings("unchecked")
 	protected void workerCompleted(Message msg) throws JMSException {
-		int processed = msg.getIntProperty(NUM_JOBS_PROCESSED_PROPERTY);
-		jobsProcessedByWorkers += processed;
-		
 		if (msg instanceof ObjectMessage) {
 			Serializable body = ((ObjectMessage) msg).getObject();
 			if (body instanceof Map) {
@@ -379,7 +391,15 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 				}
 			}
 		}
-		log("Worker finished (processed "+processed+" jobs)");
+		
+		if (msg.propertyExists(NUM_JOBS_PROCESSED_PROPERTY)) {
+			int processed = msg.getIntProperty(NUM_JOBS_PROCESSED_PROPERTY);
+			jobsProcessedByWorkers += processed;
+			log("Worker finished (processed "+processed+" jobs)");
+		}
+		else {
+			log("Worker finished.");
+		}
 	}
 	
 	/**
