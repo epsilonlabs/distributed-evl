@@ -47,18 +47,18 @@ public class EvlModuleFlinkMaster extends EvlModuleDistributedMaster {
 	@Override
 	protected final void executeWorkerJobs(Collection<? extends Serializable> jobs) throws EolRuntimeException {
 		try {
-			String outputPath = getContext().getOutputPath();
+			EvlContextFlinkMaster context = getContext();
+			String outputPath = context.getOutputPath();
 			
 			DataSet<? extends Serializable> pipeline =
-				executionEnv.fromCollection(jobs)
-				.flatMap(new EvlFlinkFlatMapFunction<>());
+				executionEnv.fromCollection(jobs).flatMap(new EvlFlinkFlatMapFunction<>());
 			
 			if (outputPath != null && !outputPath.isEmpty()) {
 				pipeline.writeAsText(outputPath, WriteMode.OVERWRITE);
 				executionEnv.execute();
 			}
 			else {
-				getContext().executeJob(pipeline.collect());
+				context.executeJob(pipeline.collect());
 			}
 		}
 		catch (Exception ex) {

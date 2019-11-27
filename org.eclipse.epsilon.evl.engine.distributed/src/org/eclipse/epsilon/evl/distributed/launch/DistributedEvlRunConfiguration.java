@@ -100,8 +100,9 @@ public abstract class DistributedEvlRunConfiguration extends EvlRunConfiguration
 		BASE_PATH_SYSTEM_PROPERTY = "org.eclipse.epsilon.evl.distributed."+BASE_PATH;
 	
 	static String removeProtocol(String path) {
+		if (path == null) return path;
 		String prot = "://";
-		if (path != null && path.contains(prot)) {
+		if (path.contains(prot)) {
 			path = path.substring(path.indexOf(prot) + prot.length());
 		}
 		int driveIndex = path.indexOf(":/");
