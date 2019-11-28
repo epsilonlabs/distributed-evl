@@ -231,6 +231,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	}
 	
 	protected void handleException(Exception ex) throws EolRuntimeException {
+		ex.printStackTrace();
 		stopAllWorkers(ex);
 		if (ex instanceof RuntimeException) throw (RuntimeException) ex;
 		if (ex instanceof EolRuntimeException) throw (EolRuntimeException) ex;

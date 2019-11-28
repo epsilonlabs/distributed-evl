@@ -33,6 +33,7 @@ import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfiguration
 public class JmsEvlRunConfigurationMaster extends DistributedEvlRunConfigurationMaster {
 	
 	protected final boolean localStandalone;
+	protected EmbeddedActiveMQ server;
 	
 	@SuppressWarnings("unchecked")
 	public static class Builder<R extends JmsEvlRunConfigurationMaster, B extends Builder<R, B>> extends DistributedEvlRunConfigurationMaster.Builder<R, B> {
@@ -76,6 +77,12 @@ public class JmsEvlRunConfigurationMaster extends DistributedEvlRunConfiguration
 		}
 		super.preExecute();
 	}
+	
+	@Override
+	public void postExecute() throws Exception {
+		super.postExecute();
+		server.stop();
+	}
 
 	protected void createWorkers() throws Exception {
 		EvlContextJmsMaster context = getModule().getContext();
@@ -86,12 +93,11 @@ public class JmsEvlRunConfigurationMaster extends DistributedEvlRunConfiguration
 		String jar = new File(EvlJmsWorker.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getPath();
 		commands.add(1, "-jar");
 		commands.add(2, jar);
-		commands.add(this.basePath);
-		commands.add(context.getSessionId() + "");
-		commands.add(context.getBrokerHost());
+		commands.add(3, this.basePath);
+		commands.add(4, context.getSessionId() + "");
+		commands.add(5, context.getBrokerHost());
 		
 		final String[] commandArr = commands.toArray(new String[commands.size()]);
-		
 		
 		for (int i = 0; i < numWorkers; i++) {
 			CompletableFuture.runAsync(() -> {
@@ -107,8 +113,9 @@ public class JmsEvlRunConfigurationMaster extends DistributedEvlRunConfiguration
 	}
 
 	protected void setupBroker() throws Exception {
-		EmbeddedActiveMQ server = new EmbeddedActiveMQ();
+		server = new EmbeddedActiveMQ();
 		Configuration config = new ConfigurationImpl();
+		config.setSecurityEnabled(false);
 		config.setPersistenceEnabled(false);
 		config.addAcceptorConfiguration("in-vm", "vm://0");
 		config.addAcceptorConfiguration("tcp", "tcp://127.0.0.1:61616");
