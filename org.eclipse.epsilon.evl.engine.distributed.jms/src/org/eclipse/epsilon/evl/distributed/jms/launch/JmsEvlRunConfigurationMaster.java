@@ -81,7 +81,9 @@ public class JmsEvlRunConfigurationMaster extends DistributedEvlRunConfiguration
 	@Override
 	public void postExecute() throws Exception {
 		super.postExecute();
-		server.stop();
+		if (server != null) {
+			server.stop();
+		}
 	}
 
 	protected void createWorkers() throws Exception {
