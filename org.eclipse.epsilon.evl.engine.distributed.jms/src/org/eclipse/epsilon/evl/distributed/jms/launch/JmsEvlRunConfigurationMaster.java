@@ -9,6 +9,9 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.jms.launch;
 
+import org.apache.activemq.artemis.core.config.Configuration;
+import org.apache.activemq.artemis.core.config.impl.ConfigurationImpl;
+import org.apache.activemq.artemis.core.server.embedded.EmbeddedActiveMQ;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -104,6 +107,12 @@ public class JmsEvlRunConfigurationMaster extends DistributedEvlRunConfiguration
 	}
 
 	protected void setupBroker() throws Exception {
-		//TODO implement
+		EmbeddedActiveMQ server = new EmbeddedActiveMQ();
+		Configuration config = new ConfigurationImpl();
+		config.setPersistenceEnabled(false);
+		config.addAcceptorConfiguration("in-vm", "vm://0");
+		config.addAcceptorConfiguration("tcp", "tcp://127.0.0.1:61616");
+		server.setConfiguration(config);
+		server.start();
 	}
 }
