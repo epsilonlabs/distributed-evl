@@ -96,14 +96,14 @@ public class JmsEvlRunConfigurationMaster extends DistributedEvlRunConfiguration
 		String src = new File(EvlJmsWorker.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getPath();
 		if (src.endsWith(".jar")) {
 			commands.add(index++, "-jar");
-			commands.add(index++, src);
+			commands.add(index++, '"'+src+'"');
 		}
 		else {
 			commands.add(index++, "-cp");
-			commands.add(index++, System.getProperty("java.class.path"));
+			commands.add(index++, '"'+System.getProperty("java.class.path")+'"');
 			commands.add(index++, EvlJmsWorker.class.getName());
 		}
-		commands.add(index++, this.basePath);
+		commands.add(index++, '"'+this.basePath+'"');
 		commands.add(index++, context.getSessionId() + "");
 		commands.add(index++, context.getBrokerHost());
 		
