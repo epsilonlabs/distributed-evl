@@ -16,13 +16,16 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import org.eclipse.epsilon.common.util.OperatingSystem;
+import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.evl.distributed.jms.EvlJmsWorker;
 import org.eclipse.epsilon.evl.distributed.jms.EvlModuleJmsMaster;
 import org.eclipse.epsilon.evl.distributed.jms.execute.context.EvlContextJmsMaster;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfiguration;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfigurationMaster;
+import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
 
 /**
  * 
@@ -93,17 +96,15 @@ public class JmsEvlRunConfigurationMaster extends DistributedEvlRunConfiguration
 		
 		int index = 0;
 		commands.add(index++, "java");
-		String jar = new File(EvlJmsWorker.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getPath();
-		if (jar.endsWith(".jar")) {
+		String src = new File(EvlJmsWorker.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getPath();
+		if (src.endsWith(".jar")) {
 			commands.add(index++, "-jar");
-			commands.add(index++, jar);
+			commands.add(index++, src);
 		}
 		else {
-			/*
-			 * commands.add(index++, "-cp"); commands.add(index++, jar);
-			 * commands.add(index++, EvlJmsWorker.class.getName());
-			 */
-			throw new IllegalStateException("Must be run from JAR");
+			commands.add(index++, "-cp");
+			commands.add(index++, System.getProperty("java.class.path"));
+			commands.add(index++, EvlJmsWorker.class.getName());
 		}
 		commands.add(index++, this.basePath);
 		commands.add(index++, context.getSessionId() + "");
