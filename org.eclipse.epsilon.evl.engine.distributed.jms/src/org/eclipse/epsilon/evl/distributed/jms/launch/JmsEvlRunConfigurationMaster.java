@@ -91,13 +91,23 @@ public class JmsEvlRunConfigurationMaster extends DistributedEvlRunConfiguration
 		final int numWorkers = context.getDistributedParallelism();
 		final ArrayList<String> commands = new ArrayList<>(ManagementFactory.getRuntimeMXBean().getInputArguments());
 		
-		commands.add(0, "java");
+		int index = 0;
+		commands.add(index++, "java");
 		String jar = new File(EvlJmsWorker.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getPath();
-		commands.add(1, "-jar");
-		commands.add(2, jar);
-		commands.add(3, this.basePath);
-		commands.add(4, context.getSessionId() + "");
-		commands.add(5, context.getBrokerHost());
+		if (jar.endsWith(".jar")) {
+			commands.add(index++, "-jar");
+			commands.add(index++, jar);
+		}
+		else {
+			/*
+			 * commands.add(index++, "-cp"); commands.add(index++, jar);
+			 * commands.add(index++, EvlJmsWorker.class.getName());
+			 */
+			throw new IllegalStateException("Must be run from JAR");
+		}
+		commands.add(index++, this.basePath);
+		commands.add(index++, context.getSessionId() + "");
+		commands.add(index++, context.getBrokerHost());
 		
 		final String[] commandArr = commands.toArray(new String[commands.size()]);
 		
