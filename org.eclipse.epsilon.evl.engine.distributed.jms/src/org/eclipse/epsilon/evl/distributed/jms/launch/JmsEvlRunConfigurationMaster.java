@@ -9,9 +9,6 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.jms.launch;
 
-import org.apache.activemq.artemis.core.config.Configuration;
-import org.apache.activemq.artemis.core.config.impl.ConfigurationImpl;
-import org.apache.activemq.artemis.core.server.embedded.EmbeddedActiveMQ;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -33,7 +30,6 @@ import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfiguration
 public class JmsEvlRunConfigurationMaster extends DistributedEvlRunConfigurationMaster {
 	
 	protected final boolean localStandalone;
-	protected EmbeddedActiveMQ server;
 	
 	@SuppressWarnings("unchecked")
 	public static class Builder<R extends JmsEvlRunConfigurationMaster, B extends Builder<R, B>> extends DistributedEvlRunConfigurationMaster.Builder<R, B> {
@@ -72,18 +68,9 @@ public class JmsEvlRunConfigurationMaster extends DistributedEvlRunConfiguration
 	@Override
 	public void preExecute() throws Exception {
 		if (localStandalone) {
-			setupBroker();
 			createWorkers();
 		}
 		super.preExecute();
-	}
-	
-	@Override
-	public void postExecute() throws Exception {
-		super.postExecute();
-		if (server != null) {
-			server.stop();
-		}
 	}
 
 	protected void createWorkers() throws Exception {
@@ -120,16 +107,5 @@ public class JmsEvlRunConfigurationMaster extends DistributedEvlRunConfiguration
 				}
 			});
 		}
-	}
-
-	protected void setupBroker() throws Exception {
-		server = new EmbeddedActiveMQ();
-		Configuration config = new ConfigurationImpl();
-		config.setSecurityEnabled(false);
-		config.setPersistenceEnabled(false);
-		config.addAcceptorConfiguration("in-vm", "vm://0");
-		config.addAcceptorConfiguration("tcp", "tcp://127.0.0.1:61616");
-		server.setConfiguration(config);
-		server.start();
 	}
 }

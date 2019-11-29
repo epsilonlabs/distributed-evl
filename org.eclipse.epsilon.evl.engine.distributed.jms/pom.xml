@@ -16,10 +16,10 @@
         <artifactId>artemis-jms-client-all</artifactId>
         <version>2.10.1</version>
      </dependency>
-	 <dependency>
+	 <!-->dependency>
         <groupId>org.apache.activemq</groupId>
         <artifactId>artemis-jms-server</artifactId>
         <version>2.10.1</version>
-     </dependency>
+     </dependency-->
   </dependencies>
 </project>
