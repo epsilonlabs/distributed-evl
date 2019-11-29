@@ -10,7 +10,6 @@
 package org.eclipse.epsilon.evl.distributed.jms.launch;
 
 import java.net.URI;
-import org.apache.commons.cli.Option;
 import org.eclipse.epsilon.evl.distributed.jms.EvlModuleJmsMaster;
 import org.eclipse.epsilon.evl.distributed.jms.execute.context.EvlContextJmsMaster;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlMasterConfigParser;
@@ -24,8 +23,6 @@ import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlMasterConfigPars
  * @param <B>
  */
 public class JmsEvlMasterConfigParser<R extends JmsEvlRunConfigurationMaster, B extends JmsEvlRunConfigurationMaster.Builder<R, B>> extends DistributedEvlMasterConfigParser<R, B> {
-
-	private final String localStandaloneOpt = "localStandalone";
 	
 	public static void main(String... args) {
 		new JmsEvlMasterConfigParser<>().parseAndRun(args);
@@ -38,17 +35,11 @@ public class JmsEvlMasterConfigParser<R extends JmsEvlRunConfigurationMaster, B 
 	
 	public JmsEvlMasterConfigParser(B builder) {
 		super(builder);
-		options.addOption(Option.builder("local")
-			.longOpt(localStandaloneOpt)
-			.desc("Run this program locally, creating the workers and broker on this machine.")
-			.build()
-		);
 	}
 	
 	@Override
 	public void parseArgs(String[] args) throws Exception {
 		super.parseArgs(args);
-		builder.localStandalone = cmdLine.hasOption(localStandaloneOpt);
 		
 		if (builder.host == null || builder.host.isEmpty()) {
 			builder.host = "tcp://localhost:61616";

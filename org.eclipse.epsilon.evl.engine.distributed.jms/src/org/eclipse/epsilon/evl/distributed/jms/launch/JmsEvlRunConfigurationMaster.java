@@ -29,21 +29,11 @@ import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfiguration
  */
 public class JmsEvlRunConfigurationMaster extends DistributedEvlRunConfigurationMaster {
 	
-	protected final boolean localStandalone;
-	
-	@SuppressWarnings("unchecked")
 	public static class Builder<R extends JmsEvlRunConfigurationMaster, B extends Builder<R, B>> extends DistributedEvlRunConfigurationMaster.Builder<R, B> {
 		@Override
 		protected EvlModuleJmsMaster createModule() {
 			EvlContextJmsMaster context = new EvlContextJmsMaster(parallelism, distributedParallelism, getJobSplitter(), host, sessionID);
 			return new EvlModuleJmsMaster(context);
-		}
-		
-		public boolean localStandalone;
-		
-		public B withLocalStandalone() {
-			localStandalone = true;
-			return (B) this;
 		}
 		
 		protected Builder() {
@@ -56,7 +46,6 @@ public class JmsEvlRunConfigurationMaster extends DistributedEvlRunConfiguration
 
 	public JmsEvlRunConfigurationMaster(Builder<? extends DistributedEvlRunConfiguration, ?> builder) {
 		super(builder);
-		this.localStandalone = builder.localStandalone;
 		getModule().setLogger(this::writeOut);
 	}
 	
@@ -64,16 +53,9 @@ public class JmsEvlRunConfigurationMaster extends DistributedEvlRunConfiguration
 	public EvlModuleJmsMaster getModule() {
 		return (EvlModuleJmsMaster) super.getModule();
 	}
-	
-	@Override
-	public void preExecute() throws Exception {
-		if (localStandalone) {
-			createWorkers();
-		}
-		super.preExecute();
-	}
 
-	protected void createWorkers() throws Exception {
+	@Override
+	protected void createStandaloneWorkers() throws Exception {
 		EvlContextJmsMaster context = getModule().getContext();
 		final int numWorkers = context.getDistributedParallelism();
 		final ArrayList<String> commands = new ArrayList<>(ManagementFactory.getRuntimeMXBean().getInputArguments());

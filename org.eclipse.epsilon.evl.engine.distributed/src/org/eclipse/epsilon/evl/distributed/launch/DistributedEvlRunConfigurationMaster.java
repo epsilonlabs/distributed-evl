@@ -33,7 +33,7 @@ import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
  * @author Sina Madani
  * @since 1.6
  */
-public abstract class DistributedEvlRunConfigurationMaster extends DistributedEvlRunConfiguration {
+public class DistributedEvlRunConfigurationMaster extends DistributedEvlRunConfiguration {
 
 	@SuppressWarnings("unchecked")
 	public static abstract class Builder<R extends DistributedEvlRunConfigurationMaster, B extends Builder<R, B>> extends DistributedEvlRunConfiguration.Builder<R, B> {
@@ -41,7 +41,7 @@ public abstract class DistributedEvlRunConfigurationMaster extends DistributedEv
 		
 		JobSplitter jobSplitter;
 		public int distributedParallelism;
-		public boolean shuffle = true;
+		public boolean shuffle = true, localStandalone;
 		public double
 			batchFactor = UNINTIALIZED_DOUBLE,
 			masterProportion = UNINTIALIZED_DOUBLE;
@@ -63,6 +63,10 @@ public abstract class DistributedEvlRunConfigurationMaster extends DistributedEv
 		}
 		public B withJobSplitter(JobSplitter splitter) {
 			this.jobSplitter = splitter;
+			return (B) this;
+		}
+		public B withLocalStandalone() {
+			localStandalone = true;
 			return (B) this;
 		}
 		
@@ -90,14 +94,18 @@ public abstract class DistributedEvlRunConfigurationMaster extends DistributedEv
 		}
 	}
 	
+	protected final boolean localStandalone;
 	protected String normalBasePath;
 	
 	public DistributedEvlRunConfigurationMaster(DistributedEvlRunConfigurationMaster other) {
 		super(other);
+		this.localStandalone = other.localStandalone;
+		this.normalBasePath = other.normalBasePath;
 	}
 	
-	public DistributedEvlRunConfigurationMaster(Builder<? extends DistributedEvlRunConfiguration, ?> builder) {
+	public DistributedEvlRunConfigurationMaster(Builder<? extends DistributedEvlRunConfigurationMaster, ?> builder) {
 		super(builder.skipModelLoading());
+		this.localStandalone = builder.localStandalone;
 	}
 	
 	protected void setNormalBasePath(String path) {
@@ -163,11 +171,19 @@ public abstract class DistributedEvlRunConfigurationMaster extends DistributedEv
 	
 	@Override
 	public void preExecute() throws Exception {
+		if (localStandalone) {
+			createStandaloneWorkers();
+		}
 		super.preExecute();
 		CheckedRunnable<?> prepareMaster = this::prepareMaster, pw = this::prepareWorkers;
 		ConcurrencyUtils.executeAsync(prepareMaster, pw);
 	}
 	
+	protected void createStandaloneWorkers() throws Exception {
+		// Assume nothing needs to be done
+		//throw new UnsupportedEncodingException();
+	}
+
 	protected void prepareMaster() throws Exception {
 		loadModels();
 		getModule().prepareExecution();

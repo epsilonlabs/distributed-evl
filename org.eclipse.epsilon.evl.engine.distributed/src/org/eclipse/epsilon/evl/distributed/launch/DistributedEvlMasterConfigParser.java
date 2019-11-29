@@ -17,7 +17,8 @@ public class DistributedEvlMasterConfigParser<R extends DistributedEvlRunConfigu
 		distributedParallelismOpt = "distributedParallelism",
 		shuffleOpt = "no-shuffle",
 		batchesOpt = "batches",
-		masterProportionOpt = "masterProportion";
+		masterProportionOpt = "masterProportion",
+		localStandaloneOpt = "localStandalone";
 	
 	public DistributedEvlMasterConfigParser(B builder) {
 		super(builder);
@@ -42,6 +43,10 @@ public class DistributedEvlMasterConfigParser<R extends DistributedEvlRunConfigu
 			.desc("Fraction of jobs to assign to the master (between 0 and 1)")
 			.hasArg()
 			.build()
+		).addOption(Option.builder("local")
+			.longOpt(localStandaloneOpt)
+			.desc("Run this program locally, creating the workers and broker on this machine.")
+			.build()
 		);
 	}
 	
@@ -52,6 +57,7 @@ public class DistributedEvlMasterConfigParser<R extends DistributedEvlRunConfigu
 		builder.distributedParallelism = tryParse(distributedParallelismOpt, builder.distributedParallelism);
 		builder.batchFactor = tryParse(batchesOpt, builder.batchFactor);
 		builder.masterProportion = tryParse(masterProportionOpt, builder.masterProportion);
+		builder.localStandalone = cmdLine.hasOption(localStandaloneOpt);
 	}
 	
 }
