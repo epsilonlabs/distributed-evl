@@ -14,6 +14,11 @@ import org.eclipse.epsilon.evl.distributed.crossflow.*;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedMaster;
 import org.eclipse.epsilon.evl.distributed.strategy.JobSplitter;
 
+/**
+ * 
+ * @author Sina Madani
+ * @since 1.6
+ */
 public class EvlContextCrossflowMaster extends EvlContextDistributedMaster {
 	
 	protected String instanceID;
