@@ -9,7 +9,7 @@ import org.eclipse.scava.crossflow.runtime.Job;
 import org.eclipse.scava.crossflow.runtime.JobStream;
 import org.apache.activemq.command.ActiveMQBytesMessage;
 
-@Generated(value = "org.eclipse.scava.crossflow.java.Steam2Class", date = "2019-10-18T14:16:53.865523500+01:00[Europe/London]")
+@Generated(value = "org.eclipse.scava.crossflow.java.Steam2Class", date = "2019-11-30T17:04:27.022703400Z")
 public class ValidationDataQueue extends JobStream<ValidationData> {
 		
 	public ValidationDataQueue(Workflow<DistributedEVLTasks> workflow, boolean enablePrefetch) throws Exception {
@@ -33,7 +33,7 @@ public class ValidationDataQueue extends JobStream<ValidationData> {
 				preConsumer.setMessageListener(message -> {
 					try {
 						workflow.cancelTermination();
-						Job job = (Job) workflow.getSerializer().toObject(getMessageText(message));
+						Job job = workflow.getSerializer().deserialize(getMessageText(message));
 						
 						if (workflow.getCache() != null && workflow.getCache().hasCachedOutputs(job)) {
 							
@@ -71,7 +71,7 @@ public class ValidationDataQueue extends JobStream<ValidationData> {
 				destinationConsumer.setMessageListener(message -> {
 					try {
 						workflow.cancelTermination();
-						Job job = (Job) workflow.getSerializer().toObject(getMessageText(message));
+						Job job = workflow.getSerializer().deserialize(getMessageText(message));
 						
 						if (workflow.getCache() != null && !job.isCached())
 							if(job.isTransactional())
@@ -110,7 +110,7 @@ public class ValidationDataQueue extends JobStream<ValidationData> {
 			messageConsumer.setMessageListener(message -> {
 				try {
 					String messageText = getMessageText(message);
-					ValidationData validationData = (ValidationData) workflow.getSerializer().toObject(messageText);
+					ValidationData validationData = workflow.getSerializer().deserialize(messageText);
 					consumer.consumeValidationDataQueueWithNotifications(validationData);
 				} catch (Exception ex) {
 					workflow.reportInternalException(ex);

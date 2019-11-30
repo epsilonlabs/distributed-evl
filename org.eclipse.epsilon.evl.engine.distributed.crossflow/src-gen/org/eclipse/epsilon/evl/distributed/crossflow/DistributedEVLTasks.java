@@ -12,9 +12,10 @@ import javax.annotation.Generated;
  * </ul>
  * </p>
  */
-@Generated(value = "org.eclipse.scava.crossflow.java.Workflow2TaskEnum", date = "2019-10-18T14:16:53.865523500+01:00[Europe/London]")
+@Generated(value = "org.eclipse.scava.crossflow.java.Workflow2TaskEnum", date = "2019-11-30T17:04:27.022703400Z")
 public enum DistributedEVLTasks {
-
+	
+	CONFIG_CONFIG_SOURCE("ConfigConfigSource", true),
 	JOB_DISTRIBUTOR("JobDistributor", true),
 	PROCESSING("Processing", true),
 	RESULT_SINK("ResultSink", true);

@@ -1,28 +1,30 @@
 /** This class was automatically generated and should not be modified */
 package org.eclipse.epsilon.evl.distributed.crossflow;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Set;
 
 import javax.annotation.Generated;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
 import org.apache.activemq.broker.BrokerFactory;
 import org.apache.activemq.broker.BrokerService;
-import org.eclipse.scava.crossflow.runtime.ParallelTaskList;
-import org.eclipse.scava.crossflow.runtime.utils.ControlSignal;
-import org.eclipse.scava.crossflow.runtime.utils.ControlSignal.ControlSignals;
-import org.eclipse.scava.crossflow.runtime.utils.CrossflowLogger.SEVERITY;
-import org.eclipse.scava.crossflow.runtime.Workflow;
-import org.eclipse.scava.crossflow.runtime.Mode;
 import org.eclipse.scava.crossflow.runtime.BuiltinStream;
+import org.eclipse.scava.crossflow.runtime.Mode;
+import org.eclipse.scava.crossflow.runtime.ParallelTaskList;
+import org.eclipse.scava.crossflow.runtime.Workflow;
+import org.eclipse.scava.crossflow.runtime.serialization.Serializer;
+import org.eclipse.scava.crossflow.runtime.serialization.JsonSerializer;import org.eclipse.scava.crossflow.runtime.utils.ControlSignal;
+import org.eclipse.scava.crossflow.runtime.utils.ControlSignal.ControlSignals;
+import org.eclipse.scava.crossflow.runtime.utils.LogLevel;
 
-@Generated(value = "org.eclipse.scava.crossflow.java.Workflow2Class", date = "2019-10-18T14:16:53.865523500+01:00[Europe/London]")
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+
+@Generated(value = "org.eclipse.scava.crossflow.java.Workflow2Class", date = "2019-11-30T17:04:27.022703400Z")
 public class DistributedEVL extends Workflow<DistributedEVLTasks> {
 	
 	// Streams
@@ -79,11 +81,6 @@ public class DistributedEVL extends Workflow<DistributedEVLTasks> {
 				}
 			}
 		}
-		
-		// Register custom types and Job subclasses
-		this.serializer.register(Config.class);
-		this.serializer.register(ValidationData.class);
-		this.serializer.register(ValidationResult.class);
 	}
 	
 	/**
@@ -94,9 +91,7 @@ public class DistributedEVL extends Workflow<DistributedEVLTasks> {
 	 */
 	@Override
 	public void run(long delay) throws Exception {
-		jobDistributors.init(this);
-		processings.init(this);
-	
+		this.getSerializer();
 		this.delay=delay;
 	
 		try {
@@ -120,10 +115,11 @@ public class DistributedEVL extends Workflow<DistributedEVLTasks> {
 				}
 			}
 	
-			connect();
-	
 			Thread.sleep(delay);
 		
+			jobDistributors.init(this);
+			processings.init(this);
+	
 			validationDataQueue = new ValidationDataQueue(DistributedEVL.this, enablePrefetch);
 			activeStreams.add(validationDataQueue);
 			validationOutput = new ValidationOutput(DistributedEVL.this, enablePrefetch);
@@ -140,6 +136,8 @@ public class DistributedEVL extends Workflow<DistributedEVLTasks> {
 					validationOutput.addConsumer(resultSink, "ResultSink");			
 					configConfigSource.setConfigConfigTopic(configConfigTopic);
 			}
+
+			connect();
 			
 			if (isWorker()) {
 				if (!tasksToExclude.contains(DistributedEVLTasks.PROCESSING)) {
@@ -155,17 +153,9 @@ public class DistributedEVL extends Workflow<DistributedEVLTasks> {
 			if (isMaster()){
 				sendConfigurations();
 			}
-				
-			// delay non-master connections to allow master to create the relevant listeners
-			// (in a multi-threaded parallel execution) to facilitate termination, by
-			// re-sending worker_added message
-			if (!isMaster()) {
-				Thread.sleep(1000);
-				controlTopic.send(new ControlSignal(ControlSignals.WORKER_ADDED, getName()));
-			}	
 					
 		} catch (Exception e) {
-			log(SEVERITY.ERROR, e.getMessage());
+			log(LogLevel.ERROR, e.getMessage());
 		}
 	}				
 	
@@ -232,11 +222,24 @@ public class DistributedEVL extends Workflow<DistributedEVLTasks> {
 	}
 	
 	@Override
-	public DistributedEVL excludeTasks(EnumSet<DistributedEVLTasks> tasks) {
+	public DistributedEVL excludeTasks(Collection<DistributedEVLTasks> tasks) {
 		for (DistributedEVLTasks t : tasks) {
 			excludeTask(t);
 		}
 		return this;
+	}
+	
+	@Override
+	protected Serializer createSerializer() {
+		return new JsonSerializer();
+	}
+	
+	@Override
+	protected void registerCustomSerializationTypes(Serializer serializer) {
+		checkNotNull(serializer);
+		serializer.registerType(Config.class);
+		serializer.registerType(ValidationData.class);
+		serializer.registerType(ValidationResult.class);
 	}
 	
 	public static DistributedEVL run(String[] args) throws Exception {
@@ -252,22 +255,22 @@ public class DistributedEVL extends Workflow<DistributedEVLTasks> {
 	}
 	
 	public static void main(String[] args) throws Exception {
-	      // Parse all values into an temporary object
-        DistributedEVL argsHolder = new DistributedEVL();
-        JCommander jct = JCommander.newBuilder().addObject(argsHolder).build();
-        
-        try {
-            jct.parse(args);
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-	    if(argsHolder.isHelp()) {
-            jct.setProgramName("DistributedEVL");
-            jct.usage();
-            System.exit(0);
-        }
-	
+		// Parse all values into an temporary object
+		DistributedEVL argsHolder = new DistributedEVL();
+		JCommander jct = JCommander.newBuilder().addObject(argsHolder).build();
+		
+		try {
+			jct.parse(args);
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+		if(argsHolder.isHelp()) {
+			jct.setProgramName("DistributedEVL");
+			jct.usage();
+			System.exit(0);
+			}
+			
 		run(args);
 	}
 	

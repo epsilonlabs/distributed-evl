@@ -13,15 +13,15 @@
 		<sink name="ResultSink" in="ValidationOutput"/>
 		
 		<type name="Config">
-			<field name="data" type="java.io.Serializable"/>
+			<datafield name="data" type="java.io.Serializable"/>
 		</type>
 
 		<type name="ValidationData">
-			<field name="data" type="java.io.Serializable"/>
+			<datafield name="data" type="java.io.Serializable"/>
 		</type>
 		
 		<type name="ValidationResult">
-			<field isMany="true" name="atoms" type="java.io.Serializable"/>
+			<datafield isMany="true" name="atoms" type="java.io.Serializable"/>
 		</type>
 
 	<language name="Java" package="org.eclipse.epsilon.evl.distributed.crossflow"/>

@@ -6,30 +6,41 @@ import java.util.Collection;
 import java.util.ArrayList;
 import org.eclipse.scava.crossflow.runtime.Job;
 
-@Generated(value = "org.eclipse.scava.crossflow.java.Type2Class", date = "2019-10-18T14:16:53.865523500+01:00[Europe/London]")
+@Generated(value = "org.eclipse.scava.crossflow.java.Type2Class", date = "2019-11-30T17:04:27.022703400Z")
 public class ValidationResult extends Job {
+		
+	protected Collection<java.io.Serializable> atoms = new ArrayList<java.io.Serializable>();
 	
-	public ValidationResult() {}
+	/**
+	 * Default Constructor
+	 * <p>
+	 * Deserialization requires an empty instance to modify
+	 * </p>
+	 */
+	public ValidationResult() {
+		;
+	}
 	
+	/**
+	 * Constructor allow initialization of all declared fields
+	 */
 	public ValidationResult(Collection<java.io.Serializable> atoms) {
 		this.atoms = atoms;
 	}
 	
+	 
 	public ValidationResult(Collection<java.io.Serializable> atoms, Job correlation) {
 		this.atoms = atoms;
-		this.correlationId = correlation.getId();
+		this.correlationId = correlation.getCorrelationId();
 	}
-		
-	protected Collection<java.io.Serializable> atoms = new ArrayList<>();
+	
+	public Collection<java.io.Serializable> getAtoms() {
+		return this.atoms;
+	}
 	
 	public void setAtoms(Collection<java.io.Serializable> atoms) {
 		this.atoms = atoms;
 	}
-	
-	public Collection<java.io.Serializable> getAtoms() {
-		return atoms;
-	}
-	
 	
 	public Object[] toObjectArray() {
 		Object[] ret = new Object[1];
@@ -38,7 +49,7 @@ public class ValidationResult extends Job {
 	}
 	
 	public String toString() {
-		return "ValidationResult (" + " atoms=" + atoms + " id=" + id + " correlationId=" + correlationId + " destination=" + destination + ")";
+		return "ValidationResult (" + " atoms=" + atoms + " jobId=" + jobId + " correlationId=" + correlationId + " destination=" + destination + ")";
 	}
 	
 }

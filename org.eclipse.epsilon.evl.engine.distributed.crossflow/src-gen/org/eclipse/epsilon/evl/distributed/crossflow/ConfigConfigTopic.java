@@ -9,7 +9,7 @@ import org.eclipse.scava.crossflow.runtime.Job;
 import org.eclipse.scava.crossflow.runtime.JobStream;
 import org.apache.activemq.command.ActiveMQBytesMessage;
 
-@Generated(value = "org.eclipse.scava.crossflow.java.Steam2Class", date = "2019-10-18T14:16:53.865523500+01:00[Europe/London]")
+@Generated(value = "org.eclipse.scava.crossflow.java.Steam2Class", date = "2019-11-30T17:04:27.022703400Z")
 public class ConfigConfigTopic extends JobStream<Config> {
 		
 	public ConfigConfigTopic(Workflow<DistributedEVLTasks> workflow, boolean enablePrefetch) throws Exception {
@@ -38,7 +38,7 @@ public class ConfigConfigTopic extends JobStream<Config> {
 				preConsumer.setMessageListener(message -> {
 					try {
 						workflow.cancelTermination();
-						Job job = (Job) workflow.getSerializer().toObject(getMessageText(message));
+						Job job = workflow.getSerializer().deserialize(getMessageText(message));
 						
 						if (workflow.getCache() != null && workflow.getCache().hasCachedOutputs(job)) {
 							
@@ -80,7 +80,7 @@ public class ConfigConfigTopic extends JobStream<Config> {
 				destinationConsumer.setMessageListener(message -> {
 					try {
 						workflow.cancelTermination();
-						Job job = (Job) workflow.getSerializer().toObject(getMessageText(message));
+						Job job = workflow.getSerializer().deserialize(getMessageText(message));
 						
 						if (workflow.getCache() != null && !job.isCached())
 							if(job.isTransactional())
@@ -119,7 +119,7 @@ public class ConfigConfigTopic extends JobStream<Config> {
 			messageConsumer.setMessageListener(message -> {
 				try {
 					String messageText = getMessageText(message);
-					Config config = (Config) workflow.getSerializer().toObject(messageText);
+					Config config = workflow.getSerializer().deserialize(messageText);
 					consumer.consumeConfigConfigTopicWithNotifications(config);
 				} catch (Exception ex) {
 					workflow.reportInternalException(ex);

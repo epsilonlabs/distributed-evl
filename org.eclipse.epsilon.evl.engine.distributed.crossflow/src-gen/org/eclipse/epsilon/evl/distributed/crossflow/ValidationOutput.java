@@ -9,7 +9,7 @@ import org.eclipse.scava.crossflow.runtime.Job;
 import org.eclipse.scava.crossflow.runtime.JobStream;
 import org.apache.activemq.command.ActiveMQBytesMessage;
 
-@Generated(value = "org.eclipse.scava.crossflow.java.Steam2Class", date = "2019-10-18T14:16:53.865523500+01:00[Europe/London]")
+@Generated(value = "org.eclipse.scava.crossflow.java.Steam2Class", date = "2019-11-30T17:04:27.022703400Z")
 public class ValidationOutput extends JobStream<ValidationResult> {
 		
 	public ValidationOutput(Workflow<DistributedEVLTasks> workflow, boolean enablePrefetch) throws Exception {
@@ -54,7 +54,7 @@ public class ValidationOutput extends JobStream<ValidationResult> {
 				destinationConsumer.setMessageListener(message -> {
 					try {
 						workflow.cancelTermination();
-						Job job = (Job) workflow.getSerializer().toObject(getMessageText(message));
+						Job job = workflow.getSerializer().deserialize(getMessageText(message));
 						
 						if (workflow.getCache() != null && !job.isCached())
 							if(job.isTransactional())
@@ -93,7 +93,7 @@ public class ValidationOutput extends JobStream<ValidationResult> {
 			messageConsumer.setMessageListener(message -> {
 				try {
 					String messageText = getMessageText(message);
-					ValidationResult validationResult = (ValidationResult) workflow.getSerializer().toObject(messageText);
+					ValidationResult validationResult = workflow.getSerializer().deserialize(messageText);
 					consumer.consumeValidationOutputWithNotifications(validationResult);
 				} catch (Exception ex) {
 					workflow.reportInternalException(ex);

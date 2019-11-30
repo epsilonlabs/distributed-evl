@@ -3,7 +3,7 @@ package org.eclipse.epsilon.evl.distributed.crossflow;
 
 import javax.annotation.Generated;
 
-@Generated(value = "org.eclipse.scava.crossflow.java.Steam2Consumer", date = "2019-10-18T14:16:53.865523500+01:00[Europe/London]")
+@Generated(value = "org.eclipse.scava.crossflow.java.Steam2Consumer", date = "2019-11-30T17:04:27.022703400Z")
 public interface ValidationOutputConsumer {
 	
 	void consumeValidationOutputWithNotifications(ValidationResult validationResult) throws Exception;
