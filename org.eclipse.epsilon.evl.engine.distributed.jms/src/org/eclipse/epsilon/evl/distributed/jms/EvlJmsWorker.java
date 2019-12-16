@@ -251,7 +251,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 	@Override
 	public String toString() {
 		if (StringUtil.isEmpty(toStringCached)) {
-			toStringCached = getClass().getSimpleName()+"-"+hashCode()+" (session "+sessionID+")";
+			toStringCached = getClass().getSimpleName()+" "+hashCode()+" (session "+sessionID+")";
 		}
 		return toStringCached;
 	}
