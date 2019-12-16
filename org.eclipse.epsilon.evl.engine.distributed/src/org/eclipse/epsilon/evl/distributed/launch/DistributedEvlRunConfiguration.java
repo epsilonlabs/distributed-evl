@@ -48,7 +48,7 @@ public abstract class DistributedEvlRunConfiguration extends EvlRunConfiguration
 		}
 		
 		protected void preBuild() {
-			for (StringProperties props : modelsAndProperties.values()) {
+			if (modelsAndProperties != null) for (StringProperties props : modelsAndProperties.values()) {
 				props.replaceAll((k, v) -> {
 					// TODO better way to determine if there is a path?
 					if (v instanceof String) {

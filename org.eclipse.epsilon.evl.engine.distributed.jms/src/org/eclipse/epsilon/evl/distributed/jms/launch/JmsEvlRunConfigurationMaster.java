@@ -18,7 +18,6 @@ import org.eclipse.epsilon.common.util.OperatingSystem;
 import org.eclipse.epsilon.evl.distributed.jms.EvlJmsWorker;
 import org.eclipse.epsilon.evl.distributed.jms.EvlModuleJmsMaster;
 import org.eclipse.epsilon.evl.distributed.jms.execute.context.EvlContextJmsMaster;
-import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfiguration;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfigurationMaster;
 
 /**
@@ -44,9 +43,13 @@ public class JmsEvlRunConfigurationMaster extends DistributedEvlRunConfiguration
 		}
 	}
 
-	public JmsEvlRunConfigurationMaster(Builder<? extends DistributedEvlRunConfiguration, ?> builder) {
+	public JmsEvlRunConfigurationMaster(Builder<? extends DistributedEvlRunConfigurationMaster, ?> builder) {
 		super(builder);
 		getModule().setLogger(this::writeOut);
+	}
+	
+	public static Builder<? extends JmsEvlRunConfigurationMaster, ?> Builder() {
+		return new Builder<>(JmsEvlRunConfigurationMaster.class);
 	}
 	
 	@Override
