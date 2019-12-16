@@ -48,8 +48,9 @@ public abstract class DistributedEvlRunConfiguration extends EvlRunConfiguration
 		}
 		
 		protected void preBuild() {
+			System.setProperty(BASE_PATH_SYSTEM_PROPERTY, basePath);
 			if (modelsAndProperties != null) for (StringProperties props : modelsAndProperties.values()) {
-				props.replaceAll((k, v) -> {
+				if (props != null) props.replaceAll((k, v) -> {
 					// TODO better way to determine if there is a path?
 					if (v instanceof String) {
 						return appendBasePathIfNeeded(basePath, (String) v);
@@ -59,7 +60,6 @@ public abstract class DistributedEvlRunConfiguration extends EvlRunConfiguration
 			}
 			script = getAbsolutePath(script, basePath);
 			outputFile = getAbsolutePath(outputFile, basePath);
-			System.setProperty(BASE_PATH_SYSTEM_PROPERTY, basePath);
 		}
 		
 		protected R buildInstance() {
