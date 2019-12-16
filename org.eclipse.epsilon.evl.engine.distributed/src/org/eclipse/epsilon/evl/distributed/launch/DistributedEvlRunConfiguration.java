@@ -10,6 +10,7 @@
 package org.eclipse.epsilon.evl.distributed.launch;
 
 import static java.net.URLEncoder.encode;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
 import org.eclipse.epsilon.common.util.OperatingSystem;
@@ -56,12 +57,8 @@ public abstract class DistributedEvlRunConfiguration extends EvlRunConfiguration
 					return v;
 				});
 			}
-			if (script != null && !script.isAbsolute()) {
-				script = Paths.get(basePath, script.toString());
-			}
-			if (outputFile != null && !outputFile.isAbsolute()) {
-				outputFile = Paths.get(basePath, outputFile.toString());
-			}
+			script = getAbsolutePath(script, basePath);
+			outputFile = getAbsolutePath(outputFile, basePath);
 			System.setProperty(BASE_PATH_SYSTEM_PROPERTY, basePath);
 		}
 		
@@ -110,6 +107,16 @@ public abstract class DistributedEvlRunConfiguration extends EvlRunConfiguration
 			path = path.substring(driveIndex - 1);
 		}
 		return path.replace("\\", "/");
+	}
+	
+	static Path getAbsolutePath(Path pathToAssign, String basePath) {
+		if (pathToAssign != null && !pathToAssign.isAbsolute()) {
+			String pathStr = pathToAssign.toString();
+			if (!(pathToAssign = Paths.get(appendBasePathIfNeeded(basePath, pathStr))).isAbsolute()) {
+				pathToAssign = Paths.get(basePath, pathStr);
+			}
+		}
+		return pathToAssign;
 	}
 	
 	static String appendBasePathIfNeeded(String basePath, String relPath) {
