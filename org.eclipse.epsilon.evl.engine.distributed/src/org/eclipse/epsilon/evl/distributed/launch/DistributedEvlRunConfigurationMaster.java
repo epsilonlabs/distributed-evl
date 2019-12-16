@@ -84,6 +84,7 @@ public class DistributedEvlRunConfigurationMaster extends DistributedEvlRunConfi
 		protected void preBuild() {
 			super.preBuild();
 			getJobSplitter();
+			module = createModule();
 		}
 		
 		protected Builder() {
@@ -143,18 +144,23 @@ public class DistributedEvlRunConfigurationMaster extends DistributedEvlRunConfi
 			String outDir = outputFile.toString();
 			config.put(OUTPUT_DIR, stripBasePath ? removeBasePath(outDir) : outDir);
 		}
-		config.put(NUM_MODELS, modelsAndProperties.size());
-			
-		Iterator<Entry<IModel, StringProperties>> modelPropertiesIter = modelsAndProperties.entrySet().iterator();
+		config.put(NUM_MODELS, modelsAndProperties != null ? modelsAndProperties.size() : 0);
 		
-		for (int i = 0; modelPropertiesIter.hasNext(); i++) {
-			Entry<IModel, StringProperties> modelProp = modelPropertiesIter.next();
-			config.put(MODEL_PREFIX+i,
-				modelProp.getKey().getClass().getName().replace("org.eclipse.epsilon.emc.", "")+"#"+
-				modelProp.getValue().entrySet().stream()
+		if (modelsAndProperties != null) {
+			Iterator<Entry<IModel, StringProperties>> modelPropertiesIter = modelsAndProperties.entrySet().iterator();
+			for (int i = 0; modelPropertiesIter.hasNext(); i++) {
+				Entry<IModel, StringProperties> modelProp = modelPropertiesIter.next();
+				IModel propKey = modelProp.getKey();
+				if (modelProp == null || modelProp.getKey() == null) continue;
+				
+				String key = propKey.getClass().getName().replace("org.eclipse.epsilon.emc.", "");
+				StringProperties propValue = modelProp.getValue();
+				String value = propValue != null ? propValue.entrySet().stream()
 					.map(entry -> entry.getKey() + "=" + (stripBasePath ? removeBasePath(entry.getValue()) : entry.getValue()))
-					.collect(Collectors.joining(","))
-			);
+					.collect(Collectors.joining(",")) : null;
+				
+				config.put(MODEL_PREFIX+i, key+"#"+value);
+			}
 		}
 		
 		if (parameters != null) {

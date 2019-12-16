@@ -10,8 +10,6 @@
 package org.eclipse.epsilon.evl.distributed.jms.launch;
 
 import java.net.URI;
-import org.eclipse.epsilon.evl.distributed.jms.EvlModuleJmsMaster;
-import org.eclipse.epsilon.evl.distributed.jms.execute.context.EvlContextJmsMaster;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlMasterConfigParser;
 
 /**
@@ -50,8 +48,5 @@ public class JmsEvlMasterConfigParser<R extends JmsEvlRunConfigurationMaster, B 
 			builder.host = hostUri.toString();
 			if (hostUri.getPort() <= 0) builder.host += ":61616";
 		}
-		
-		EvlContextJmsMaster context = new EvlContextJmsMaster(builder.parallelism, builder.distributedParallelism, builder.getJobSplitter(), builder.host, builder.sessionID);
-		builder.module = new EvlModuleJmsMaster(context);
 	}
 }
