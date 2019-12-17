@@ -43,6 +43,10 @@ public class DistributedEvlRunConfigurationSlave extends DistributedEvlRunConfig
 		}
 	}
 	
+	public static Builder<? extends DistributedEvlRunConfigurationSlave, ?> Builder() {
+		return new Builder<>(DistributedEvlRunConfigurationSlave.class);
+	}
+	
 	/**
 	 * This constructor is to be called by workers as a convenient
 	 * data holder for initializing Epsilon.
@@ -83,7 +87,7 @@ public class DistributedEvlRunConfigurationSlave extends DistributedEvlRunConfig
 		
 		String evlScriptPath = Objects.toString(config.get(EVL_SCRIPT), null);
 		if (evlScriptPath == null) throw new IllegalStateException("No script path!");
-		evlScriptPath = evlScriptPath.replace(masterBasePath, normBasePath);
+		evlScriptPath = evlScriptPath.replace(masterBasePath, normBasePath).replace(normBasePath+"//", "/");
 		
 		Map<IModel, StringProperties> localModelsAndProperties;
 		if (config.containsKey(IGNORE_MODELS)) {
@@ -95,7 +99,10 @@ public class DistributedEvlRunConfigurationSlave extends DistributedEvlRunConfig
 			for (int i = 0; i < numModels; i++) {
 				String modelConfig = Objects.toString(config.get(MODEL_PREFIX+i), null);
 				if (modelConfig != null) {
-					modelsConfig[i] = modelConfig.replace(masterBasePath, normBasePath);
+					modelsConfig[i] = modelConfig
+						.replace(masterBasePath, normBasePath)
+						.replace(normBasePath+"//", "/")
+						.replace("\\:", ":");
 				}
 			}
 			localModelsAndProperties = parseModelParameters(modelsConfig);

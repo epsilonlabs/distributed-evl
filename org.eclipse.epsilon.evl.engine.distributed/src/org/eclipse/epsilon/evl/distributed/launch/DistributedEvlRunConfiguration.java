@@ -69,6 +69,7 @@ public abstract class DistributedEvlRunConfiguration extends EvlRunConfiguration
 		@Override
 		public final R build() {
 			preBuild();
+			if (module == null) module = createModule();
 			return buildInstance();
 		}
 		
@@ -146,16 +147,18 @@ public abstract class DistributedEvlRunConfiguration extends EvlRunConfiguration
 	
 	protected String removeBasePath(Object fullPath) {
 		String fpStr = Objects.toString(fullPath);
+		String fpNormal = fpStr.replace("\\", "/");
 		try {
-			String fpNormal = fpStr
-				.replace("\\", "/")
-				.replace(
+			fpNormal = fpNormal
+				/*.replace(
 					java.net.URI.create(encode(basePath, ENCODING))
 					.normalize().toString(), BASE_PATH_SUBSTITUTE
-				)
-				.replace(basePath.replace(" ", "%20"), BASE_PATH_SUBSTITUTE);
+				)*/
+				.replace(basePath.replace(" ", "%20"), BASE_PATH_SUBSTITUTE)
+				.replace(basePath, BASE_PATH_SUBSTITUTE)
+				.replace(BASE_PATH_SUBSTITUTE+"//", BASE_PATH_SUBSTITUTE+"/");
 			
-			return fpNormal.replace(basePath, BASE_PATH_SUBSTITUTE);
+			return fpNormal;
 		}
 		catch (Exception ex) {
 			return fpStr;

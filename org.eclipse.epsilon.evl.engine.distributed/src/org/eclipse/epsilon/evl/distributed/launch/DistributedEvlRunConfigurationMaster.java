@@ -84,7 +84,6 @@ public class DistributedEvlRunConfigurationMaster extends DistributedEvlRunConfi
 		protected void preBuild() {
 			super.preBuild();
 			getJobSplitter();
-			module = createModule();
 		}
 		
 		protected Builder() {
@@ -150,9 +149,9 @@ public class DistributedEvlRunConfigurationMaster extends DistributedEvlRunConfi
 			Iterator<Entry<IModel, StringProperties>> modelPropertiesIter = modelsAndProperties.entrySet().iterator();
 			for (int i = 0; modelPropertiesIter.hasNext(); i++) {
 				Entry<IModel, StringProperties> modelProp = modelPropertiesIter.next();
+				if (modelProp == null) continue;
 				IModel propKey = modelProp.getKey();
-				if (modelProp == null || modelProp.getKey() == null) continue;
-				
+				if (propKey == null) continue;
 				String key = propKey.getClass().getName().replace("org.eclipse.epsilon.emc.", "");
 				StringProperties propValue = modelProp.getValue();
 				String value = propValue != null ? propValue.entrySet().stream()
