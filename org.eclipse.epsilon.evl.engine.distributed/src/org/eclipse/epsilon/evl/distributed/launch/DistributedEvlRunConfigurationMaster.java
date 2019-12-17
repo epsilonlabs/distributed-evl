@@ -9,12 +9,8 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.launch;
 
-import static java.net.URLDecoder.decode;
-import static java.net.URLEncoder.encode;
 import static org.eclipse.epsilon.common.util.profiling.BenchmarkUtils.profileExecutionStage;
 import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -95,31 +91,15 @@ public class DistributedEvlRunConfigurationMaster extends DistributedEvlRunConfi
 	}
 	
 	protected final boolean localStandalone;
-	protected String normalBasePath;
 	
 	public DistributedEvlRunConfigurationMaster(DistributedEvlRunConfigurationMaster other) {
 		super(other);
 		this.localStandalone = other.localStandalone;
-		this.normalBasePath = other.normalBasePath;
 	}
 	
 	public DistributedEvlRunConfigurationMaster(Builder<? extends DistributedEvlRunConfigurationMaster, ?> builder) {
 		super(builder.skipModelLoading());
 		this.localStandalone = builder.localStandalone;
-	}
-	
-	protected void setNormalBasePath(String path) {
-		if (path != null) {
-			try {
-				normalBasePath = decode(
-					java.net.URI.create(encode(path, ENCODING)).normalize().toString(),
-					ENCODING
-				);
-			}
-			catch (IllegalArgumentException | UnsupportedEncodingException iax) {
-				normalBasePath = Paths.get(path).normalize().toString();
-			}
-		}
 	}
 	
 	/**

@@ -9,7 +9,6 @@
 **********************************************************************/
 package org.eclipse.epsilon.evl.distributed.launch;
 
-import static java.net.URLEncoder.encode;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
