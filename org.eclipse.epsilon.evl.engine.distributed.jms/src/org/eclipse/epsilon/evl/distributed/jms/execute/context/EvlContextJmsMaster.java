@@ -60,6 +60,7 @@ public class EvlContextJmsMaster extends EvlContextDistributedMaster {
 				throw new RuntimeException(ex);
 			}
 		}
+		connectionFactory = null;
 	}
 	
 	@Override
