@@ -76,7 +76,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 		END_JOBS_TOPIC = "no_more_jobs",
 		STOP_TOPIC = "shortcircuit",
 		REGISTRATION_QUEUE = "registration",
-		RESULTS_QUEUE_NAME = "results",
+		RESULTS_QUEUE = "results",
 		LAST_MESSAGE_PROPERTY = "lastMsg",
 		NUM_JOBS_PROCESSED_PROPERTY = "jobsProcessed",
 		CONFIG_HASH_PROPERTY = "configChecksum";
@@ -173,7 +173,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	protected final void executeWorkerJobs(Collection<? extends Serializable> jobs) throws EolRuntimeException {
 		try (JMSContext resultContext = connectionContext.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {
 			
-			resultContext.createConsumer(resultContext.createQueue(RESULTS_QUEUE_NAME + getContext().getSessionId()))
+			resultContext.createConsumer(resultContext.createQueue(RESULTS_QUEUE + getContext().getSessionId()))
 				.setMessageListener(getResultsMessageListener());
 			
 			try (JMSContext jobContext = resultContext.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {		

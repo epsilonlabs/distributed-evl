@@ -13,7 +13,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
-import java.util.concurrent.CompletableFuture;
 import org.eclipse.epsilon.common.util.OperatingSystem;
 import org.eclipse.epsilon.evl.distributed.jms.EvlJmsWorker;
 import org.eclipse.epsilon.evl.distributed.jms.EvlModuleJmsMaster;
@@ -82,7 +81,7 @@ public class JmsEvlRunConfigurationMaster extends DistributedEvlRunConfiguration
 		final String[] commandArr = commands.toArray(new String[commands.size()]);
 		
 		for (int i = 0; i < numWorkers; i++) {
-			CompletableFuture.runAsync(() -> {
+			new Thread(() -> {
 				try {
 					OperatingSystem.executeCommand(commandArr);
 				}
@@ -90,7 +89,7 @@ public class JmsEvlRunConfigurationMaster extends DistributedEvlRunConfiguration
 					// TODO Auto-generated catch block
 					ex.printStackTrace();
 				}
-			});
+			}).start();
 		}
 	}
 }

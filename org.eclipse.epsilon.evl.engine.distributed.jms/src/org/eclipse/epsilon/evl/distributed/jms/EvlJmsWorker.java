@@ -174,7 +174,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 	 */
 	void processJobs(JMSConsumer jobConsumer, JMSContext replyContext) throws Exception {
 		JMSProducer resultSender = replyContext.createProducer().setAsync(null);
-		Destination resultDest = replyContext.createQueue(RESULTS_QUEUE_NAME+sessionID);
+		Destination resultDest = replyContext.createQueue(RESULTS_QUEUE+sessionID);
 		log("Began processing jobs");
 		EvlContextDistributedSlave context = configContainer.getModule().getContext();
 		
@@ -228,7 +228,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 		finishedMsg.setBooleanProperty(LAST_MESSAGE_PROPERTY, true);
 		finishedMsg.setIntProperty(NUM_JOBS_PROCESSED_PROPERTY, jobsProcessed);
 		finishedMsg.setObject(stopBody != null ? stopBody : context.getSerializableRuleExecutionTimes());
-		session.createProducer().send(session.createQueue(RESULTS_QUEUE_NAME+sessionID), finishedMsg);
+		session.createProducer().send(session.createQueue(RESULTS_QUEUE+sessionID), finishedMsg);
 		
 		log("Signalled completion (processed "+jobsProcessed+" jobs)");
 	}
