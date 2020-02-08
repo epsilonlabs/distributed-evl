@@ -101,7 +101,7 @@ public class JobSplitter {
 			masterProportion = 1;
 		}
 		else if (masterProportion > 1 || masterProportion < 0) {
-			masterProportion = 1/(1.0d + distributedParallelism);
+			masterProportion = distributedParallelism > 0 ? 1/(1.0d + distributedParallelism) : 0;
 		}
 		
 		int numMasterJobs = (int) (masterProportion * numTotalJobs);
