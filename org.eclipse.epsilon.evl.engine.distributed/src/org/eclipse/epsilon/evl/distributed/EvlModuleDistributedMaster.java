@@ -85,7 +85,7 @@ public abstract class EvlModuleDistributedMaster extends EvlModuleDistributed {
 		postExecution();
 		return results;
 	}
-	
+
 	@Override
 	protected final void checkConstraints() throws EolRuntimeException {
 		JobSplitter splitter = getContext().getJobSplitter();

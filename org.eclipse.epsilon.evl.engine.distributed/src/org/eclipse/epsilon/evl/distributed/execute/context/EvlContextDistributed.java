@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
+import org.eclipse.epsilon.eol.execute.context.IEolContext;
 import org.eclipse.epsilon.eol.execute.control.ExecutionController;
 import org.eclipse.epsilon.eol.execute.control.ExecutionProfiler;
 import org.eclipse.epsilon.erl.dom.*;
@@ -25,7 +26,7 @@ import org.eclipse.epsilon.evl.execute.context.concurrent.EvlContextParallel;
  * @author Sina Madani
  * @since 1.6
  */
-public abstract class EvlContextDistributed extends EvlContextParallel {
+public class EvlContextDistributed extends EvlContextParallel {
 
 	public EvlContextDistributed() {
 		super();
@@ -33,6 +34,12 @@ public abstract class EvlContextDistributed extends EvlContextParallel {
 	
 	public EvlContextDistributed(int localParallelism) {
 		super(localParallelism);
+	}
+	
+	public EvlContextDistributed(IEolContext other) {
+		super(other);
+		executorService = newExecutorService();
+		initThreadLocals();
 	}
 	
 	@Override

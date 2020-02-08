@@ -83,13 +83,15 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	
 	private final Collection<Serializable> responses = new java.util.HashSet<>();
 	private final Object criticalConditionObj = this;
-	private JMSContext connectionContext;
+	private Consumer<String> logger = System.out::println;
+	JMSContext connectionContext;
 	protected volatile int jobsProcessedByWorkers;
 	protected int jobsSentToWorkers;
-	private Consumer<String> logger = System.out::println;
+	Thread localWorkerThread;
 	
 	public EvlModuleJmsMaster(EvlContextJmsMaster context) {
 		super(context);
+		context.setModule(this);
 	}
 	
 	public void setLogger(Consumer<String> logger) {
@@ -98,7 +100,6 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	
 	@Override
 	protected void executeMasterJobs(Collection<?> jobs) throws EolRuntimeException {
-		log("Total number of jobs = "+getAllJobs().size());
 		super.executeMasterJobs(jobs);
 		log("Finished processing "+jobs.size()+" master jobs");
 	}
@@ -109,8 +110,9 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 		final int sessionId = evlContext.getSessionId();
 		try {
 			connectionContext = evlContext.getConnectionFactory().createContext(JMSContext.AUTO_ACKNOWLEDGE);
-				
 			log("Connected to "+evlContext.getBrokerHost()+" session "+sessionId);
+			localWorkerThread = new Thread(createLocalWorker());
+			
 			// Initial registration of workers
 			final Destination tempDest = connectionContext.createTemporaryQueue();
 			final JMSProducer regProducer = connectionContext.createProducer();
@@ -175,6 +177,10 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 			
 			resultContext.createConsumer(resultContext.createQueue(RESULTS_QUEUE + getContext().getSessionId()))
 				.setMessageListener(getResultsMessageListener());
+			
+			if (localWorkerThread != null) {
+				localWorkerThread.start();
+			}
 			
 			try (JMSContext jobContext = resultContext.createContext(JMSContext.AUTO_ACKNOWLEDGE)) {		
 				final JMSProducer jobsProducer = jobContext.createProducer().setAsync(null);
@@ -287,6 +293,10 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 		}
 	}
 	
+	protected Runnable createLocalWorker() throws Exception {
+		return new EvlJmsWorker(this);
+	}
+	
 	/**
 	 * Main results processing listener. Implementations are expected to handle both results processing and
 	 * signalling of terminal waiting condition once all workers have indicated all results have been
@@ -340,6 +350,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 				throw new JMSRuntimeException(jmx.getMessage());
 			}
 			catch (EolRuntimeException ex) {
+				ex.printStackTrace();
 				stopAllWorkers(ex);
 				throw new RuntimeException(ex);
 			}

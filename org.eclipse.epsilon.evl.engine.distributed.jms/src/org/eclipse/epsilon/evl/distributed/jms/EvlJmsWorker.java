@@ -21,19 +21,21 @@ import org.eclipse.epsilon.common.function.CheckedRunnable;
 import org.eclipse.epsilon.common.util.StringUtil;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributedSlave;
+import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributed;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributedSlave;
 import org.eclipse.epsilon.evl.distributed.jms.internal.ConnectionFactoryObtainer;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfigurationSlave;
 
 /**
- * Reactive slave worker.
+ * Reactive slave worker. May be used as a standalone worker on a separate JVM,
+ * or invoked by {@link EvlModuleJmsMaster}, reusing the same execution context.
  * 
  * @see EvlModuleDistributedSlave
  * @see EvlModuleJmsMaster
  * @author Sina Madani
  * @since 1.6
  */
-public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoCloseable {
+public final class EvlJmsWorker implements CheckedRunnable<Exception> {
 
 	public static void main(String... args) throws Exception {
 		if (args.length < 2) throw new java.lang.IllegalStateException(
@@ -57,9 +59,8 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 		}
 		
 		ConnectionFactory connectionFactory = ConnectionFactoryObtainer.get(host);
-		try (EvlJmsWorker worker = new EvlJmsWorker(connectionFactory.createContext(), basePath, sessionID)) {
-			System.out.println("Worker started for session "+sessionID);
-			worker.run();
+		try {
+			new EvlJmsWorker(connectionFactory.createContext(), basePath, sessionID).run();
 		}
 		finally {
 			if (connectionFactory instanceof AutoCloseable) {
@@ -72,6 +73,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 	final String basePath;
 	final int sessionID;
 	DistributedEvlRunConfigurationSlave configContainer;
+	EvlContextDistributed context;
 	Serializable stopBody;
 	volatile boolean finished;
 	int jobsProcessed = 0;
@@ -79,10 +81,18 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 	String toStringCached;
 	
 	
-	public EvlJmsWorker(JMSContext connection, String basePath, int sessionID) {
+	EvlJmsWorker(JMSContext connection, String basePath, int sessionID) {
 		this.jmsConnection = connection;
 		this.basePath = basePath;
 		this.sessionID = sessionID;
+		System.out.println("Worker started for session "+sessionID);
+	}
+	
+	EvlJmsWorker(EvlModuleJmsMaster master) {
+		context = new EvlContextDistributed(master.getContext());
+		sessionID = master.getContext().getSessionId();
+		jmsConnection = master.connectionContext;
+		basePath = null;
 	}
 	
 	@Override
@@ -119,7 +129,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 						
 						// Tell the master we're setup and ready to work. We need to send the message here
 						// because if the master is fast we may receive jobs before we have even created the listener!
-						ackSender.run();
+						if (ackSender != null) ackSender.run();
 						
 						processJobs(jobConsumer, resultContext);
 						onCompletion(resultContext);
@@ -130,6 +140,9 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 	}
 	
 	Runnable setup(JMSContext regContext) throws Exception {
+		// Don't wait for config if launched from the master
+		if (basePath == null) return null;
+		
 		// Announce our presence to the master
 		Queue regQueue = regContext.createQueue(REGISTRATION_QUEUE+sessionID);
 		JMSProducer regProducer = regContext.createProducer();
@@ -153,6 +166,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 			configContainer = DistributedEvlRunConfigurationSlave.parseJobParameters(configMap, basePath);
 			logger = configContainer::writeOut;
 			configContainer.preExecute();
+			context = configContainer.getModule().getContext();
 
 			// This is to acknowledge when we have completed loading the script(s) and model(s) successfully
 			configuredAckMsg.setIntProperty(CONFIG_HASH_PROPERTY, configMap.hashCode());
@@ -176,7 +190,6 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 		JMSProducer resultSender = replyContext.createProducer().setAsync(null);
 		Destination resultDest = replyContext.createQueue(RESULTS_QUEUE+sessionID);
 		log("Began processing jobs");
-		EvlContextDistributedSlave context = configContainer.getModule().getContext();
 		
 		Message msg;
 		while ((msg = finished ? jobConsumer.receiveNoWait() : jobConsumer.receive()) != null) {
@@ -186,8 +199,13 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 					Serializable currentJob = ((ObjectMessage) msg).getObject();
 					ObjectMessage resultsMsg = null;
 					try {
-						Serializable resultObj = (Serializable) context.executeJobStateless(currentJob);
-						resultsMsg = replyContext.createObjectMessage(resultObj);
+						if (context instanceof EvlContextDistributedSlave) {
+							Object resultObj = ((EvlContextDistributedSlave) context).executeJobStateless(currentJob);
+							resultsMsg = replyContext.createObjectMessage((Serializable) resultObj);
+						}
+						else {
+							context.executeJob(currentJob);
+						}
 						++jobsProcessed;
 					}
 					catch (EolRuntimeException eox) {
@@ -220,16 +238,17 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 	}
 	
 	void onCompletion(JMSContext session) throws Exception {
-		EvlContextDistributedSlave context = configContainer.getModule().getContext();
-		// This is to ensure execution times are merged into main thread
-		context.endParallelTask();
-		
 		ObjectMessage finishedMsg = session.createObjectMessage();
 		finishedMsg.setBooleanProperty(LAST_MESSAGE_PROPERTY, true);
 		finishedMsg.setIntProperty(NUM_JOBS_PROCESSED_PROPERTY, jobsProcessed);
-		finishedMsg.setObject(stopBody != null ? stopBody : context.getSerializableRuleExecutionTimes());
-		session.createProducer().send(session.createQueue(RESULTS_QUEUE+sessionID), finishedMsg);
 		
+		if (context instanceof EvlContextDistributedSlave) {
+			// This is to ensure execution times are merged into main thread
+			context.endParallelTask();
+			finishedMsg.setObject(stopBody != null ? stopBody : context.getSerializableRuleExecutionTimes());
+		}
+		
+		session.createProducer().send(session.createQueue(RESULTS_QUEUE+sessionID), finishedMsg);
 		log("Signalled completion (processed "+jobsProcessed+" jobs)");
 	}
 	
@@ -239,13 +258,6 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception>, AutoClose
 
 	void log(Object message) {
 		logger.accept("["+this.toString()+"] "+LocalTime.now()+" "+message);
-	}
-	
-	@Override
-	public void close() throws Exception {
-		if (jmsConnection != null) {
-			jmsConnection.close();
-		}
 	}
 	
 	@Override
