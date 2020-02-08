@@ -6,7 +6,7 @@ Command-line invocation requires [Apache Commons CLI 1.4](https://commons.apache
 
 Invoke the main class (as described in the META-INF/MANIFEST.MF) with the following arguments:
 
-"relative/path/to/script.evl" -models "emf.EmfModel#cached=true,concurrent=true,fileBasedMetamodelUri=file:///relative/path/to/metamodel.ecore,modelUri=file:///relative/path/to/model.xmi" -profile -basePath "/absolute/path/to/resources" -host tcp://brokerhost:61616 -session [session_ID] -shuffle -workers [num_workers] -outfile "relative/path/to/output.log"
+"relative/path/to/script.evl" -models "emf.EmfModel#cached=true,concurrent=true,fileBasedMetamodelUri=file:///relative/path/to/metamodel.ecore,modelUri=file:///relative/path/to/model.xmi" -profile -basePath "/absolute/path/to/resources" -host tcp://brokerhost:61616 -session [sessionID] -shuffle -bf [number of cores] -outfile "relative/path/to/output.log"
 
 
 You can also add the following options:
@@ -17,7 +17,7 @@ You can also add the following options:
 
 -workers [number] -- The number of workers you expect
 
-It is strongly recommended to specify the "bf" argument. This should be at least as many as the maximum number of logical cores for any given computer in your distributed system.
+It is strongly recommended to specify the "bf" argument. This should be at least as many as the maximum number of hardware threads (logical cores) for any given computer in your distributed system.
 
 Specifying either the -masterProportion or -distributedParallelism parameters will statically assign a proportion of jobs to the master. To ensure all jobs executed on the master are dynamically load balanced, do not specify either of these options.
 
