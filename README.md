@@ -13,11 +13,13 @@ You can also add the following options:
 
 -bf [number] -- The batch size (will set to use the batch-based module)
 
--mp [number] -- Master proportion (i.e. percetnage of jobs processed on the master, between 0 and 1)
+-mp [number] -- Master proportion (i.e. percentage of jobs statically assigned to the master, between 0 and 1)
+
+-workers [number] -- The number of workers you expect
 
 It is strongly recommended to specify the "bf" argument. This should be at least as many as the maximum number of logical cores for any given computer in your distributed system.
 
-You must specify the number of workers you expect to connect with the -workers option.
+Specifying either the -masterProportion or -distributedParallelism parameters will statically assign a proportion of jobs to the master. To ensure all jobs executed on the master are dynamically load balanced, do not specify either of these options.
 
 Job randomisation order can be disabled with the -noshuffle option, though it is only recommended for debugging.
 
