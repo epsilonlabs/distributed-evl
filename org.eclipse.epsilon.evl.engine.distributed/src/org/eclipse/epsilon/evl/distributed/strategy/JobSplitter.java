@@ -53,15 +53,16 @@ public class JobSplitter {
 			batchSize = context.getParallelism();
 		}
 		else if (batchSize == 0) {
-			batchSize = 1;
+			batchSize = numTotalJobs;
 		}
 		
 		if (batchSize >= 1) {
 			chunks = (int) batchSize;
 		}
 		else {
+			assert batchSize < 1 && batchSize > 0;
 			final int adjusted = Math.max(context.getDistributedParallelism(), 1);
-			chunks = (int) (numTotalJobs * (batchSize / adjusted));
+			chunks = (int) (numTotalJobs * ((1-batchSize) / adjusted));
 		}
 		return JobBatch.getBatches(numTotalJobs, chunks);
 	}
