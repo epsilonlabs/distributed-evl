@@ -255,10 +255,10 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	 */
 	protected void beforeSend(AtomicInteger workersReady) throws Exception {
 		log("Waiting for workers to load configuration...");
-		int expected = Math.max(getContext().getDistributedParallelism(), 1);
 		// Need to make sure someone is listening otherwise messages might be lost
-		while (workersReady.get() < expected) synchronized (workersReady) {
-			workersReady.wait();
+		while (localWorkerThread == null && workersReady.get() < Math.max(getContext().getDistributedParallelism(), 1))
+			synchronized (workersReady) {
+				workersReady.wait();
 		}
 	}
 	

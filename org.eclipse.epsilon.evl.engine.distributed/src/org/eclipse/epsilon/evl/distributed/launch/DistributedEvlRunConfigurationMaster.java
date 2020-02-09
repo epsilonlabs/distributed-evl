@@ -36,7 +36,7 @@ public class DistributedEvlRunConfigurationMaster extends DistributedEvlRunConfi
 		protected static final double UNINTIALIZED_DOUBLE = -Double.MAX_VALUE;
 		
 		JobSplitter jobSplitter;
-		public int distributedParallelism;
+		public int distributedParallelism = Integer.MIN_VALUE;
 		public boolean shuffle = true, localStandalone;
 		public double
 			batchFactor = UNINTIALIZED_DOUBLE,
