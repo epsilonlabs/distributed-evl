@@ -9,17 +9,16 @@
     <relativePath>../org.eclipse.epsilon.evl.engine.distributed/pom.xml</relativePath>
   </parent>
   <artifactId>org.eclipse.epsilon.evl.engine.distributed.flink</artifactId>
-  <!--packaging>eclipse-plugin</packaging-->
   <dependencies>
     <dependency>
         <groupId>org.apache.flink</groupId>
         <artifactId>flink-java</artifactId>
-        <version>1.9.1</version>
+        <version>1.10.0</version>
      </dependency>
      <dependency>
         <groupId>org.apache.flink</groupId>
         <artifactId>flink-clients_2.12</artifactId>
-        <version>1.9.1</version>
+        <version>1.10.0</version>
      </dependency>
   </dependencies>
 </project>

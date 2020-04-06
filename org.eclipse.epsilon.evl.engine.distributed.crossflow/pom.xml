@@ -9,12 +9,4 @@
     <relativePath>../org.eclipse.epsilon.evl.engine.distributed/pom.xml</relativePath>
   </parent>
   <artifactId>org.eclipse.epsilon.evl.engine.distributed.crossflow</artifactId>
-  <!--packaging>eclipse-plugin</packaging-->
-  <!--dependencies>
-    <dependency>
-        <groupId></groupId>
-        <artifactId></artifactId>
-        <version>..</version>
-     </dependency>
-  </dependencies-->
 </project>
