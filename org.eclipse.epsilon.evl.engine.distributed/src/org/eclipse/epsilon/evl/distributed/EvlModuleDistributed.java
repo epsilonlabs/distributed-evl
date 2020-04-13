@@ -13,7 +13,7 @@ import java.util.Iterator;
 import java.util.Objects;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.erl.execute.data.RuleAtom;
-import org.eclipse.epsilon.evl.concurrent.atomic.EvlModuleParallelContextAtoms;
+import org.eclipse.epsilon.evl.concurrent.EvlModuleParallelContextAtoms;
 import org.eclipse.epsilon.evl.distributed.execute.context.EvlContextDistributed;
 
 /**

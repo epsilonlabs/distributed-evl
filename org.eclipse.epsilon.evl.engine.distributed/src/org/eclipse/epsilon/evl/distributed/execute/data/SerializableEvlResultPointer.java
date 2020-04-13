@@ -12,7 +12,7 @@ package org.eclipse.epsilon.evl.distributed.execute.data;
 import java.util.Objects;
 import org.eclipse.epsilon.eol.exceptions.EolRuntimeException;
 import org.eclipse.epsilon.erl.execute.data.JobBatch;
-import org.eclipse.epsilon.evl.concurrent.atomic.EvlModuleParallelAtomic;
+import org.eclipse.epsilon.evl.concurrent.EvlModuleParallelAtoms;
 import org.eclipse.epsilon.evl.distributed.EvlModuleDistributed;
 import org.eclipse.epsilon.evl.dom.Constraint;
 import org.eclipse.epsilon.evl.execute.UnsatisfiedConstraint;
@@ -35,7 +35,7 @@ public class SerializableEvlResultPointer implements SerializableEvlResult, Clon
 	public int index;
 	public String constraintName;
 	
-	public <A extends EvlAtom<?>> A getAtom(EvlModuleParallelAtomic<? extends A> module) throws EolRuntimeException {
+	public <A extends EvlAtom<?>> A getAtom(EvlModuleParallelAtoms<? extends A> module) throws EolRuntimeException {
 		return module.getAllJobs().get(index);
 	}
 	
