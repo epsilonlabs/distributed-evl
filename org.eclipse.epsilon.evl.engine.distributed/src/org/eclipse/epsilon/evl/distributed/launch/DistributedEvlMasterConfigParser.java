@@ -14,7 +14,7 @@ import org.apache.commons.cli.Option;
 public class DistributedEvlMasterConfigParser<R extends DistributedEvlRunConfigurationMaster, B extends DistributedEvlRunConfigurationMaster.Builder<R, B>> extends DistributedEvlConfigParser<R, B> {
 	
 	private final String
-		distributedParallelismOpt = "distributedParallelism",
+		distributedParallelismOpt = DistributedEvlRunConfigurationMaster.DISTRIBUTED_PARALLELISM,
 		shuffleOpt = "no-shuffle",
 		batchesOpt = "batches",
 		masterProportionOpt = "masterProportion",

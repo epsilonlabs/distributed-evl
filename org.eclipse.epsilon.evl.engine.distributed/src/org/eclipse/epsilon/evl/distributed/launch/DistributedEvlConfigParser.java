@@ -28,7 +28,8 @@ public class DistributedEvlConfigParser<R extends DistributedEvlRunConfiguration
 	
 	private final String
 		hostOpt = "host",
-		basePathOpt = "basePath",
+		basePathOpt = DistributedEvlRunConfiguration.BASE_PATH,
+		localParallelismOpt = DistributedEvlRunConfigurationMaster.LOCAL_PARALLELISM,
 		sessionIdOpt = "session";
 	
 	@SuppressWarnings("unchecked")
@@ -53,6 +54,12 @@ public class DistributedEvlConfigParser<R extends DistributedEvlRunConfiguration
 			.desc("Identifier for the execution session")
 			.hasArg()
 			.build()
+		)
+		.addOption(Option.builder()
+			.longOpt(localParallelismOpt)
+			.desc("Same as "+parallelismOpt)
+			.hasArg()
+			.build()
 		);
 	}
 	
@@ -62,5 +69,6 @@ public class DistributedEvlConfigParser<R extends DistributedEvlRunConfiguration
 		builder.host = cmdLine.getOptionValue(hostOpt);
 		builder.basePath = cmdLine.getOptionValue(basePathOpt);
 		builder.sessionID = tryParse(sessionIdOpt, builder.sessionID);
+		builder.parallelism = tryParse(localParallelismOpt, builder.parallelism);
 	}
 }
