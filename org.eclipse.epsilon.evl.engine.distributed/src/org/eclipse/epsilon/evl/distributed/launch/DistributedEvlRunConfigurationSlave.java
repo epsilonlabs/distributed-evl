@@ -82,7 +82,13 @@ public class DistributedEvlRunConfigurationSlave extends DistributedEvlRunConfig
 			}
 		}
 		else {
-			normBasePath = masterBasePath;
+			normBasePath = Objects.toString(config.get(BASE_PATH));
+			if (normBasePath == null) {
+				normBasePath = Objects.toString(config.get(BASE_PATH_SUBSTITUTE));
+			}
+			if (normBasePath == null) {
+				normBasePath = masterBasePath;
+			}
 		}
 		
 		String evlScriptPath = Objects.toString(config.get(EVL_SCRIPT), null);
