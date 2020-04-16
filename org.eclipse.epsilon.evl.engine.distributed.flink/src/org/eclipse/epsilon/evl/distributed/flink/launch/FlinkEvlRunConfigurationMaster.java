@@ -15,7 +15,6 @@ import java.util.Objects;
 import org.apache.flink.configuration.Configuration;
 import org.eclipse.epsilon.evl.distributed.flink.EvlModuleFlinkMaster;
 import org.eclipse.epsilon.evl.distributed.flink.execute.context.EvlContextFlinkMaster;
-import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfiguration;
 import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfigurationMaster;
 
 /**
@@ -44,14 +43,14 @@ public class FlinkEvlRunConfigurationMaster extends DistributedEvlRunConfigurati
 		return new Builder<>(FlinkEvlRunConfigurationMaster.class);
 	}
 	
-	public FlinkEvlRunConfigurationMaster(Builder<? extends DistributedEvlRunConfiguration, ?> builder) {
-		super(builder);
+	public FlinkEvlRunConfigurationMaster(Builder<? extends FlinkEvlRunConfigurationMaster, ?> builder) {
+		super(builder.rawBasePath());
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	protected Serializable getJobParameters(boolean stripBasePath) {
-		final Map<String, ?> confParams = (Map<String, ?>) super.getJobParameters(stripBasePath);
+	protected Serializable getJobParameters() {
+		final Map<String, ?> confParams = (Map<String, ?>) super.getJobParameters();
 		Configuration flinkConf = new Configuration();	
 		for (Map.Entry<String, ?> entry : confParams.entrySet()) {
 			String key = entry.getKey();

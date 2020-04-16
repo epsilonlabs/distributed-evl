@@ -37,7 +37,7 @@ public class DistributedEvlRunConfigurationMaster extends DistributedEvlRunConfi
 		
 		JobSplitter jobSplitter;
 		public int distributedParallelism = Integer.MIN_VALUE;
-		public boolean shuffle = true, localStandalone;
+		public boolean shuffle = true, localStandalone = false, stripBasePath = true;
 		public double
 			batchFactor = UNINTIALIZED_DOUBLE,
 			masterProportion = UNINTIALIZED_DOUBLE;
@@ -63,6 +63,13 @@ public class DistributedEvlRunConfigurationMaster extends DistributedEvlRunConfi
 		}
 		public B withLocalStandalone() {
 			localStandalone = true;
+			return (B) this;
+		}
+		public B rawBasePath() {
+			return stripBaseBath(false);
+		}
+		public B stripBaseBath(boolean anon) {
+			this.stripBasePath = anon;
 			return (B) this;
 		}
 		
@@ -91,15 +98,18 @@ public class DistributedEvlRunConfigurationMaster extends DistributedEvlRunConfi
 	}
 	
 	protected final boolean localStandalone;
+	protected final boolean stripBasePath;
 	
 	public DistributedEvlRunConfigurationMaster(DistributedEvlRunConfigurationMaster other) {
 		super(other);
 		this.localStandalone = other.localStandalone;
+		this.stripBasePath = other.stripBasePath;
 	}
 	
 	public DistributedEvlRunConfigurationMaster(Builder<? extends DistributedEvlRunConfigurationMaster, ?> builder) {
 		super(builder.skipModelLoading());
 		this.localStandalone = builder.localStandalone;
+		this.stripBasePath = builder.stripBasePath;
 	}
 	
 	/**
@@ -107,10 +117,9 @@ public class DistributedEvlRunConfigurationMaster extends DistributedEvlRunConfi
 	 * can then be used by slave modules to re-build an equivalent state. Such information
 	 * includes the parallelism, path to the script, models and variables in the frame stack.
 	 * 
-	 * @param stripBasePath Whether to anonymise / normalise paths containing the basePath.
 	 * @return The configuration properties.
 	 */
-	protected Serializable getJobParameters(boolean stripBasePath) {
+	protected Serializable getJobParameters() {
 		EvlContextDistributedMaster context = getModule().getContext();
 		HashMap<String, Serializable> config = new HashMap<>();
 		
@@ -178,11 +187,11 @@ public class DistributedEvlRunConfigurationMaster extends DistributedEvlRunConfi
 		if (getModule().getContext().getDistributedParallelism() == 0) return;
 		if (profileExecution) {
 			profileExecutionStage(profiledStages, "Sending configuration to workers",
-				() -> getModule().prepareWorkers(getJobParameters(true))
+				() -> getModule().prepareWorkers(getJobParameters())
 			);
 		}
 		else {
-			getModule().prepareWorkers(getJobParameters(true));
+			getModule().prepareWorkers(getJobParameters());
 		}
 	}
 	
