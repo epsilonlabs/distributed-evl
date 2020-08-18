@@ -425,7 +425,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	}
 	
 	@Override
-	protected void postExecution() throws EolRuntimeException {
+	public void postExecution() throws EolRuntimeException {
 		assert getCriticalCondition() && jobsProcessedByWorkers == jobsSentToWorkers : "All worker jobs processed";
 
 		super.postExecution();
