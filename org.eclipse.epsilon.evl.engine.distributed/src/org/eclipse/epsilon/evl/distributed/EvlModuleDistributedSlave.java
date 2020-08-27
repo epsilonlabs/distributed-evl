@@ -57,8 +57,9 @@ public class EvlModuleDistributedSlave extends EvlModuleDistributed {
 	public void prepareExecution() throws EolRuntimeException {
 		super.prepareExecution();
 	}
+	
 	@Override
-	protected void postExecution() throws EolRuntimeException {
+	public void postExecution() throws EolRuntimeException {
 		// Do nothing
 	}
 }
