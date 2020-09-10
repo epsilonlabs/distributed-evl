@@ -189,8 +189,8 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 				
 				for (Serializable job : jobs) {
 					jobsProducer.send(jobsQueue, job);
+					jobsSentToWorkers++;
 				}
-				jobsSentToWorkers += jobs.size();
 				// Signal completion
 				jobsProducer.send(completionTopic, jobContext.createMessage());
 				
@@ -206,6 +206,9 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 		}
 	}
 	
+	/**
+	 * Ensures the critical condition is satisfied before returning.
+	 */
 	private final void waitForWorkersToFinishJobs() {
 		log("Awaiting workers to signal completion...");
 		while (!getCriticalCondition()) synchronized (criticalConditionObj) {
@@ -293,6 +296,11 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 		}
 	}
 	
+	/**
+	 * Implementations may override this to customize the worker implementation.
+	 * @return A worker dedicated to processing the master's jobs on this machine.
+	 * @throws Exception
+	 */
 	protected Runnable createLocalWorker() throws Exception {
 		return new EvlJmsWorker(this);
 	}
@@ -364,7 +372,7 @@ public class EvlModuleJmsMaster extends EvlModuleDistributedMaster {
 	
 	/**
 	 * 
-	 * @param response
+	 * @param response The received message contents.
 	 * @return Whether the job was processed. Returning <code>true</code> will
 	 * not add the response to the collection for post-processing. Returning <code>false</code>
 	 * will deal with the job later once all other jobs have been executed.
