@@ -27,10 +27,23 @@ import org.eclipse.epsilon.evl.distributed.launch.DistributedEvlRunConfiguration
  */
 public class JmsEvlRunConfigurationMaster extends DistributedEvlRunConfigurationMaster {
 	
+	@SuppressWarnings("unchecked")
 	public static class Builder<R extends JmsEvlRunConfigurationMaster, B extends Builder<R, B>> extends DistributedEvlRunConfigurationMaster.Builder<R, B> {
+		
+		public boolean includeLocalWorker = false;
+		
+		public B withLocalJmsWorker() {
+			return withLocalJmsWorker(true);
+		}
+		public B withLocalJmsWorker(boolean includeLocalWorker) {
+			this.includeLocalWorker = includeLocalWorker;
+			return (B) this;
+		}
+		
 		@Override
 		protected EvlModuleJmsMaster createModule() {
-			EvlContextJmsMaster context = new EvlContextJmsMaster(parallelism, distributedParallelism, getJobSplitter(), host, sessionID);
+			includeLocalWorker |= masterProportion == 0;
+			EvlContextJmsMaster context = new EvlContextJmsMaster(parallelism, distributedParallelism, getJobSplitter(), host, sessionID, includeLocalWorker);
 			return new EvlModuleJmsMaster(context);
 		}
 		

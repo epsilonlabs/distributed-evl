@@ -26,6 +26,8 @@ public class JmsEvlMasterConfigParser<R extends JmsEvlRunConfigurationMaster, B 
 		new JmsEvlMasterConfigParser<>().parseAndRun(args);
 	}
 	
+	private final String localJmsWorkerOpt = "localWorker";
+	
 	@SuppressWarnings("unchecked")
 	public JmsEvlMasterConfigParser() {
 		this((B) new JmsEvlRunConfigurationMaster.Builder<>());
@@ -33,12 +35,13 @@ public class JmsEvlMasterConfigParser<R extends JmsEvlRunConfigurationMaster, B 
 	
 	public JmsEvlMasterConfigParser(B builder) {
 		super(builder);
+		options.addOption(localJmsWorkerOpt, "Whether the master should spawn its own JMS worker");
 	}
 	
 	@Override
 	public void parseArgs(String[] args) throws Exception {
 		super.parseArgs(args);
-		
+		builder.includeLocalWorker = cmdLine.hasOption(localJmsWorkerOpt);
 		if (builder.host == null || builder.host.isEmpty()) {
 			builder.host = "tcp://localhost:61616";
 		}

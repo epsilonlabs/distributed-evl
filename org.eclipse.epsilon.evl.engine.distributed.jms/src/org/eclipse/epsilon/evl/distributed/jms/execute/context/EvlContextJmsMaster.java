@@ -26,12 +26,14 @@ public class EvlContextJmsMaster extends EvlContextDistributedMaster {
 
 	protected final int sessionID;
 	protected final String brokerHost;
+	protected final boolean includeLocalWorker;
 	protected ConnectionFactory connectionFactory;
 
-	public EvlContextJmsMaster(int localParallelism, int expectedWorkers, JobSplitter splitter, String brokerHost, int sessionID) {
+	public EvlContextJmsMaster(int localParallelism, int expectedWorkers, JobSplitter splitter, String brokerHost, int sessionID, boolean localWorker) {
 		super(localParallelism, expectedWorkers, splitter);
 		this.sessionID = sessionID;
 		this.brokerHost = URI.create(brokerHost).toString();
+		this.includeLocalWorker = localWorker;
 	}
 	
 	public String getBrokerHost() {
@@ -40,6 +42,10 @@ public class EvlContextJmsMaster extends EvlContextDistributedMaster {
 	
 	public int getSessionId() {
 		return this.sessionID;
+	}
+	
+	public boolean hasLocalJmsWorker() {
+		return includeLocalWorker;
 	}
 	
 	public synchronized ConnectionFactory getConnectionFactory() throws NamingException {
