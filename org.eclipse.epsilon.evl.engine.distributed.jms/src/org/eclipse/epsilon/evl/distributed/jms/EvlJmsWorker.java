@@ -191,12 +191,14 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception> {
 		Destination resultDest = replyContext.createQueue(RESULTS_QUEUE+sessionID);
 		log("Began processing jobs");
 		
+		long timeout = Long.MAX_VALUE;
 		Message msg;
-		while ((msg = finished ? jobConsumer.receiveNoWait() : jobConsumer.receive()) != null) {
+		while ((msg = jobConsumer.receive(timeout)) != null) {
 			try {
 				msg.acknowledge();
 				boolean isObjectMessage = msg instanceof ObjectMessage;
-				if (isObjectMessage)  {
+				if (isObjectMessage) {
+					timeout = 1000;
 					Serializable currentJob = ((ObjectMessage) msg).getObject();
 					ObjectMessage resultsMsg = null;
 					try {
@@ -222,6 +224,7 @@ public final class EvlJmsWorker implements CheckedRunnable<Exception> {
 				
 				if (msg.getBooleanProperty(LAST_MESSAGE_PROPERTY)) {
 					finished = true;
+					timeout = 0;
 				}
 				else if (!isObjectMessage) {
 					log("Received unexpected message of type "+msg.getClass().getName());
