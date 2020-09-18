@@ -10,10 +10,8 @@
 package org.eclipse.epsilon.evl.distributed.jms.launch;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
-import org.eclipse.epsilon.common.util.OperatingSystem;
 import org.eclipse.epsilon.evl.distributed.jms.EvlJmsWorker;
 import org.eclipse.epsilon.evl.distributed.jms.EvlModuleJmsMaster;
 import org.eclipse.epsilon.evl.distributed.jms.execute.context.EvlContextJmsMaster;
@@ -94,15 +92,8 @@ public class JmsEvlRunConfigurationMaster extends DistributedEvlRunConfiguration
 		final String[] commandArr = commands.toArray(new String[commands.size()]);
 		
 		for (int i = 0; i < numWorkers; i++) {
-			new Thread(() -> {
-				try {
-					OperatingSystem.executeCommand(commandArr);
-				}
-				catch (IOException ex) {
-					// TODO Auto-generated catch block
-					ex.printStackTrace();
-				}
-			}).start();
+			Process worker = new ProcessBuilder(commandArr).redirectErrorStream(true).start();
+			writeOut("Started worker process "+worker.pid());
 		}
 	}
 }

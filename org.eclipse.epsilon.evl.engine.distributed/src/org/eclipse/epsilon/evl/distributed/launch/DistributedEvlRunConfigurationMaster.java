@@ -169,8 +169,8 @@ public class DistributedEvlRunConfigurationMaster extends DistributedEvlRunConfi
 			createStandaloneWorkers();
 		}
 		super.preExecute();
-		CheckedRunnable<?> prepareMaster = this::prepareMaster, pw = this::prepareWorkers;
-		ConcurrencyUtils.executeAsync(prepareMaster, pw);
+		CheckedRunnable<?> pm = this::prepareMaster, pw = this::prepareWorkers;
+		ConcurrencyUtils.executeAsync(pm, pw);
 	}
 	
 	protected void createStandaloneWorkers() throws Exception {
@@ -184,14 +184,15 @@ public class DistributedEvlRunConfigurationMaster extends DistributedEvlRunConfi
 	}
 	
 	protected void prepareWorkers() throws Exception {
-		if (getModule().getContext().getDistributedParallelism() == 0) return;
+		EvlModuleDistributedMaster module = getModule();
+		if (module.getContext().getDistributedParallelism() == 0) return;
 		if (profileExecution) {
 			profileExecutionStage(profiledStages, "Sending configuration to workers",
-				() -> getModule().prepareWorkers(getJobParameters())
+				() -> module.prepareWorkers(getJobParameters())
 			);
 		}
 		else {
-			getModule().prepareWorkers(getJobParameters());
+			module.prepareWorkers(getJobParameters());
 		}
 	}
 	
