@@ -1,7 +1,7 @@
 # Distributed infrastructure and implementation for the Epsilon Validation Language
 
 To run the JMS implementation, you will need a JMS 2.0 compliant broker on the classpath, such as [Artemis](https://activemq.apache.org/components/artemis/download/).
-You will also need Epsilon 2.0 or later [Epsilon](https://www.eclipse.org/epsilon/download/).
+You will also need [Epsilon 2.0 or later](https://www.eclipse.org/epsilon/download/).
 
 Invoke the main class (as described in the META-INF/MANIFEST.MF) with the following arguments:
 
